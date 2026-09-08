@@ -3,14 +3,14 @@
   "short_name": "Evolversi",
   "start_url": "./index.html",
   "display": "standalone",
-  "background_color": "#ffffff",
-  "theme_color": "#1d4ed8",
+  "background_color": "#ff00ff",
+  "theme_color": "#ff00ff",
   "icons": [
     {
       "src": "https://lh3.googleusercontent.com/d/1tezpM-m3xkcrq4xQ4XzPW8_z8i5elqUg",
       "sizes": "512x512",
       "type": "image/png",
-      "purpose": "any maskable"
+      "purpose": "any"
     }
   ]
 }
