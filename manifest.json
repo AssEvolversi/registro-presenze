@@ -1,0 +1,15 @@
+{
+  "name": "Evolversi APS - Gestionale",
+  "short_name": "Evolversi",
+  "start_url": "./index.html",
+  "display": "standalone",
+  "background_color": "#ffffff",
+  "theme_color": "#1d4ed8",
+  "icons": [
+    {
+      "src": "https://lh3.googleusercontent.com/d/1tezpM-m3xkcrq4xQ4XzPW8_z8i5elqUg",
+      "sizes": "512x512",
+      "type": "image/png"
+    }
+  ]
+}
