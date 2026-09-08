@@ -583,8 +583,6 @@ function inviaTimbratura() {
       console.error("Errore nel recupero dati iniziali:", err);
       mostraErrore(err);
     });
-
-  
 const QUEUE_KEY = 'evolversi_offline_queue';
 
 function salvaInCodaLocale(dati) {
@@ -603,20 +601,27 @@ async function sincronizzaCodaOffline() {
   let coda = JSON.parse(localStorage.getItem(QUEUE_KEY)) || [];
   if (coda.length === 0) return;
 
-  const urlAppsScript = "https://script.google.com/macros/s/AKfycbySXKKSHEbvS1fRRR1Fh9foXKaSFjzN1hPlzP_wpUQOalclx9DDzUf2wTgU9qxQcIML/exec";
   let elementiRimanenti = [];
 
   for (let item of coda) {
     try {
-      await fetch(urlAppsScript, {
-        method: "POST",
-        mode: "no-cors",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify(item.dati)
+      // Ricreiamo i parametri GET coerenti con la nuova architettura
+      const payload = item.dati;
+      const parametri = new URLSearchParams();
+      for (let key in payload) {
+        parametri.append(key, payload[key]);
+      }
+
+      const response = await fetch(`${URL_WEB_APP}?${parametri.toString()}`, {
+        method: 'GET'
       });
-      // Se va a buon fine, l'elemento non viene reinserito nell'array
+
+      if (!response.ok) {
+        throw new Error('Errore di rete');
+      }
+      // Se la richiesta va a buon fine, l'elemento non viene reinserito nell'array
     } catch (e) {
-      // Se fallisce ancora, lo teniamo in coda per il prossimo tentativo
+      // Se fallisce, lo teniamo in coda per il prossimo tentativo
       elementiRimanenti.push(item);
     }
   }
