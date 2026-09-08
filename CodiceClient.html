@@ -502,64 +502,50 @@ function aggiornaBadgeRiepilogo() {
           }
         }
         if (typeof tabSelezionatoCorrente !== 'undefined') {
-          google.script.run.salvaExtra(tabSelezionatoCorrente, riga, false, "");
-        }
+      chiamaBackend('salvaExtra', { 
+        tab: tabSelezionatoCorrente, 
+        riga: riga, 
+        attivo: false, 
+        ore: "" 
+      }).catch(err => console.error("Errore salvataggio extra:", err));
+    }
+
+    chiamaBackend('salvaPresenza', {
+      tab: tabSelezionatoCorrente,
+      riga: riga,
+      colonna: null,
+      stato: nuovoStato
+    })
+    .then(risultato => {
+      console.log("Successo backend:", risultato);
+      if (typeof aggiornaStatoSalvataggio === 'function') {
+        aggiornaStatoSalvataggio('ok', 'Sincronizzato');
       }
-    }
-
-    if (typeof elencoAlunniGlobale !== 'undefined' && Array.isArray(elencoAlunniGlobale)) {
-      var alunnoTrovato = elencoAlunniGlobale.find(a => a.riga === riga);
-      if (alunnoTrovato) {
-        alunnoTrovato.stato = nuovoStato;
-      }
-    }
-    
-    if (typeof aggiornaBadgeRiepilogo === 'function') {
-      aggiornaBadgeRiepilogo();
-    }
-
-    if (typeof aggiornaStatoSalvataggio === 'function') {
-      aggiornaStatoSalvataggio('salvataggio', 'Salvataggio...');
-    }
-    
-    if (typeof tabSelezionatoCorrente === 'undefined') {
-      alert("Errore critico: tabSelezionatoCorrente non è definito.");
-      return;
-    }
-
-    // Chiamata sicura al backend
-    google.script.run
-      .withSuccessHandler(function(risultato) {
-        console.log("Successo backend:", risultato);
-        if (typeof aggiornaStatoSalvataggio === 'function') {
-          aggiornaStatoSalvataggio('ok', 'Sincronizzato');
+      var spanIngressi = document.getElementById('ingressi-' + riga);
+      if (spanIngressi && risultato && risultato.nuoviIngressi !== undefined) {
+        spanIngressi.innerText = risultato.nuoviIngressi;
+        if (typeof elencoAlunniGlobale !== 'undefined') {
+          var alunnoSync = elencoAlunniGlobale.find(a => a.riga === riga);
+          if (alunnoSync) alunnoSync.ingressi = risultato.nuoviIngressi;
         }
-        var spanIngressi = document.getElementById('ingressi-' + riga);
-        if (spanIngressi && risultato && risultato.nuoviIngressi !== undefined) {
-          spanIngressi.innerText = risultato.nuoviIngressi;
-          if (typeof elencoAlunniGlobale !== 'undefined') {
-            var alunnoSync = elencoAlunniGlobale.find(a => a.riga === riga);
-            if (alunnoSync) alunnoSync.ingressi = risultato.nuoviIngressi;
-          }
 
-          var card = document.getElementById('card-' + riga);
-          if (card) {
-            if (typeof risultato.nuoviIngressi === 'number' && risultato.nuoviIngressi <= 0) {
-              card.classList.add('border-red-400', 'bg-red-50');
-            } else {
-              card.classList.remove('border-red-400', 'bg-red-50');
-            }
+        var card = document.getElementById('card-' + riga);
+        if (card) {
+          if (typeof risultato.nuoviIngressi === 'number' && risultato.nuoviIngressi <= 0) {
+            card.classList.add('border-red-400', 'bg-red-50');
+          } else {
+            card.classList.remove('border-red-400', 'bg-red-50');
           }
         }
-      })
-      .withFailureHandler(function(err) {
-        console.error("Errore backend:", err);
-        if (typeof aggiornaStatoSalvataggio === 'function') {
-          aggiornaStatoSalvataggio('errore', 'Errore salvataggio');
-        }
-        alert("Errore durante il salvataggio: " + err.message);
-      })
-      .salvaPresenza(tabSelezionatoCorrente, riga, null, nuovoStato);
+      }
+    })
+    .catch(err => {
+      console.error("Errore backend:", err);
+      if (typeof aggiornaStatoSalvataggio === 'function') {
+        aggiornaStatoSalvataggio('errore', 'Errore salvataggio');
+      }
+      alert("Errore durante il salvataggio: " + err.message);
+    });
 
   } catch (e) {
     console.error("Errore JS intercettato in registraStato:", e);
@@ -591,17 +577,21 @@ function aggiornaBadgeRiepilogo() {
     if (alunnoTrovato) alunnoTrovato.nota = testo;
 
     aggiornaStatoSalvataggio('salvataggio', 'Salvataggio nota...');
-    google.script.run
-      .withSuccessHandler(function() {
-        aggiornaStatoSalvataggio('ok', 'Sincronizzato');
-        console.log("Nota salvata per la riga " + riga);
-      })
-      .withFailureHandler(function(err) {
-        aggiornaStatoSalvataggio('errore', 'Errore nota');
-        alert("Errore nel salvataggio della nota: " + err.message);
-      })
-      .salvaNota(tabSelezionatoCorrente, riga, testo);
-  }
+  
+  chiamaBackend('salvaNota', {
+    tab: tabSelezionatoCorrente,
+    riga: riga,
+    testo: testo
+  })
+  .then(() => {
+    aggiornaStatoSalvataggio('ok', 'Sincronizzato');
+    console.log("Nota salvata per la riga " + riga);
+  })
+  .catch(err => {
+    aggiornaStatoSalvataggio('errore', 'Errore nota');
+    alert("Errore nel salvataggio della nota: " + err.message);
+  });
+}
   function salvaDatiExtra(riga) {
     var checkServizio = document.getElementById('servizio-extra-' + riga);
     var inputOre = document.getElementById('ore-extra-' + riga);
@@ -616,19 +606,23 @@ function aggiornaBadgeRiepilogo() {
       alunnoTrovato.servizioExtra = servizioExtra;
       alunnoTrovato.oreExtra = oreExtra;
     }
-
-    aggiornaStatoSalvataggio('salvataggio', 'Salvataggio extra...');
-    google.script.run
-      .withSuccessHandler(function() {
-        aggiornaStatoSalvataggio('ok', 'Sincronizzato');
-        console.log("Dati extra salvati per la riga " + riga);
-      })
-      .withFailureHandler(function(err) {
-        aggiornaStatoSalvataggio('errore', 'Errore extra');
-        alert("Errore nel salvataggio dei dati extra: " + err.message);
-      })
-      .salvaExtra(tabSelezionatoCorrente, riga, servizioExtra, oreExtra);
-  }
+aggiornaStatoSalvataggio('salvataggio', 'Salvataggio extra...');
+  
+  chiamaBackend('salvaExtra', {
+    tab: tabSelezionatoCorrente,
+    riga: riga,
+    attivo: servizioExtra,
+    ore: oreExtra
+  })
+  .then(() => {
+    aggiornaStatoSalvataggio('ok', 'Sincronizzato');
+    console.log("Dati extra salvati per la riga " + riga);
+  })
+  .catch(err => {
+    aggiornaStatoSalvataggio('errore', 'Errore extra');
+    alert("Errore nel salvataggio dei dati extra: " + err.message);
+  });
+}
   function apriStorico(riga, nomeBambino) {
     var modale = document.getElementById('modaleStorico');
     var titolo = document.getElementById('modaleTitolo');
