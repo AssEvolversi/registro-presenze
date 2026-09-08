@@ -304,30 +304,21 @@
     selectOp.innerHTML = '<option value="" disabled selected>Caricamento operatori...</option>';
     selectServ.innerHTML = '<option value="" disabled selected>Caricamento servizi...</option>';
 
-    // Aggiunta dell'evento onchange sulla select operatore per aggiornare lo storico
-    selectOp.onchange = function() {
-      caricaStoricoOperatore(this.value);
-    };
-
-    if (typeof google === 'undefined' || !google.script || !google.script.run) {
-      console.warn("Ambiente Google Apps Script non rilevato. Uso dati di test.");
-      var datiFinti = {
-        operatori: [{ id: "OP01", nome: "Mario Rossi", mansioni: "Educatore" }],
-        servizi: [{ idTab: "PRESENZE_Test", etichetta: "Servizio di Test" }]
-      };
-      popolaMenu(datiFinti);
-      return;
-    }
-
-    google.script.run
-      .withSuccessHandler(function(dati) {
-        popolaMenu(dati);
-      })
-      .withFailureHandler(function(err) {
-        mostraErrore(err);
-      })
-      .ottieniDatiInizialiTimbratura();
+   // Aggiunta dell'evento onchange sulla select operatore per aggiornare lo storico
+  selectOp.onchange = function() {
+    caricaStoricoOperatore(this.value);
   };
+
+  // Chiamata al backend tramite fetch verso la Web App di Google Apps Script su GitHub Pages
+  chiamaBackend('ottieniDatiInizialiTimbratura')
+    .then(function(dati) {
+      popolaMenu(dati);
+    })
+    .catch(function(err) {
+      console.error("Errore nel recupero dati iniziali:", err);
+      mostraErrore(err);
+    });
+};
 
   function popolaMenu(dati) {
     var selectOp = document.getElementById("selectOperatore");
