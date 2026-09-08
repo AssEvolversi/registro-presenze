@@ -1,36 +1,32 @@
 <!DOCTYPE html>
-<html>
-  <head>
-    <meta charset="UTF-8">
+<html lang="it">
+<head>
+  <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Registro Presenze</title>
-  <!-- Tailwind CSS CDN -->
+  <title>Evolversi APS - Gestionale</title>
+  
+  <!-- Tailwind CSS CDN (Versione Script Moderna) -->
   <script src="https://cdn.tailwindcss.com"></script>
+  
   <!-- FontAwesome Icons -->
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
-    <link rel="manifest" href="manifest.json">
-    <base target="_top">
-    <meta charset="utf-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Evolversi APS - Gestionale</title>
-    
-    <!-- Icona Lumaca PNG incorporata (Base64) per Browser, Android e iOS -->
-    <link rel="icon" type="image/png" sizes="512x512" href="data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAGAAAABgCAYAAADimHcQAAAACXBIWXMAAAsTAAALEwEAmpwYAAAKT2lDQ1BQaG90b3Nob3AgSUNDIHByb2ZpbGUAADHhnVbbWZu4EkWv2eUrcAAZg7P7f6bWzWxvZ5d5+M0t3YkIWRwG2eWSvP4lC8XbWw4YnE0q19u5P3d93PffX3j5a+j88m9bL308+0c89+N5P15d/H5bF5+fbnOefv59bf6u/P582l9fvzVnF9vX78c//72l9fVj+vtz8n7X19vffD48vT8e334uL+f54/b/b338vO///xxfv8A">
-    <link rel="apple-touch-icon" href="data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAGAAAABgCAYAAADimHcQAAAACXBIWXMAAAsTAAALEwEAmpwYAAAKT2lDQ1BQaG90b3Nob3AgSUNDIHByb2ZpbGUAADHhnVbbWZu4EkWv2eUrcAAZg7P7f6bWzWxvZ5d5+M0t3YkIWRwG2eWSvP4lC8XbWw4YnE0q19u5P3d93PffX3j5a+j88m9bL308+0c89+N5P15d/H5bF5+fbnOefv59bf6u/P582l9fvzVnF9vX78c//72l9fVj+vtz8n7X19vffD48vT8e334uL+f54/b/b338vO///xxfv8A">
-    
-    <!-- Colore della barra del browser su smartphone -->
-    <meta name="theme-color" content="#d81b60">
+  
+  <!-- PWA & Icone -->
+  <link rel="manifest" href="manifest.json">
+  <base target="_top">
+  <link rel="icon" type="image/png" sizes="512x512" href="data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAGAAAABgCAYAAADimHcQAAAACXBIWXMAAAsTAAALEwEAmpwYAAAKT2lDQ1BQaG90b3Nob3AgSUNDIHByb2ZpbGUAADHhnVbbWZu4EkWv2eUrcAAZg7P7f6bWzWxvZ5d5+M0t3YkIWRwG2eWSvP4lC8XbWw4YnE0q19u5P3d93PffX3j5a+j88m9bL308+0c89+N5P15d/H5bF5+fbnOefv59bf6u/P582l9fvzVnF9vX78c//72l9fVj+vtz8n7X19vffD48vT8e334uL+f54/b/b338vO///xxfv8A">
+  <link rel="apple-touch-icon" href="data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAGAAAABgCAYAAADimHcQAAAACXBIWXMAAAsTAAALEwEAmpwYAAAKT2lDQ1BQaG90b3Nob3AgSUNDIHByb2ZpbGUAADHhnVbbWZu4EkWv2eUrcAAZg7P7f6bWzWxvZ5d5+M0t3YkIWRwG2eWSvP4lC8XbWw4YnE0q19u5P3d93PffX3j5a+j88m9bL308+0c89+N5P15d/H5bF5+fbnOefv59bf6u/P582l9fvzVnF9vX78c//72l9fVj+vtz8n7X19vffD48vT8e334uL+f54/b/b338vO///xxfv8A">
+  <meta name="theme-color" content="#d81b60">
 
-    <link href="https://cdn.jsdelivr.net/npm/tailwindcss@2.2.19/dist/tailwind.min.css" rel="stylesheet">
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
-    <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@500;700;800&display=swap" rel="stylesheet">
+  <!-- Google Fonts Outfit -->
+  <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@500;700;800&display=swap" rel="stylesheet">
 
-    <style>
-      .font-brand { font-family: 'Outfit', sans-serif; }
-      @keyframes pulse-slow { 0%, 100% { opacity: 1; } 50% { opacity: 0.4; } }
-      .animate-pulse-slow { animation: pulse-slow 1.5s cubic-bezier(0.4, 0, 0.6, 1) infinite; }
-    </style>
-  </head>
+  <style>
+    .font-brand { font-family: 'Outfit', sans-serif; }
+    @keyframes pulse-slow { 0%, 100% { opacity: 1; } 50% { opacity: 0.4; } }
+    .animate-pulse-slow { animation: pulse-slow 1.5s cubic-bezier(0.4, 0, 0.6, 1) infinite; }
+  </style>
+</head>
   <body class="bg-gray-50 text-gray-800 min-h-screen flex flex-col">
     
     <!-- 1. Schermata Home Iniziale -->
