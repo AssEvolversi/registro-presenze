@@ -1,4 +1,4 @@
-const CACHE_NAME = 'evolversi-v4';
+const CACHE_NAME = 'evolversi-v5';
 const ASSETS_TO_CACHE = [
   './',
   './index.html',
@@ -6,7 +6,7 @@ const ASSETS_TO_CACHE = [
   './IconaApp.png'
 ];
 
-// Installazione: memorizza solo i file locali
+// Installazione: memorizza i file locali
 self.addEventListener('install', (event) => {
   event.waitUntil(
     caches.open(CACHE_NAME).then((cache) => {
@@ -16,7 +16,7 @@ self.addEventListener('install', (event) => {
   self.skipWaiting();
 });
 
-// Attivazione: pulisce le vecchie cache
+// Attivazione: pulisce immediatamente le vecchie cache
 self.addEventListener('activate', (event) => {
   event.waitUntil(
     caches.keys().then((cacheNames) => {
@@ -32,10 +32,10 @@ self.addEventListener('activate', (event) => {
   self.clients.claim();
 });
 
-// Gestione delle richieste
+// Gestione delle richieste offline avanzata per PWABuilder
 self.addEventListener('fetch', (event) => {
   if (event.request.url.includes('script.google.com')) {
-    return; // Lascia passare liberamente le chiamate a Google Apps Script
+    return; // Salta le chiamate al backend Google
   }
 
   event.respondWith(
@@ -43,9 +43,12 @@ self.addEventListener('fetch', (event) => {
       if (cachedResponse) {
         return cachedResponse;
       }
-      return fetch(event.request).catch(() => {
-        if (event.request.mode === 'navigate') {
-          return caches.match('./index.html');
+      return fetch(event.request).then((networkResponse) => {
+        return networkResponse;
+      }).catch(() => {
+        // Se la rete cade, intercetta le richieste di pagina e restituisce index.html
+        if (event.request.mode === 'navigate' || event.request.destination === 'document') {
+          return caches.match('./index.html') || caches.match('./');
         }
       });
     })
