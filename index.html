@@ -450,7 +450,6 @@ function inviaTimbratura() {
       }
     });
 }
-
   function mostraErrore(err) {
     console.error("Errore di caricamento dati:", err);
     var selectOp = document.getElementById("selectOperatore");
@@ -584,9 +583,6 @@ function inviaTimbratura() {
       console.error("Errore nel recupero dati iniziali:", err);
       mostraErrore(err);
     });
-      // Funzione principale per inviare i dati (presenze, registrazioni, ecc.)
-async function inviaDati(datiDaInviare) {
-  const urlAppsScript = "https://script.google.com/macros/s/AKfycbySXKKSHEbvS1fRRR1Fh9foXKaSFjzN1hPlzP_wpUQOalclx9DDzUf2wTgU9qxQcIML/exec"; // Il tuo URL
 
   // Controlliamo se siamo offline o se vogliamo tentare l'invio
   if (!navigator.onLine) {
