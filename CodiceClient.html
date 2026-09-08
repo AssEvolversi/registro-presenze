@@ -296,6 +296,7 @@
       var area = document.getElementById('areaContenuto');
       area.innerHTML = '<div class="max-w-4xl mx-auto text-center text-blue-600 mt-16 text-lg animate-pulse">Caricamento registro per ' + nomeFormattato + '...</div>';
 
+      console.log("Sto per chiamare il backend...");
       chiamaBackend('ottieniDatiRegistro', { tab: tabSelezionatoCorrente })
           .then(risposta => {
         console.log("Risposta grezza dal backend:", risposta); // <-- AGGIUNGI QUESTO
