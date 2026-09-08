@@ -567,100 +567,111 @@
     }
 
     function registraStato(riga, statoScelto) {
-      try {
-        var btnP = document.getElementById('btn-p-' + riga);
-        var btnA = document.getElementById('btn-a-' + riga);
-        
-        var isGiàPresente = btnP && btnP.classList.contains('bg-green-600');
-        var isGiàAssente = btnA && btnA.classList.contains('bg-red-600');
+  try {
+    var btnP = document.getElementById('btn-p-' + riga);
+    var btnA = document.getElementById('btn-a-' + riga);
+    
+    var isGiàPresente = btnP && btnP.classList.contains('bg-green-600');
+    var isGiàAssente = btnA && btnA.classList.contains('bg-red-600');
 
-        var nuovoStato = statoScelto;
-        if ((statoScelto === 'P' && isGiàPresente) || (statoScelto === 'A' && isGiàAssente)) {
-          nuovoStato = "";
-        }
+    var nuovoStato = statoScelto;
+    if ((statoScelto === 'P' && isGiàPresente) || (statoScelto === 'A' && isGiàAssente)) {
+      nuovoStato = "";
+    }
 
-        if (btnP && btnA) {
-          btnP.className = "flex-1 py-3.5 sm:py-4 text-base font-bold rounded-xl transition active:scale-95 shadow-sm bg-gray-100 text-gray-700 hover:bg-green-100";
-          btnA.className = "flex-1 py-3.5 sm:py-4 text-base font-bold rounded-xl transition active:scale-95 shadow-sm bg-gray-100 text-gray-700 hover:bg-red-100";
+    if (btnP && btnA) {
+      btnP.className = "flex-1 py-3.5 sm:py-4 text-base font-bold rounded-xl transition active:scale-95 shadow-sm bg-gray-100 text-gray-700 hover:bg-green-100";
+      btnA.className = "flex-1 py-3.5 sm:py-4 text-base font-bold rounded-xl transition active:scale-95 shadow-sm bg-gray-100 text-gray-700 hover:bg-red-100";
 
-          if (nuovoStato === 'P') {
-            btnP.className = "flex-1 py-3.5 sm:py-4 text-base font-bold rounded-xl transition active:scale-95 bg-green-600 text-white shadow-inner";
-          } else if (nuovoStato === 'A') {
-            btnA.className = "flex-1 py-3.5 sm:py-4 text-base font-bold rounded-xl transition active:scale-95 bg-red-600 text-white shadow-inner";
-          }
-        }
-
-        var checkServizio = document.getElementById('servizio-extra-' + riga);
-        var inputOre = document.getElementById('ore-extra-' + riga);
-        var labelServizio = document.getElementById('label-servizio-' + riga);
-
-        if (checkServizio && inputOre && labelServizio) {
-          if (nuovoStato === 'P') {
-            checkServizio.disabled = false;
-            inputOre.disabled = false;
-            labelServizio.classList.remove('opacity-50', 'cursor-not-allowed');
-            labelServizio.classList.add('cursor-pointer');
-            inputOre.classList.remove('opacity-50', 'cursor-not-allowed', 'bg-gray-100');
-            inputOre.classList.add('bg-gray-50');
-          } else {
-            checkServizio.disabled = true;
-            checkServizio.checked = false;
-            inputOre.disabled = true;
-            inputOre.value = "";
-            labelServizio.classList.add('opacity-50', 'cursor-not-allowed');
-            labelServizio.classList.remove('cursor-pointer');
-            inputOre.classList.add('opacity-50', 'cursor-not-allowed', 'bg-gray-100');
-            inputOre.classList.remove('bg-gray-50');
-
-            if (typeof elencoAlunniGlobale !== 'undefined' && Array.isArray(elencoAlunniGlobale)) {
-              var alunnoExtra = elencoAlunniGlobale.find(a => a.riga === riga);
-              if (alunnoExtra) {
-                alunnoExtra.servizioExtra = false;
-                alunnoExtra.oreExtra = "";
-              }
-            }
-          }
-        }
-
-        aggiornaStatoSalvataggio('salvataggio', 'Salvataggio...');
-
-        chiamaBackend('salvaPresenza', {
-          tab: tabSelezionatoCorrente,
-          riga: riga,
-          colonna: null,
-          stato: nuovoStato
-        })
-        .then(risultato => {
-          aggiornaStatoSalvataggio('ok', 'Sincronizzato');
-          var spanIngressi = document.getElementById('ingressi-' + riga);
-          if (spanIngressi && risultato && risultato.nuoviIngressi !== undefined) {
-            spanIngressi.innerText = risultato.nuoviIngressi;
-            if (typeof elencoAlunniGlobale !== 'undefined') {
-              var alunnoSync = elencoAlunniGlobale.find(a => a.riga === riga);
-              if (alunnoSync) alunnoSync.ingressi = risultato.nuoviIngressi;
-            }
-
-            var card = document.getElementById('card-' + riga);
-            if (card) {
-              if (typeof risultato.nuoviIngressi === 'number' && risultato.nuoviIngressi <= 0) {
-                card.classList.add('border-red-400', 'bg-red-50');
-              } else {
-                card.classList.remove('border-red-400', 'bg-red-50');
-              }
-            }
-          }
-          aggiornaBadgeRiepilogo();
-        })
-        .catch(err => {
-          aggiornaStatoSalvataggio('errore', 'Errore salvataggio');
-          alert("Errore durante il salvataggio: " + err.message);
-        });
-
-      } catch (e) {
-        alert("Errore imprevisto nell'interfaccia: " + e.message);
+      if (nuovoStato === 'P') {
+        btnP.className = "flex-1 py-3.5 sm:py-4 text-base font-bold rounded-xl transition active:scale-95 bg-green-600 text-white shadow-inner";
+      } else if (nuovoStato === 'A') {
+        btnA.className = "flex-1 py-3.5 sm:py-4 text-base font-bold rounded-xl transition active:scale-95 bg-red-600 text-white shadow-inner";
       }
     }
 
+    var checkServizio = document.getElementById('servizio-extra-' + riga);
+    var inputOre = document.getElementById('ore-extra-' + riga);
+    var labelServizio = document.getElementById('label-servizio-' + riga);
+
+    if (checkServizio && inputOre && labelServizio) {
+      if (nuovoStato === 'P') {
+        checkServizio.disabled = false;
+        inputOre.disabled = false;
+        labelServizio.classList.remove('opacity-50', 'cursor-not-allowed');
+        labelServizio.classList.add('cursor-pointer');
+        inputOre.classList.remove('opacity-50', 'cursor-not-allowed', 'bg-gray-100');
+        inputOre.classList.add('bg-gray-50');
+      } else {
+        checkServizio.disabled = true;
+        checkServizio.checked = false;
+        inputOre.disabled = true;
+        inputOre.value = "";
+        labelServizio.classList.add('opacity-50', 'cursor-not-allowed');
+        labelServizio.classList.remove('cursor-pointer');
+        inputOre.classList.add('opacity-50', 'cursor-not-allowed', 'bg-gray-100');
+        inputOre.classList.remove('bg-gray-50');
+
+        if (typeof elencoAlunniGlobale !== 'undefined' && Array.isArray(elencoAlunniGlobale)) {
+          var alunnoExtra = elencoAlunniGlobale.find(a => a.riga === riga);
+          if (alunnoExtra) {
+            alunnoExtra.servizioExtra = false;
+            alunnoExtra.oreExtra = "";
+          }
+        }
+      }
+    }
+
+    var payloadPresenza = {
+      tab: tabSelezionatoCorrente,
+      riga: riga,
+      colonna: null,
+      stato: nuovoStato
+    };
+
+    // Controllo offline preventivo: se manca la rete, salva direttamente in coda locale
+    if (!navigator.onLine) {
+      salvaInCodaLocale({ azione: 'salvaPresenza', ...payloadPresenza });
+      aggiornaStatoSalvataggio('errore', 'Offline (Salvato in locale)');
+      aggiornaBadgeRiepilogo();
+      return;
+    }
+
+    aggiornaStatoSalvataggio('salvataggio', 'Salvataggio...');
+
+    chiamaBackend('salvaPresenza', payloadPresenza)
+    .then(risultato => {
+      aggiornaStatoSalvataggio('ok', 'Sincronizzato');
+      var spanIngressi = document.getElementById('ingressi-' + riga);
+      if (spanIngressi && risultato && risultato.nuoviIngressi !== undefined) {
+        spanIngressi.innerText = risultato.nuoviIngressi;
+        if (typeof elencoAlunniGlobale !== 'undefined') {
+          var alunnoSync = elencoAlunniGlobale.find(a => a.riga === riga);
+          if (alunnoSync) alunnoSync.ingressi = risultato.nuoviIngressi;
+        }
+
+        var card = document.getElementById('card-' + riga);
+        if (card) {
+          if (typeof risultato.nuoviIngressi === 'number' && risultato.nuoviIngressi <= 0) {
+            card.classList.add('border-red-400', 'bg-red-50');
+          } else {
+            card.classList.remove('border-red-400', 'bg-red-50');
+          }
+        }
+      }
+      aggiornaBadgeRiepilogo();
+    })
+    .catch(err => {
+      // Se la chiamata fallisce per problemi di rete improvvisi, salva in coda locale per non perdere il dato
+      salvaInCodaLocale({ azione: 'salvaPresenza', ...payloadPresenza });
+      aggiornaStatoSalvataggio('errore', 'Errore rete: salvato in locale');
+      aggiornaBadgeRiepilogo();
+    });
+
+  } catch (e) {
+    alert("Errore imprevisto nell'interfaccia: " + e.message);
+  }
+}
     function selezionaTutti(statoForzato) {
       if (!confirm(statoForzato === 'P' ? "Vuoi segnare TUTTI i bambini come presenti?" : "Vuoi azzerare tutte le presenze di oggi?")) {
         return;
