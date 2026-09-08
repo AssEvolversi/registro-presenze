@@ -169,7 +169,7 @@
         return risposta;
       });
     } else {
-      // Chiamata GET per letture semplici (es. getOperatori, ottieniElencoSedi)
+      // Chiamata GET per letture semplici (es. ottieniElencoSedi)
       const parametri = new URLSearchParams();
       for (var key in payload) {
         parametri.append(key, payload[key]);
