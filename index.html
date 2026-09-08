@@ -581,14 +581,15 @@
     });
   }
   // Esempio: Appena si apre la sezione timbratura, carichiamo gli operatori
- function caricaDatiInizialiTimbratura() {
-    console.log("Richiesta operatori in corso..."); // Corretto da console.p a console.log
-    chiamaBackend('getOperatori')
-      .then(data => {
-        // Qui inserisci la logica per popolare la tendina o la lista degli operatori
-        console.log("Operatori ricevuti:", data);
-      });
-  }
+ // Chiamata al backend tramite fetch per i dati di timbratura
+  chiamaBackend('ottieniDatiInizialiTimbratura')
+    .then(function(dati) {
+      popolaMenu(dati);
+    })
+    .catch(function(err) {
+      console.error("Errore nel recupero dati iniziali:", err);
+      mostraErrore(err);
+    });
       // Funzione principale per inviare i dati (presenze, registrazioni, ecc.)
 async function inviaDati(datiDaInviare) {
   const urlAppsScript = "https://script.google.com/macros/s/AKfycbySXKKSHEbvS1fRRR1Fh9foXKaSFjzN1hPlzP_wpUQOalclx9DDzUf2wTgU9qxQcIML/exec"; // Il tuo URL
