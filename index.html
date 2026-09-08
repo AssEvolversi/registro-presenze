@@ -565,19 +565,30 @@
   const URL_WEB_APP = "https://script.google.com/macros/s/AKfycbySXKKSHEbvS1fRRR1Fh9foXKaSFjzN1hPlzP_wpUQOalclx9DDzUf2wTgU9qxQcIML/exec";
 
   // Funzione universale per caricare i dati da Google Sheets
+ // Funzione universale per leggere i dati da Google Sheets (usa GET per evitare i blocchi CORS)
   function chiamaBackend(azione, payload = {}) {
     payload.azione = azione;
     
-    return fetch(URL_WEB_APP, {
-      method: 'POST',
-      body: JSON.stringify(payload)
+    // Trasforma il payload in parametri URL per una chiamata GET sicura
+    const parametri = new URLSearchParams();
+    for (key in payload) {
+      parametri.append(key, payload[key]);
+    }
+
+    return fetch(`${URL_WEB_APP}?${parametri.toString()}`, {
+      method: 'GET'
     })
-    .then(response => response.json())
+    .then(response => {
+      if (!response.ok) {
+        throw new Error('Errore di rete dal server');
+      }
+      return response.json();
+    })
     .catch(error => {
       console.error("Errore di comunicazione con il backend:", error);
+      return null;
     });
   }
-
   // Esempio: Appena si apre la sezione timbratura, carichiamo gli operatori
  function caricaDatiInizialiTimbratura() {
     console.log("Richiesta operatori in corso..."); // Corretto da console.p a console.log
