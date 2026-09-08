@@ -59,7 +59,145 @@
           <i class="fas fa-arrow-left"></i> Torna alla Home
         </button>
       </div>
-      <!-- Spazio per i contenuti del Registro -->
+     <!-- Contenitore principale a schermo intero del Registro -->
+<div class="w-full min-h-screen bg-white shadow-none flex flex-col">
+  
+  <!-- Header Principale Compatto del Registro -->
+  <div class="bg-gradient-to-r from-blue-700 via-indigo-600 to-blue-800 text-white px-6 py-3 flex flex-col gap-2 shadow-xl border-b-4 border-blue-900 sticky top-0 z-30">
+    <div class="flex flex-row items-center justify-between gap-4">
+      <div class="flex items-center gap-3">
+        <div class="bg-white p-1.5 rounded-xl shadow-md flex items-center justify-center shrink-0">
+          <img src="https://lh3.googleusercontent.com/d/1U3wZDb34MJyIGitW-ZEmgd5cRBDorTG3" class="w-7 h-7 object-contain" alt="Logo">
+        </div>
+        <div>
+          <h1 class="font-brand font-extrabold text-sm sm:text-base tracking-wide text-white uppercase leading-none">Evolversi</h1>
+          <p class="text-[9px] sm:text-[10px] text-blue-200 font-medium tracking-wider uppercase mt-0.5">Associazione di Promozione Sociale</p>
+        </div>
+      </div>
+
+      <div class="flex items-center gap-4">
+        <div id="indicatoreStato" class="hidden sm:flex items-center gap-2 px-3 py-1 rounded-full text-xs font-bold bg-white bg-opacity-10 border border-white border-opacity-20 shadow-sm">
+          <span id="puntoStato" class="w-2 h-2 rounded-full bg-green-400 inline-block shadow-sm"></span>
+          <span id="testoStato" class="text-white text-[11px]">Sincronizzato</span>
+        </div>
+
+        <div class="flex items-center gap-2">
+          <a href="https://www.facebook.com" target="_blank" rel="noopener noreferrer" class="w-8 h-8 rounded-full bg-white bg-opacity-20 hover:bg-opacity-30 flex items-center justify-center text-white text-xs transition shadow-sm active:scale-95" title="Visita Facebook">
+            <i class="fab fa-facebook-f"></i>
+          </a>
+          <a href="https://www.instagram.com" target="_blank" rel="noopener noreferrer" class="w-8 h-8 rounded-full bg-white bg-opacity-20 hover:bg-opacity-30 flex items-center justify-center text-white text-xs transition shadow-sm active:scale-95" title="Visita Instagram">
+            <i class="fab fa-instagram"></i>
+          </a>
+        </div>
+      </div>
+    </div>
+  </div>
+  
+  <!-- Area Controlli Superiori Sedi e Filtri -->
+  <div class="px-4 py-2.5 bg-gradient-to-b from-blue-50 to-white border-b sticky top-[60px] z-20 shadow-sm">
+    <div class="max-w-5xl mx-auto flex flex-col items-center">
+      <div class="w-full flex justify-between items-center mb-2 px-1">
+        <label class="block text-blue-900 font-bold text-xs sm:text-sm flex items-center gap-2">
+          <i class="fas fa-school text-blue-600"></i> Seleziona Plesso e Servizio:
+        </label>
+        <button onclick="caricaSedi()" class="text-xs bg-blue-100 text-blue-700 px-3 py-1 rounded-full font-bold hover:bg-blue-200 transition shadow-sm flex items-center gap-1 active:scale-95">
+          <i class="fas fa-sync-alt"></i> Aggiorna
+        </button>
+      </div>
+
+      <div id="grigliaSedi" class="w-full grid grid-cols-1 sm:grid-cols-3 gap-2 max-h-40 overflow-y-auto pr-1">
+        <div class="p-3 rounded-xl border-2 border-dashed border-blue-200 bg-white text-center text-gray-400 text-xs col-span-full">
+          Caricamento servizi in corso...
+        </div>
+      </div>
+      
+      <div id="pannelloAzioni" class="hidden w-full space-y-2 mt-2.5 pt-2.5 border-t border-blue-100">
+        <div class="flex items-center justify-between px-1">
+          <span id="titoloServizioSelezionato" class="text-xs font-bold text-blue-700 uppercase tracking-wider">Servizio attivo</span>
+          <button onclick="tornaAllaSelezioneSedi()" class="text-xs text-red-600 font-bold hover:underline flex items-center gap-1">
+            <i class="fas fa-exchange-alt"></i> Cambia servizio
+          </button>
+        </div>
+
+        <div class="flex flex-col md:flex-row items-center gap-2">
+          <div class="relative w-full md:w-80 shrink-0">
+            <div class="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none text-gray-400 text-xs">
+              <i class="fas fa-search"></i>
+            </div>
+            <input type="text" id="inputRicerca" onkeyup="applicaFiltriComplessivi()" placeholder="Cerca bambino..." 
+              class="w-full pl-9 pr-3 py-1.5 text-xs sm:text-sm border border-gray-200 rounded-xl bg-white shadow-sm focus:bg-white focus:outline-none focus:ring-1 focus:ring-blue-500 transition">
+          </div>
+          
+          <div class="flex flex-wrap items-center justify-between md:justify-end gap-1.5 w-full flex-1">
+            <div class="flex flex-wrap gap-1">
+              <button onclick="impostaFiltroStato('tutti')" id="filtro-tutti" class="px-2.5 py-1 rounded-lg text-xs font-bold bg-blue-600 text-white shadow-sm transition active:scale-95">Tutti</button>
+              <button onclick="impostaFiltroStato('da-segnare')" id="filtro-da-segnare" class="px-2.5 py-1 rounded-lg text-xs font-bold bg-gray-100 text-gray-700 hover:bg-gray-200 shadow-sm transition active:scale-95">Da Segnare</button>
+              <button onclick="impostaFiltroStato('presenti')" id="filtro-presenti" class="px-2.5 py-1 rounded-lg text-xs font-bold bg-gray-100 text-green-700 hover:bg-green-100 shadow-sm transition active:scale-95">Presenti</button>
+              <button onclick="impostaFiltroStato('assenti')" id="filtro-assenti" class="px-2.5 py-1 rounded-lg text-xs font-bold bg-gray-100 text-red-700 hover:bg-red-100 shadow-sm transition active:scale-95">Assenti</button>
+            </div>
+
+            <div class="flex gap-1.5">
+              <button onclick="selezionaTutti('P')" class="bg-green-100 text-green-700 hover:bg-green-200 px-2.5 py-1 rounded-lg text-xs font-bold transition active:scale-95 shadow-sm" title="Segna tutti presenti">Tutti P</button>
+              <button onclick="selezionaTutti('')" class="bg-gray-200 text-gray-700 hover:bg-gray-300 px-2.5 py-1 rounded-lg text-xs font-bold transition active:scale-95 shadow-sm" title="Azzera presenze">Azzera</button>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+  
+  <!-- Area Contenuto Dinamico (Elenco Alunni) -->
+  <div id="areaContenuto" class="flex-1 p-4 sm:p-6 overflow-y-auto mb-16 max-w-5xl mx-auto w-full">
+    <div class="text-center text-gray-400 mt-16 text-lg">
+      Seleziona un servizio dalla griglia in alto per visualizzare l'elenco dei bambini.
+    </div>
+  </div>
+
+</div>
+
+<!-- Badge di Riepilogo Fluttuante -->
+<div id="footerRiepilogo" class="fixed bottom-0 inset-x-0 bg-white bg-opacity-95 backdrop-blur-md border-t border-gray-200 shadow-xl py-2 px-4 z-20 hidden transition-all duration-300">
+  <div class="max-w-5xl mx-auto flex flex-row justify-between items-center gap-2">
+    <div class="text-xs font-semibold text-gray-600 flex items-center gap-1.5">
+      <i class="fas fa-chart-pie text-blue-600"></i> Riepilogo:
+    </div>
+    <div id="badgeRiepilogo" class="bg-gradient-to-r from-blue-600 to-indigo-600 text-white px-4 py-1.5 rounded-xl font-bold shadow-sm text-xs tracking-wide">
+      P: 0 | A: 0 | Da segnare: 0
+    </div>
+  </div>
+</div>
+
+<!-- Modale Storico -->
+<div id="modaleStorico" class="fixed inset-0 bg-black bg-opacity-50 hidden z-50 flex items-center justify-center p-4">
+  <div class="bg-white rounded-3xl w-full max-w-lg p-6 shadow-2xl flex flex-col max-h-[85vh]">
+    <div class="flex justify-between items-center border-b pb-3 mb-3">
+      <h3 id="modaleTitolo" class="font-bold text-gray-800 text-lg">Storico Alunno</h3>
+      <button onclick="chiudiStorico()" class="text-gray-400 hover:text-gray-600 font-bold text-2xl px-2">&times;</button>
+    </div>
+    <div id="modaleContenuto" class="overflow-y-auto flex-1 space-y-2 text-sm text-gray-600 pr-1">
+      <p class="text-center text-gray-400 py-4">Caricamento in corso...</p>
+    </div>
+    <div class="mt-4 pt-3 border-t text-right">
+      <button onclick="chiudiStorico()" class="bg-blue-600 text-white px-4 py-3 rounded-2xl text-base font-bold shadow hover:bg-blue-700 transition w-full">Chiudi</button>
+    </div>
+  </div>
+</div>
+
+<!-- Modale Dettagli / Sicurezza -->
+<div id="modaleDettagli" class="fixed inset-0 bg-black bg-opacity-50 hidden z-50 flex items-center justify-center p-4">
+  <div class="bg-white rounded-3xl w-full max-w-lg p-6 shadow-2xl flex flex-col max-h-[85vh]">
+    <div class="flex justify-between items-center border-b pb-3 mb-3">
+      <h3 id="dettagliTitolo" class="font-bold text-gray-800 text-lg">Scheda Sicurezza</h3>
+      <button onclick="chiudiDettagli()" class="text-gray-400 hover:text-gray-600 font-bold text-2xl px-2">&times;</button>
+    </div>
+    <div id="dettagliContenuto" class="overflow-y-auto flex-1 space-y-3 text-sm text-gray-600 pr-1">
+      <p class="text-center text-gray-400 py-4">Caricamento in corso...</p>
+    </div>
+    <div class="mt-4 pt-3 border-t text-right">
+      <button onclick="chiudiDettagli()" class="bg-blue-600 text-white px-4 py-3 rounded-2xl text-base font-bold shadow hover:bg-blue-700 transition w-full">Chiudi</button>
+    </div>
+  </div>
+</div>
     </div>
 
     <!-- 3. Contenitore Timbratura Staff -->
@@ -69,7 +207,291 @@
           <i class="fas fa-arrow-left"></i> Torna alla Home
         </button>
       </div>
-      <!-- Spazio per i contenuti della Timbratura -->
+      <!-- Sezione Timbratura Presenze Staff -->
+<div id="sezioneTimbratura" class="max-w-4xl mx-auto px-4 py-6">
+  <div class="bg-white rounded-3xl shadow-sm border border-gray-100 p-6 sm:p-8 space-y-6">
+    
+    <!-- Intestazione della sezione -->
+    <div>
+      <h2 class="text-xl sm:text-2xl font-bold text-gray-800">Timbratura Presenze Staff</h2>
+      <p class="text-sm text-gray-500 mt-1">Registra il tuo ingresso o la tua uscita in servizio.</p>
+    </div>
+
+    <hr class="border-gray-100">
+
+    <!-- Form di timbratura -->
+    <div class="space-y-5">
+      
+      <!-- Selezione Operatore -->
+      <div>
+        <label class="block text-sm font-bold text-gray-700 mb-2">Operatore</label>
+        <div class="relative">
+          <select id="selectOperatore" class="w-full px-4 py-3.5 bg-gray-50 border border-gray-200 rounded-2xl text-gray-700 text-sm sm:text-base focus:bg-white focus:outline-none focus:ring-2 focus:ring-blue-500 appearance-none cursor-pointer">
+            <option value="" disabled selected>Caricamento operatori...</option>
+          </select>
+          <div class="absolute inset-y-0 right-0 flex items-center px-4 pointer-events-none text-gray-400">
+            <i class="fas fa-chevron-down text-xs"></i>
+          </div>
+        </div>
+      </div>
+
+      <!-- Box Storico Odierno (Integrato) -->
+      <div id="boxStorico" class="hidden p-4 bg-gray-50 border border-gray-200 rounded-2xl space-y-2">
+        <p class="text-xs font-bold text-gray-500 uppercase tracking-wider">I tuoi movimenti di oggi:</p>
+        <div id="listaStorico" class="space-y-1 text-sm text-gray-700"></div>
+      </div>
+
+      <!-- Selezione Servizio / Plesso -->
+      <div>
+        <label class="block text-sm font-bold text-gray-700 mb-2">Plesso e Servizio</label>
+        <div class="relative">
+          <select id="selectServizio" class="w-full px-4 py-3.5 bg-gray-50 border border-gray-200 rounded-2xl text-gray-700 text-sm sm:text-base focus:bg-white focus:outline-none focus:ring-2 focus:ring-blue-500 appearance-none cursor-pointer">
+            <option value="" disabled selected>Caricamento servizi...</option>
+          </select>
+          <div class="absolute inset-y-0 right-0 flex items-center px-4 pointer-events-none text-gray-400">
+            <i class="fas fa-chevron-down text-xs"></i>
+          </div>
+        </div>
+      </div>
+
+      <!-- Tipo di Timbratura (Entrata / Uscita) -->
+      <div>
+        <label class="block text-sm font-bold text-gray-700 mb-2">Tipo di Registrazione</label>
+        <div class="grid grid-cols-2 gap-3">
+          <div id="btnEntrata" onclick="impostaTipoTimbratura('ENTRATA')" class="flex items-center justify-center px-4 py-3.5 border-2 border-blue-600 bg-blue-50 text-blue-900 rounded-2xl cursor-pointer font-bold text-sm sm:text-base transition shadow-sm select-none">
+            <span>🟢 Entrata</span>
+          </div>
+          <div id="btnUscita" onclick="impostaTipoTimbratura('USCITA')" class="flex items-center justify-center px-4 py-3.5 border-2 border-gray-200 bg-gray-50 text-gray-700 rounded-2xl cursor-pointer font-bold text-sm sm:text-base hover:border-gray-300 transition select-none">
+            <span>🔴 Uscita</span>
+          </div>
+        </div>
+        <!-- Input nascosto per memorizzare la scelta -->
+        <input type="hidden" id="valoreTipoTimbratura" value="ENTRATA">
+      </div>
+
+      <!-- Note opzionali -->
+      <div>
+        <label class="block text-sm font-bold text-gray-700 mb-2">Note (opzionale)</label>
+        <input type="text" id="inputNote" placeholder="Es. Cambio turno, ritardo giustificato..." class="w-full px-4 py-3.5 bg-gray-50 border border-gray-200 rounded-2xl text-gray-700 text-sm sm:text-base focus:bg-white focus:outline-none focus:ring-2 focus:ring-blue-500">
+      </div>
+
+      <!-- Pulsante di invio -->
+      <div class="pt-2">
+        <button onclick="inviaTimbratura()" class="w-full py-4 bg-blue-600 hover:bg-blue-700 active:scale-98 text-white font-bold rounded-2xl shadow-sm transition text-base cursor-pointer">
+          Registra Timbratura
+        </button>
+      </div>
+
+      <!-- Area messaggi di feedback -->
+      <div id="messaggioTimbratura" class="text-center text-sm font-medium"></div>
+
+    </div>
+
+  </div>
+</div>
+
+<!-- Script Logica Timbrature -->
+<script>
+  window.caricaDatiIniziali = function() {
+    var selectOp = document.getElementById("selectOperatore");
+    var selectServ = document.getElementById("selectServizio");
+    
+    if (!selectOp || !selectServ) {
+      console.warn("Elementi select non trovati nel DOM!");
+      return;
+    }
+
+    selectOp.innerHTML = '<option value="" disabled selected>Caricamento operatori...</option>';
+    selectServ.innerHTML = '<option value="" disabled selected>Caricamento servizi...</option>';
+
+    // Aggiunta dell'evento onchange sulla select operatore per aggiornare lo storico
+    selectOp.onchange = function() {
+      caricaStoricoOperatore(this.value);
+    };
+
+    if (typeof google === 'undefined' || !google.script || !google.script.run) {
+      console.warn("Ambiente Google Apps Script non rilevato. Uso dati di test.");
+      var datiFinti = {
+        operatori: [{ id: "OP01", nome: "Mario Rossi", mansioni: "Educatore" }],
+        servizi: [{ idTab: "PRESENZE_Test", etichetta: "Servizio di Test" }]
+      };
+      popolaMenu(datiFinti);
+      return;
+    }
+
+    google.script.run
+      .withSuccessHandler(function(dati) {
+        popolaMenu(dati);
+      })
+      .withFailureHandler(function(err) {
+        mostraErrore(err);
+      })
+      .ottieniDatiInizialiTimbratura();
+  };
+
+  function popolaMenu(dati) {
+    var selectOp = document.getElementById("selectOperatore");
+    var selectServ = document.getElementById("selectServizio");
+    
+    if (!selectOp || !selectServ) return;
+
+    selectOp.innerHTML = '<option value="" disabled selected>Seleziona il tuo nome...</option>';
+    if (dati && dati.operatori && dati.operatori.length > 0) {
+      dati.operatori.forEach(function(op) {
+        var opt = document.createElement("option");
+        opt.value = op.nome; 
+        opt.textContent = op.nome + (op.mansioni ? ' (' + op.mansioni + ')' : '');
+        selectOp.appendChild(opt);
+      });
+    } else {
+      selectOp.innerHTML = '<option value="" disabled selected>Nessun operatore trovato</option>';
+    }
+    
+    selectServ.innerHTML = '<option value="" disabled selected>Seleziona plesso e servizio...</option>';
+    if (dati && dati.servizi && dati.servizi.length > 0) {
+      dati.servizi.forEach(function(serv) {
+        var opt = document.createElement("option");
+        opt.value = serv.etichetta; 
+        opt.textContent = serv.etichetta;
+        selectServ.appendChild(opt);
+      });
+    } else {
+      selectServ.innerHTML = '<option value="" disabled selected>Nessun servizio trovato</option>';
+    }
+  }
+
+  function caricaStoricoOperatore(nomeOperatore) {
+    var boxStorico = document.getElementById("boxStorico");
+    var listaStorico = document.getElementById("listaStorico");
+    
+    if (!nomeOperatore || !boxStorico || !listaStorico) return;
+    
+    if (typeof google !== 'undefined' && google.script && google.script.run) {
+      google.script.run
+        .withSuccessHandler(function(storico) {
+          if (storico && storico.length > 0) {
+            boxStorico.classList.remove("hidden");
+            var html = "";
+            storico.forEach(function(item) {
+              var coloreBadge = (item.tipo === "ENTRATA") ? "text-green-700 bg-green-50 border-green-200" : "text-red-700 bg-red-50 border-red-200";
+              html += '<div class="flex items-center justify-between py-1 px-2.5 bg-white rounded-xl border border-gray-100 text-xs font-medium">' +
+                      '<span><b>' + item.orario + '</b> - ' + item.servizio + '</span>' +
+                      '<span class="px-2 py-0.5 rounded-lg border font-bold ' + coloreBadge + '">' + item.tipo + '</span>' +
+                      '</div>';
+            });
+            listaStorico.innerHTML = html;
+          } else {
+            boxStorico.classList.add("hidden");
+            listaStorico.innerHTML = "";
+          }
+        })
+        .ottieniStoricoOdierno(nomeOperatore);
+    }
+  }
+
+  function impostaTipoTimbratura(tipo) {
+    var inputNas = document.getElementById("valoreTipoTimbratura");
+    var btnE = document.getElementById("btnEntrata");
+    var btnU = document.getElementById("btnUscita");
+    
+    if (inputNas) inputNas.value = tipo;
+    
+    if (tipo === 'ENTRATA') {
+      if (btnE) btnE.className = "flex items-center justify-center px-4 py-3.5 border-2 border-blue-600 bg-blue-50 text-blue-900 rounded-2xl cursor-pointer font-bold text-sm sm:text-base transition shadow-sm select-none";
+      if (btnU) btnU.className = "flex items-center justify-center px-4 py-3.5 border-2 border-gray-200 bg-gray-50 text-gray-700 rounded-2xl cursor-pointer font-bold text-sm sm:text-base hover:border-gray-300 transition select-none";
+    } else {
+      if (btnU) btnU.className = "flex items-center justify-center px-4 py-3.5 border-2 border-red-600 bg-red-50 text-red-900 rounded-2xl cursor-pointer font-bold text-sm sm:text-base transition shadow-sm select-none";
+      if (btnE) btnE.className = "flex items-center justify-center px-4 py-3.5 border-2 border-gray-200 bg-gray-50 text-gray-700 rounded-2xl cursor-pointer font-bold text-sm sm:text-base hover:border-gray-300 transition select-none";
+    }
+  }
+
+  function inviaTimbratura() {
+    var divMsg = document.getElementById("messaggioTimbratura");
+    
+    var operatoreEl = document.getElementById("selectOperatore");
+    var servizioEl = document.getElementById("selectServizio");
+    
+    if (!operatoreEl || !servizioEl) {
+      if (divMsg) divMsg.innerHTML = '<div class="p-3 rounded-xl bg-red-50 text-red-800 text-sm font-semibold">Errore critico: campi modulo non trovati.</div>';
+      return;
+    }
+
+    var operatore = operatoreEl.value;
+    var servizio = servizioEl.value;
+    
+    if (!operatore || !servizio) {
+      if (divMsg) divMsg.innerHTML = '<div class="p-3 rounded-xl bg-amber-50 text-amber-800 text-sm font-semibold">Seleziona sia l\'operatore che il servizio!</div>';
+      return;
+    }
+
+    var tipo = "ENTRATA";
+    var tipoEl = document.getElementById("valoreTipoTimbratura");
+    if (tipoEl) {
+      tipo = tipoEl.value || "ENTRATA";
+    }
+
+    var noteEl = document.getElementById("inputNote");
+    var note = (noteEl && noteEl.value) ? noteEl.value : "";
+    
+    if (divMsg) {
+      divMsg.innerHTML = '<div class="p-3 rounded-xl bg-blue-50 text-blue-800 text-sm font-semibold animate-pulse">Registrazione in corso...</div>';
+    }
+    
+    if (typeof google !== 'undefined' && google.script && google.script.run) {
+      google.script.run
+        .withSuccessHandler(function(risultato) {
+          if (divMsg) {
+            divMsg.innerHTML = '<div class="p-3 rounded-xl bg-green-50 text-green-800 text-sm font-semibold">' + (risultato && risultato.messaggio ? risultato.messaggio : "Registrato con successo!") + '</div>';
+          }
+          if (noteEl) noteEl.value = "";
+          // Aggiorna lo storico immediatamente dopo il successo
+          caricaStoricoOperatore(operatore);
+          setTimeout(function() { 
+            if (divMsg) divMsg.innerHTML = ""; 
+          }, 4000);
+        })
+        .withFailureHandler(function(err) {
+          if (divMsg) {
+            divMsg.innerHTML = '<div class="p-3 rounded-xl bg-red-50 text-red-800 text-sm font-semibold">Errore: ' + (err && err.message ? err.message : err) + '</div>';
+          }
+        })
+        .salvaTimbratura(operatore, servizio, tipo, note);
+    } else {
+      setTimeout(function() {
+        if (divMsg) {
+          divMsg.innerHTML = '<div class="p-3 rounded-xl bg-green-50 text-green-800 text-sm font-semibold">Timbratura di test simulata con successo!</div>';
+        }
+      }, 1000);
+    }
+  }
+
+  function mostraErrore(err) {
+    console.error("Errore di caricamento dati:", err);
+    var selectOp = document.getElementById("selectOperatore");
+    var selectServ = document.getElementById("selectServizio");
+    if (selectOp) selectOp.innerHTML = '<option value="" disabled selected>Errore di caricamento</option>';
+    if (selectServ) selectServ.innerHTML = '<option value="" disabled selected>Errore di caricamento</option>';
+  }
+
+  document.addEventListener("DOMContentLoaded", function() {
+    var sezione = document.getElementById('sezioneTimbratura');
+    if (!sezione) return;
+
+    if (!sezione.classList.contains('hidden') && sezione.style.display !== 'none') {
+      caricaDatiIniziali();
+    }
+
+    var observer = new MutationObserver(function() {
+      if (!sezione.classList.contains('hidden') && sezione.style.display !== 'none') {
+        if (typeof caricaDatiIniziali === 'function') {
+          caricaDatiIniziali();
+        }
+      }
+    });
+
+    observer.observe(sezione, { attributes: true, attributeFilter: ['class', 'style'] });
+  });
+</script>
     </div>
 
     <!-- Script di navigazione locale -->
