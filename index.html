@@ -73,5 +73,32 @@
     </div>
 
     <?!= include('CodiceClient'); ?>
+    <script>
+  if ('serviceWorker' in navigator) {
+    window.addEventListener('load', () => {
+      navigator.serviceWorker.register('./sw.js')
+        .then(reg => {
+          console.log('Service Worker registrato con successo:', reg.scope);
+          
+          // Controlla automaticamente se c'è un aggiornamento ogni volta che l'app viene aperta
+          reg.onupdatefound = () => {
+            const installingWorker = reg.installing;
+            installingWorker.onchange = () => {
+              if (installingWorker.state === 'installed') {
+                if (navigator.serviceWorker.controller) {
+                  // Nuovo contenuto disponibile, ricarica la pagina per applicarlo
+                  console.log('Nuova versione disponibile, ricaricamento in corso...');
+                  window.location.reload();
+                }
+              }
+            };
+          };
+        })
+        .catch(err => {
+          console.log('Registrazione Service Worker fallita:', err);
+        });
+    });
+  }
+</script>
   </body>
 </html>
