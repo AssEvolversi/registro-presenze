@@ -352,34 +352,34 @@
   }
 
   function caricaStoricoOperatore(nomeOperatore) {
-    var boxStorico = document.getElementById("boxStorico");
-    var listaStorico = document.getElementById("listaStorico");
-    
-    if (!nomeOperatore || !boxStorico || !listaStorico) return;
-    
-    if (typeof google !== 'undefined' && google.script && google.script.run) {
-      google.script.run
-        .withSuccessHandler(function(storico) {
-          if (storico && storico.length > 0) {
-            boxStorico.classList.remove("hidden");
-            var html = "";
-            storico.forEach(function(item) {
-              var coloreBadge = (item.tipo === "ENTRATA") ? "text-green-700 bg-green-50 border-green-200" : "text-red-700 bg-red-50 border-red-200";
-              html += '<div class="flex items-center justify-between py-1 px-2.5 bg-white rounded-xl border border-gray-100 text-xs font-medium">' +
-                      '<span><b>' + item.orario + '</b> - ' + item.servizio + '</span>' +
-                      '<span class="px-2 py-0.5 rounded-lg border font-bold ' + coloreBadge + '">' + item.tipo + '</span>' +
-                      '</div>';
-            });
-            listaStorico.innerHTML = html;
-          } else {
-            boxStorico.classList.add("hidden");
-            listaStorico.innerHTML = "";
-          }
-        })
-        .ottieniStoricoOdierno(nomeOperatore);
-    }
-  }
-
+  var boxStorico = document.getElementById("boxStorico");
+  var listaStorico = document.getElementById("listaStorico");
+  
+  if (!nomeOperatore || !boxStorico || !listaStorico) return;
+  
+  chiamaBackend('ottieniStoricoOdierno', { nomeOperatore: nomeOperatore })
+    .then(function(storico) {
+      if (storico && storico.length > 0) {
+        boxStorico.classList.remove("hidden");
+        var html = "";
+        storico.forEach(function(item) {
+          var coloreBadge = (item.tipo === "ENTRATA") ? "text-green-700 bg-green-50 border-green-200" : "text-red-700 bg-red-50 border-red-200";
+          html += '<div class="flex items-center justify-between py-1 px-2.5 bg-white rounded-xl border border-gray-100 text-xs font-medium">' +
+                  '<span><b>' + item.orario + '</b> - ' + item.servizio + '</span>' +
+                  '<span class="px-2 py-0.5 rounded-lg border font-bold ' + coloreBadge + '">' + item.tipo + '</span>' +
+                  '</div>';
+        });
+        listaStorico.innerHTML = html;
+      } else {
+        boxStorico.classList.add("hidden");
+        listaStorico.innerHTML = "";
+      }
+    })
+    .catch(function(err) {
+      console.error("Errore nel recupero dello storico:", err);
+      boxStorico.classList.add("hidden");
+    });
+}
   function impostaTipoTimbratura(tipo) {
     var inputNas = document.getElementById("valoreTipoTimbratura");
     var btnE = document.getElementById("btnEntrata");
