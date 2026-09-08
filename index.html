@@ -12,7 +12,7 @@
     <link rel="apple-touch-icon" href="data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAGAAAABgCAYAAADimHcQAAAACXBIWXMAAAsTAAALEwEAmpwYAAAKT2lDQ1BQaG90b3Nob3AgSUNDIHByb2ZpbGUAADHhnVbbWZu4EkWv2eUrcAAZg7P7f6bWzWxvZ5d5+M0t3YkIWRwG2eWSvP4lC8XbWw4YnE0q19u5P3d93PffX3j5a+j88m9bL308+0c89+N5P15d/H5bF5+fbnOefv59bf6u/P582l9fvzVnF9vX78c//72l9fVj+vtz8n7X19vffD48vT8e334uL+f54/b/b338vO///xxfv8A">
     
     <!-- Colore della barra del browser su smartphone -->
-    <meta name="theme-color" content="#1d4ed8">
+    <meta name="theme-color" content="#d81b60">
 
     <link href="https://cdn.jsdelivr.net/npm/tailwindcss@2.2.19/dist/tailwind.min.css" rel="stylesheet">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
@@ -59,7 +59,7 @@
           <i class="fas fa-arrow-left"></i> Torna alla Home
         </button>
       </div>
-      <?!= include('HeaderContenutiEModali'); ?>
+      <!-- Spazio per i contenuti del Registro -->
     </div>
 
     <!-- 3. Contenitore Timbratura Staff -->
@@ -69,36 +69,74 @@
           <i class="fas fa-arrow-left"></i> Torna alla Home
         </button>
       </div>
-      <?!= include('SezioneTimbratura'); ?>
+      <!-- Spazio per i contenuti della Timbratura -->
     </div>
 
-    <?!= include('CodiceClient'); ?>
+    <!-- Script di navigazione locale -->
     <script>
-  if ('serviceWorker' in navigator) {
-    window.addEventListener('load', () => {
-      navigator.serviceWorker.register('./sw.js')
-        .then(reg => {
-          console.log('Service Worker registrato con successo:', reg.scope);
-          
-          // Controlla automaticamente se c'è un aggiornamento ogni volta che l'app viene aperta
-          reg.onupdatefound = () => {
-            const installingWorker = reg.installing;
-            installingWorker.onchange = () => {
-              if (installingWorker.state === 'installed') {
-                if (navigator.serviceWorker.controller) {
-                  // Nuovo contenuto disponibile, ricarica la pagina per applicarlo
-                  console.log('Nuova versione disponibile, ricaricamento in corso...');
-                  window.location.reload();
-                }
-              }
-            };
-          };
-        })
-        .catch(err => {
-          console.log('Registrazione Service Worker fallita:', err);
+      function apriSezione(tipo) {
+        var home = document.getElementById('schermataHome');
+        var reg = document.getElementById('wrapperRegistro');
+        var timb = document.getElementById('wrapperTimbratura');
+
+        // Nascondi tutto
+        if (home) home.classList.add('hidden');
+        if (reg) reg.classList.add('hidden');
+        if (timb) timb.classList.add('hidden');
+
+        if (tipo === 'registro') {
+          if (reg) reg.classList.remove('hidden');
+          if (typeof caricaSedi === 'function') caricaSedi();
+        } else if (tipo === 'timbratura') {
+          if (timb) timb.classList.remove('hidden');
+          if (typeof caricaDatiIniziali === 'function') {
+            caricaDatiIniziali();
+          } else if (typeof caricaDatiInizialiTimbratura === 'function') {
+            caricaDatiInizialiTimbratura();
+          }
+        }
+      }
+
+      function tornaAllaHome() {
+        var home = document.getElementById('schermataHome');
+        var reg = document.getElementById('wrapperRegistro');
+        var timb = document.getElementById('wrapperTimbratura');
+
+        if (home) home.classList.remove('hidden');
+        if (reg) reg.classList.add('hidden');
+        if (timb) timb.classList.add('hidden');
+        
+        if (typeof tornaAllaSelezioneSedi === 'function') {
+          tornaAllaSelezioneSedi();
+        }
+      }
+    </script>
+
+    <!-- Script Service Worker per la gestione PWA e aggiornamenti -->
+    <script>
+      if ('serviceWorker' in navigator) {
+        window.addEventListener('load', () => {
+          navigator.serviceWorker.register('./sw.js')
+            .then(reg => {
+              console.log('Service Worker registrato con successo:', reg.scope);
+              
+              reg.onupdatefound = () => {
+                const installingWorker = reg.installing;
+                installingWorker.onchange = () => {
+                  if (installingWorker.state === 'installed') {
+                    if (navigator.serviceWorker.controller) {
+                      console.log('Nuova versione disponibile, ricaricamento in corso...');
+                      window.location.reload();
+                    }
+                  }
+                };
+              };
+            })
+            .catch(err => {
+              console.log('Registrazione Service Worker fallita:', err);
+            });
         });
-    });
-  }
-</script>
+      }
+    </script>
   </body>
 </html>
