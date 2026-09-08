@@ -584,34 +584,7 @@ function inviaTimbratura() {
       mostraErrore(err);
     });
 
-  // Controlliamo se siamo offline o se vogliamo tentare l'invio
-  if (!navigator.onLine) {
-    salvaInCodaLocale(datiDaInviare);
-    mostraNotifica("📴 Sei offline: dato salvato sul dispositivo. Verrà inviato appena torna la rete.", "warning");
-    return;
-  }
-
-  try {
-    const response = await fetch(urlAppsScript, {
-      method: "POST",
-      mode: "no-cors", // Necessario per Google Apps Script se non gestisci i CORS
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify(datiDaInviare)
-    });
-
-    // Se arriviamo qui senza eccezioni di rete, consideriamo l'invio riuscito
-    mostraNotifica("✅ Presenza registrata con successo!", "success");
-    
-    // Già che siamo online, proviamo a inviare eventuali dati arretrati rimasti in coda
-    sincronizzaCodaOffline();
-
-  } catch (error) {
-    // Errore di rete imprevisto (es. la connessione cade mentre invia)
-    console.warn("Errore di rete, salvataggio in locale...", error);
-    salvaInCodaLocale(datiDaInviare);
-    mostraNotifica("⚠️ Connessione instabile: dato salvato in locale e pronto per la sincronizzazione.", "warning");
-  }
-}
+  
 const QUEUE_KEY = 'evolversi_offline_queue';
 
 function salvaInCodaLocale(dati) {
