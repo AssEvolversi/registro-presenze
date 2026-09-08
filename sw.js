@@ -1,4 +1,4 @@
-const CACHE_NAME = 'evolversi-v5';
+const CACHE_NAME = 'evolversi-v6';
 const ASSETS_TO_CACHE = [
   './',
   './index.html',
