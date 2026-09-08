@@ -1,0 +1,76 @@
+<!DOCTYPE html>
+<html>
+  <head>
+    <base target="_top">
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Evolversi APS - Gestionale</title>
+    
+    <!-- Icona Lumaca PNG incorporata (Base64) per Browser, Android e iOS -->
+    <link rel="icon" type="image/png" sizes="512x512" href="data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAGAAAABgCAYAAADimHcQAAAACXBIWXMAAAsTAAALEwEAmpwYAAAKT2lDQ1BQaG90b3Nob3AgSUNDIHByb2ZpbGUAADHhnVbbWZu4EkWv2eUrcAAZg7P7f6bWzWxvZ5d5+M0t3YkIWRwG2eWSvP4lC8XbWw4YnE0q19u5P3d93PffX3j5a+j88m9bL308+0c89+N5P15d/H5bF5+fbnOefv59bf6u/P582l9fvzVnF9vX78c//72l9fVj+vtz8n7X19vffD48vT8e334uL+f54/b/b338vO///xxfv8A">
+    <link rel="apple-touch-icon" href="data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAGAAAABgCAYAAADimHcQAAAACXBIWXMAAAsTAAALEwEAmpwYAAAKT2lDQ1BQaG90b3Nob3AgSUNDIHByb2ZpbGUAADHhnVbbWZu4EkWv2eUrcAAZg7P7f6bWzWxvZ5d5+M0t3YkIWRwG2eWSvP4lC8XbWw4YnE0q19u5P3d93PffX3j5a+j88m9bL308+0c89+N5P15d/H5bF5+fbnOefv59bf6u/P582l9fvzVnF9vX78c//72l9fVj+vtz8n7X19vffD48vT8e334uL+f54/b/b338vO///xxfv8A">
+    
+    <!-- Colore della barra del browser su smartphone -->
+    <meta name="theme-color" content="#1d4ed8">
+
+    <link href="https://cdn.jsdelivr.net/npm/tailwindcss@2.2.19/dist/tailwind.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@500;700;800&display=swap" rel="stylesheet">
+
+    <style>
+      .font-brand { font-family: 'Outfit', sans-serif; }
+      @keyframes pulse-slow { 0%, 100% { opacity: 1; } 50% { opacity: 0.4; } }
+      .animate-pulse-slow { animation: pulse-slow 1.5s cubic-bezier(0.4, 0, 0.6, 1) infinite; }
+    </style>
+  </head>
+  <body class="bg-gray-50 text-gray-800 min-h-screen flex flex-col">
+    
+    <!-- 1. Schermata Home Iniziale -->
+    <div id="schermataHome" class="flex-1 flex flex-col items-center justify-center p-6 max-w-xl mx-auto w-full">
+      <div class="text-center mb-8">
+        <h1 class="font-brand font-extrabold text-2xl sm:text-3xl text-gray-900 mb-2">Evolversi APS</h1>
+        <p class="text-sm text-gray-500">Seleziona l'area di lavoro</p>
+      </div>
+
+      <div class="grid grid-cols-1 sm:grid-cols-2 gap-4 w-full">
+        <div onclick="apriSezione('registro')" class="p-6 rounded-3xl border-2 border-blue-100 bg-white shadow-sm hover:border-blue-500 hover:shadow-md cursor-pointer transition flex flex-col items-center text-center group active:scale-95">
+          <div class="w-16 h-16 rounded-2xl bg-blue-100 text-blue-600 flex items-center justify-center text-2xl font-bold mb-4 group-hover:scale-110 transition">
+            <i class="fas fa-child"></i>
+          </div>
+          <h2 class="font-bold text-gray-800 text-lg mb-1">Registro Alunni</h2>
+          <p class="text-xs text-gray-400">Presenze, ingressi e dati giornalieri</p>
+        </div>
+
+        <div onclick="apriSezione('timbratura')" class="p-6 rounded-3xl border-2 border-indigo-100 bg-white shadow-sm hover:border-indigo-500 hover:shadow-md cursor-pointer transition flex flex-col items-center text-center group active:scale-95">
+          <div class="w-16 h-16 rounded-2xl bg-indigo-100 text-indigo-600 flex items-center justify-center text-2xl font-bold mb-4 group-hover:scale-110 transition">
+            <i class="fas fa-clock"></i>
+          </div>
+          <h2 class="font-bold text-gray-800 text-lg mb-1">Operatori</h2>
+          <p class="text-xs text-gray-400">Bollatrice virtuale entrate e uscite</p>
+        </div>
+      </div>
+    </div>
+
+    <!-- 2. Contenitore Registro Alunni -->
+    <div id="wrapperRegistro" class="hidden flex-1 flex flex-col">
+      <div class="bg-gray-100 px-4 py-2 flex items-center justify-between border-b">
+        <button onclick="tornaAllaHome()" class="text-xs font-bold text-blue-600 hover:underline flex items-center gap-1.5">
+          <i class="fas fa-arrow-left"></i> Torna alla Home
+        </button>
+      </div>
+      <?!= include('HeaderContenutiEModali'); ?>
+    </div>
+
+    <!-- 3. Contenitore Timbratura Staff -->
+    <div id="wrapperTimbratura" class="hidden flex-1 flex flex-col">
+      <div class="bg-gray-100 px-4 py-2 flex items-center justify-between border-b">
+        <button onclick="tornaAllaHome()" class="text-xs font-bold text-blue-600 hover:underline flex items-center gap-1.5">
+          <i class="fas fa-arrow-left"></i> Torna alla Home
+        </button>
+      </div>
+      <?!= include('SezioneTimbratura'); ?>
+    </div>
+
+    <?!= include('CodiceClient'); ?>
+  </body>
+</html>
