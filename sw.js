@@ -3,7 +3,7 @@ const ASSETS_TO_CACHE = [
   './',
   './index.html',
   './manifest.json',
-  './Icona-2.png' // Assicurati che corrisponda al nome esatto dell'icona nel manifest
+  './IconaApp.png' // Nome corretto in base al manifest e al repository
 ];
 
 // Installazione: memorizza i file grafici principali
@@ -34,7 +34,6 @@ self.addEventListener('activate', (event) => {
 
 // Gestione delle richieste: prima la rete, se cade mostra la cache o avviso
 self.addEventListener('fetch', (event) => {
-  // Escludiamo le chiamate a Google Apps Script dal Service Worker per evitare conflitti coi dati in tempo reale
   if (event.request.url.includes('script.google.com')) {
     return;
   }
@@ -46,7 +45,6 @@ self.addEventListener('fetch', (event) => {
           if (response) {
             return response;
           }
-          // Se la risorsa non è in cache e la rete è assente, mostra una pagina pulita di fallback
           if (event.request.mode === 'navigate') {
             return caches.match('./index.html');
           }
