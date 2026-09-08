@@ -1,826 +1,837 @@
-<script>
-  let colonnaGiornoCorrente = -1;
-  let tabSelezionatoCorrente = "";
-  let elencoAlunniGlobale = [];
-  let filtroStatoAttivo = 'tutti';
+<!DOCTYPE html>
+<html lang="it">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Registro Presenze</title>
+  <!-- Tailwind CSS CDN -->
+  <script src="https://cdn.tailwindcss.com"></script>
+  <!-- FontAwesome Icons -->
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+</head>
+<body class="bg-gray-100 text-gray-800 min-h-screen flex flex-col">
 
-  // All'avvio non carichiamo automaticamente nulla, lasciamo che l'utente veda la Home con le 2 icone
-  window.onload = function() {
-    console.log("Pagina caricata correttamente. In attesa di selezione utente.");
-  };
-
- function apriSezione(tipo) {
-  var home = document.getElementById('schermataHome');
-  var reg = document.getElementById('wrapperRegistro');
-  var timb = document.getElementById('wrapperTimbratura');
-
-  // Nascondi tutto
-  if (home) home.classList.add('hidden');
-  if (reg) reg.classList.add('hidden');
-  if (timb) timb.classList.add('hidden');
-
-  if (tipo === 'registro') {
-    if (reg) reg.classList.remove('hidden');
-    if (typeof caricaSedi === 'function') caricaSedi();
-  } else if (tipo === 'timbratura') {
-    if (timb) timb.classList.remove('hidden');
-    // Avvia il caricamento dati della timbratura
-    if (typeof caricaDatiIniziali === 'function') {
-      caricaDatiIniziali();
-    } else if (typeof caricaDatiInizialiTimbratura === 'function') {
-      caricaDatiInizialiTimbratura();
-    }
-  }
-}
-function tornaAllaHome() {
-  var home = document.getElementById('schermataHome');
-  var reg = document.getElementById('wrapperRegistro');
-  var timb = document.getElementById('wrapperTimbratura');
-
-  if (home) home.classList.remove('hidden');
-  if (reg) reg.classList.add('hidden');
-  if (timb) timb.classList.add('hidden'); // CORRETTO: era 'reg'
-  
-  if (typeof tornaAllaSelezioneSedi === 'function') {
-    tornaAllaSelezioneSedi();
-  }
-}
-
-function popolaMenuOperatori(operatori) {
-  // Sostituisci 'selectOperatore' con l'ID reale del tuo menu a tendina degli operatori nel file HTML
-  var select = document.getElementById('selectOperatore'); 
-  if (!select) return;
-  
-  select.innerHTML = '<option value="">Seleziona operatore...</option>';
-  operatori.forEach(function(op) {
-    var opt = document.createElement('option');
-    opt.value = op.nome;
-    opt.textContent = op.nome + (op.mansioni ? ' (' + op.mansioni + ')' : '');
-    select.appendChild(opt);
-  });
-}
-
-function popolaMenuServizi(servizi) {
-  // Sostituisci 'selectServizio' con l'ID reale del tuo menu a tendina dei servizi/plessi nel file HTML
-  var select = document.getElementById('selectServizio');
-  if (!select) return;
-  
-  select.innerHTML = '<option value="">Seleziona plesso / servizio...</option>';
-  servizi.forEach(function(serv) {
-    var opt = document.createElement('option');
-    opt.value = serv.etichetta;
-    opt.textContent = serv.etichetta;
-    select.appendChild(opt);
-  });
-}
-
-  function aggiornaStatoSalvataggio(stato, messaggio) {
-    var punto = document.getElementById('puntoStato');
-    var testo = document.getElementById('testoStato');
-    var puntoM = document.getElementById('puntoStatoMobile');
-    var testoM = document.getElementById('testoStatoMobile');
+  <!-- Header / Barra Superiore -->
+  <header class="bg-white border-b sticky top-0 z-30 px-4 py-3 shadow-sm flex justify-between items-center">
+    <div class="flex items-center gap-3">
+      <button onclick="tornaAllaHome()" class="text-gray-600 hover:text-blue-600 transition font-bold text-sm flex items-center gap-1">
+        <i class="fas fa-home"><span>Home</span></i>
+      </button>
+      <h1 class="font-bold text-lg text-blue-900 hidden sm:block">Gestione Presenze</h1>
+    </div>
     
-    var coloreBg = "bg-green-400";
-    if (stato === 'salvataggio') coloreBg = "bg-yellow-400 animate-pulse";
-    if (stato === 'errore') coloreBg = "bg-red-400";
+    <!-- Indicatore di stato sincronizzazione -->
+    <div class="flex items-center gap-2 text-xs">
+      <span id="puntoStato" class="w-2.5 h-2.5 rounded-full inline-block shadow-sm bg-green-400"></span>
+      <span id="testoStato" class="text-gray-500 font-medium">Pronto</span>
+    </div>
+  </header>
 
-    if (punto) punto.className = `w-2.5 h-2.5 rounded-full inline-block shadow-sm ${coloreBg}`;
-    if (testo) testo.innerText = messaggio;
-    if (puntoM) puntoM.className = `w-2 h-2 rounded-full inline-block ${coloreBg}`;
-    if (testoM) testoM.innerText = messaggio;
-  }
+  <main class="flex-1 p-4 sm:p-6 max-w-6xl mx-auto w-full">
 
-  function caricaSedi() {
-    var griglia = document.getElementById('grigliaSedi');
-    if (!griglia) return;
+    <!-- SCHERMATA HOME (Selezione Sezione) -->
+    <div id="schermataHome" class="space-y-6 py-8">
+      <div class="text-center max-w-lg mx-auto">
+        <h2 class="text-2xl font-black text-gray-900 mb-2">Benvenuto nel Gestionale</h2>
+        <p class="text-gray-500 text-sm">Seleziona l'area di lavoro desiderata per iniziare.</p>
+      </div>
+      <div class="grid grid-cols-1 sm:grid-cols-2 gap-4 max-w-2xl mx-auto">
+        <div onclick="apriSezione('registro')" class="p-6 rounded-2xl border-2 border-blue-100 hover:border-blue-500 bg-white shadow-sm cursor-pointer transition flex items-center gap-4 group">
+          <div class="w-14 h-14 rounded-2xl bg-blue-100 text-blue-600 flex items-center justify-center text-xl group-hover:scale-110 transition">
+            <i class="fas fa-clipboard-user"></i>
+          </div>
+          <div>
+            <div class="font-bold text-lg text-gray-800">Registro Presenze</div>
+            <div class="text-xs text-gray-400">Gestisci alunni, presenze e note giornaliere</div>
+          </div>
+        </div>
+        <div onclick="apriSezione('timbratura')" class="p-6 rounded-2xl border-2 border-indigo-100 hover:border-indigo-500 bg-white shadow-sm cursor-pointer transition flex items-center gap-4 group">
+          <div class="w-14 h-14 rounded-2xl bg-indigo-100 text-indigo-600 flex items-center justify-center text-xl group-hover:scale-110 transition">
+            <i class="fas fa-clock"></i>
+          </div>
+          <div>
+            <div class="font-bold text-lg text-gray-800">Timbratura</div>
+            <div class="text-xs text-gray-400">Registra ingressi e uscite operatori</div>
+          </div>
+        </div>
+      </div>
+    </div>
 
-    griglia.innerHTML = '<div class="p-4 rounded-2xl border-2 border-dashed border-blue-200 bg-white text-center text-blue-500 text-sm col-span-full animate-pulse">Caricamento sedi in corso...</div>';
+    <!-- WRAPPER REGISTRO -->
+    <div id="wrapperRegistro" class="hidden space-y-6">
+      
+      <!-- Griglia Sedi (Generata Dinamicamente) -->
+      <div id="grigliaSedi" class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
+        <!-- Inserito via JS -->
+      </div>
 
-    chiamaBackend('ottieniElencoSedi')
-      .then(listaSedi => {
-        console.log("Lista sedi ricevuta dal server:", listaSedi);
-        griglia.innerHTML = '';
+      <!-- Pannello Azioni e Filtri (Nascosto finché non si seleziona una sede) -->
+      <div id="pannelloAzioni" class="hidden space-y-4">
+        <div class="flex flex-col sm:flex-row justify-between items-stretch sm:items-center gap-3 bg-white p-4 rounded-2xl border shadow-sm">
+          <div class="flex items-center gap-2 overflow-x-auto pb-1 sm:pb-0">
+            <button onclick="impostaFiltroStato('tutti')" id="filtro-tutti" class="px-3 py-1.5 rounded-xl text-xs sm:text-sm font-bold bg-blue-600 text-white shadow-sm transition">Tutti</button>
+            <button onclick="impostaFiltroStato('da-segnare')" id="filtro-da-segnare" class="px-3 py-1.5 rounded-xl text-xs sm:text-sm font-bold bg-gray-100 text-gray-700 hover:bg-gray-200 shadow-sm transition">Da segnare</button>
+            <button onclick="impostaFiltroStato('presenti')" id="filtro-presenti" class="px-3 py-1.5 rounded-xl text-xs sm:text-sm font-bold bg-gray-100 text-gray-700 hover:bg-gray-200 shadow-sm transition">Presenti</button>
+            <button onclick="impostaFiltroStato('assenti')" id="filtro-assenti" class="px-3 py-1.5 rounded-xl text-xs sm:text-sm font-bold bg-gray-100 text-gray-700 hover:bg-gray-200 shadow-sm transition">Assenti</button>
+          </div>
+          <div class="relative">
+            <input type="text" id="inputRicerca" oninput="applicaFiltriComplessivi()" placeholder="Cerca alunno..." class="w-full sm:w-64 pl-9 pr-4 py-2 border rounded-xl text-sm focus:outline-none focus:ring-1 focus:ring-blue-600 bg-gray-50">
+            <i class="fas fa-search absolute left-3 top-3 text-gray-400 text-xs"></i>
+          </div>
+        </div>
 
-        if (!listaSedi || listaSedi.length === 0) {
-          griglia.innerHTML = '<div class="p-4 rounded-2xl bg-white text-center text-gray-500 text-sm col-span-full">Nessuna sede trovata (verifica nome fogli)</div>';
-          return;
-        }
+        <div class="flex gap-2">
+          <button onclick="selezionaTutti('P')" class="bg-green-50 text-green-700 hover:bg-green-100 border border-green-200 px-3 py-2 rounded-xl text-xs font-bold transition">Segna tutti Presenti</button>
+          <button onclick="selezionaTutti('')" class="bg-gray-50 text-gray-700 hover:bg-gray-100 border border-gray-200 px-3 py-2 rounded-xl text-xs font-bold transition">Azzera tutti</button>
+        </div>
+      </div>
 
-        listaSedi.forEach(function(nomeTab) {
-          var nomeFormattato = formattaNomeTab(nomeTab);
-          var icona = "fa-child";
-          var coloreBordo = "border-blue-100 hover:border-blue-500 hover:bg-blue-50";
-          var nomeLower = nomeTab.toLowerCase();
+      <!-- Area Contenuto Alunni -->
+      <div id="areaContenuto">
+        <div class="max-w-4xl mx-auto text-center text-gray-400 mt-16 text-lg">
+          Seleziona un servizio dalla griglia in alto per visualizzare l'elenco dei bambini.
+        </div>
+      </div>
 
-          if (nomeLower.includes('prescuola')) {
-            icona = "fa-sun";
-            coloreBordo = "border-amber-100 hover:border-amber-500 hover:bg-amber-50";
-          } else if (nomeLower.includes('postscuola') || nomeLower.includes('doposcuola')) {
-            icona = "fa-book-reader";
-            coloreBordo = "border-indigo-100 hover:border-indigo-500 hover:bg-indigo-50";
-          } else if (nomeLower.includes('integrazione')) {
-            icona = "fa-users";
-            coloreBordo = "border-emerald-100 hover:border-emerald-500 hover:bg-emerald-50";
+    </div>
+
+    <!-- WRAPPER TIMBRATURA -->
+    <div id="wrapperTimbratura" class="hidden space-y-6">
+      <div class="bg-white p-6 rounded-2xl border shadow-sm text-center">
+        <h3 class="text-xl font-bold text-gray-800 mb-2">Area Timbratura</h3>
+        <p class="text-gray-500 text-sm">Sezione dedicata alla registrazione presenze del personale.</p>
+      </div>
+    </div>
+
+  </main>
+
+  <!-- Footer Riepilogo Fisso -->
+  <footer id="footerRiepilogo" class="hidden bg-white border-t py-3 px-4 text-center text-xs sm:text-sm text-gray-600 sticky bottom-0 z-20 shadow-lg">
+    <div id="badgeRiepilogo" class="font-bold">P: 0 | A: 0 | Da segnare: 0</div>
+  </footer>
+
+  <!-- MODALE STORICO -->
+  <div id="modaleStorico" class="hidden fixed inset-0 bg-black/50 backdrop-blur-sm z-50 flex items-center justify-center p-4">
+    <div class="bg-white w-full max-w-lg rounded-3xl shadow-2xl overflow-hidden flex flex-col max-h-[90vh]">
+      <div class="p-4 border-b flex justify-between items-center bg-gray-50">
+        <h3 id="modaleTitolo" class="font-bold text-lg text-gray-800">Storico Alunno</h3>
+        <button onclick="chiudiStorico()" class="w-8 h-8 rounded-full bg-gray-200 hover:bg-gray-300 flex items-center justify-center font-bold transition">✕</button>
+      </div>
+      <div id="modaleContenuto" class="p-4 overflow-y-auto flex-1 space-y-3">
+        <!-- Dinamico -->
+      </div>
+    </div>
+  </div>
+
+  <!-- MODALE DETTAGLI / SICUREZZA -->
+  <div id="modaleDettagli" class="hidden fixed inset-0 bg-black/50 backdrop-blur-sm z-50 flex items-center justify-center p-4">
+    <div class="bg-white w-full max-w-lg rounded-3xl shadow-2xl overflow-hidden flex flex-col max-h-[90vh]">
+      <div class="p-4 border-b flex justify-between items-center bg-gray-50">
+        <h3 id="dettagliTitolo" class="font-bold text-lg text-gray-800">Scheda Sicurezza</h3>
+        <button onclick="document.getElementById('modaleDettagli').classList.add('hidden')" class="w-8 h-8 rounded-full bg-gray-200 hover:bg-gray-300 flex items-center justify-center font-bold transition">✕</button>
+      </div>
+      <div id="dettagliContenuto" class="p-4 overflow-y-auto flex-1 space-y-3">
+        <!-- Dinamico -->
+      </div>
+    </div>
+  </div>
+
+  <!-- SCRIPT PRINCIPALE -->
+  <script>
+    // URL di configurazione della Web App Google Apps Script
+    const URL_WEB_APP = "INSERISCI_QUI_IL_TUO_URL_DI_GOOGLE_APPS_SCRIPT_EXEC";
+
+    let colonnaGiornoCorrente = -1;
+    let tabSelezionatoCorrente = "";
+    let elencoAlunniGlobale = [];
+    let filtroStatoAttivo = 'tutti';
+
+    // Funzione centralizzata per comunicare con il backend Apps Script via POST
+    function chiamaBackend(azione, dati = {}) {
+      return fetch(URL_WEB_APP, {
+        method: 'POST',
+        mode: 'cors',
+        headers: { 'Content-Type': 'text/plain;charset=utf-8' },
+        body: JSON.stringify({ azione: azione, ...dati })
+      })
+      .then(response => response.json())
+      .then(data => {
+        if (data.status === 'error') throw new Error(data.message);
+        return data;
+      });
+    }
+
+    window.onload = function() {
+      console.log("Pagina caricata correttamente. In attesa di selezione utente.");
+    };
+
+    function apriSezione(tipo) {
+      var home = document.getElementById('schermataHome');
+      var reg = document.getElementById('wrapperRegistro');
+      var timb = document.getElementById('wrapperTimbratura');
+
+      if (home) home.classList.add('hidden');
+      if (reg) reg.classList.add('hidden');
+      if (timb) timb.classList.add('hidden');
+
+      if (tipo === 'registro') {
+        if (reg) reg.classList.remove('hidden');
+        if (typeof caricaSedi === 'function') caricaSedi();
+      } else if (tipo === 'timbratura') {
+        if (timb) timb.classList.remove('hidden');
+      }
+    }
+
+    function tornaAllaHome() {
+      var home = document.getElementById('schermataHome');
+      var reg = document.getElementById('wrapperRegistro');
+      var timb = document.getElementById('wrapperTimbratura');
+
+      if (home) home.classList.remove('hidden');
+      if (reg) reg.classList.add('hidden');
+      if (timb) timb.classList.add('hidden');
+      
+      if (typeof tornaAllaSelezioneSedi === 'function') {
+        tornaAllaSelezioneSedi();
+      }
+    }
+
+    function aggiornaStatoSalvataggio(stato, messaggio) {
+      var punto = document.getElementById('puntoStato');
+      var testo = document.getElementById('testoStato');
+      
+      var coloreBg = "bg-green-400";
+      if (stato === 'salvataggio') coloreBg = "bg-yellow-400 animate-pulse";
+      if (stato === 'errore') coloreBg = "bg-red-400";
+
+      if (punto) punto.className = `w-2.5 h-2.5 rounded-full inline-block shadow-sm ${coloreBg}`;
+      if (testo) testo.innerText = messaggio;
+    }
+
+    function caricaSedi() {
+      var griglia = document.getElementById('grigliaSedi');
+      if (!griglia) return;
+
+      griglia.innerHTML = '<div class="p-4 rounded-2xl border-2 border-dashed border-blue-200 bg-white text-center text-blue-500 text-sm col-span-full animate-pulse">Caricamento sedi in corso...</div>';
+
+      chiamaBackend('ottieniElencoSedi')
+        .then(listaSedi => {
+          griglia.innerHTML = '';
+          if (!listaSedi || listaSedi.length === 0) {
+            griglia.innerHTML = '<div class="p-4 rounded-2xl bg-white text-center text-gray-500 text-sm col-span-full">Nessuna sede trovata</div>';
+            return;
           }
 
-          var cardDiv = document.createElement('div');
-          cardDiv.className = `p-3.5 rounded-2xl border-2 ${coloreBordo} bg-white shadow-sm cursor-pointer transition-all duration-200 flex items-center justify-between group active:scale-95`;
-          cardDiv.onclick = function() {
-            selezionaServizioDaGriglia(nomeTab, nomeFormattato);
-          };
+          listaSedi.forEach(function(nomeTab) {
+            var nomeFormattato = formattaNomeTab(nomeTab);
+            var icona = "fa-child";
+            var coloreBordo = "border-blue-100 hover:border-blue-500 hover:bg-blue-50";
+            var nomeLower = nomeTab.toLowerCase();
 
-          cardDiv.innerHTML = `
-            <div class="flex items-center gap-3">
-              <div class="w-10 h-10 rounded-xl bg-blue-100 text-blue-600 flex items-center justify-center font-bold group-hover:scale-110 transition">
-                <i class="fas ${icona}"></i>
-              </div>
-              <div>
-                <div class="font-bold text-gray-800 text-sm sm:text-base">${nomeFormattato}</div>
-                <div class="text-[11px] text-gray-400">Clicca per aprire il registro</div>
-              </div>
-            </div>
-            <div class="text-blue-400 group-hover:translate-x-1 transition">
-              <i class="fas fa-chevron-right"></i>
-            </div>
-          `;
-          griglia.appendChild(cardDiv);
-        });
-      })
-      .catch(err => {
-        console.error("Fallimento chiamata sedi:", err);
-        griglia.innerHTML = '<div class="p-4 rounded-2xl bg-red-50 text-center text-red-500 text-sm col-span-full">Errore caricamento: ' + err.message + '</div>';
-      });
-  }
-  function formattaNomeTab(nomeTab) {
-    var pulito = nomeTab.replace("PRESENZE_", "");
-    pulito = pulito.replace(/[-_]/g, " ");
-    pulito = pulito.replace(/donmilani/gi, "Don Milani");
-    pulito = pulito.replace(/donbalbiano/gi, "Don Balbiano");
-    pulito = pulito.replace(/iqbalmasih/gi, "Iqbal Masih");
-    pulito = pulito.replace(/prescuola/gi, "Pre Scuola");
-    pulito = pulito.replace(/postscuola/gi, "Post Scuola");
-    pulito = pulito.replace(/doposcuola/gi, "Dopo Scuola");
-    pulito = pulito.replace(/integrazioneorarioscolastico/gi, "Integrazione Orario Scolastico");
+            if (nomeLower.includes('prescuola')) {
+              icona = "fa-sun";
+              coloreBordo = "border-amber-100 hover:border-amber-500 hover:bg-amber-50";
+            } else if (nomeLower.includes('postscuola') || nomeLower.includes('doposcuola')) {
+              icona = "fa-book-reader";
+              coloreBordo = "border-indigo-100 hover:border-indigo-500 hover:bg-indigo-50";
+            } else if (nomeLower.includes('integrazione')) {
+              icona = "fa-users";
+              coloreBordo = "border-emerald-100 hover:border-emerald-500 hover:bg-emerald-50";
+            }
 
-    var parole = pulito.split(/\s+/);
-    var paroleFormattate = parole.map(function(parola) {
-      if (!parola) return "";
-      return parola.charAt(0).toUpperCase() + parola.slice(1).toLowerCase();
-    });
-    return paroleFormattate.join(" ");
-  }
+            var cardDiv = document.createElement('div');
+            cardDiv.className = `p-3.5 rounded-2xl border-2 ${coloreBordo} bg-white shadow-sm cursor-pointer transition flex items-center justify-between group active:scale-95`;
+            cardDiv.onclick = function() {
+              selezionaServizioDaGriglia(nomeTab, nomeFormattato);
+            };
 
-  chiamaBackend('ottieniDatiRegistro', { tab: tabSelezionatoCorrente })
-      .then(risposta => {
-        if (risposta.errore) {
-          area.innerHTML = '<div class="max-w-4xl mx-auto text-center text-red-500 mt-12 text-lg">' + risposta.errore + '</div>';
-          return;
-        }
-        colonnaGiornoCorrente = risposta.colonnaGiorno;
-        if (colonnaGiornoCorrente === -1) {
-          area.innerHTML = '<div class="max-w-4xl mx-auto text-center text-orange-500 mt-12 font-semibold p-4 text-lg">Attenzione: Impossibile trovare la colonna per la data di oggi (' + risposta.dataOdierna + ') nel registro.</div>';
-          return;
-        }
-        elencoAlunniGlobale = risposta.alunni || [];
-        applicaFiltriComplessivi(risposta.dataOdierna, risposta.isDonMilaniIntegrazione);
-        aggiornaStatoSalvataggio('ok', 'Sincronizzato');
-      })
-      .catch(err => {
-        area.innerHTML = '<div class="max-w-4xl mx-auto text-center text-red-500 mt-12 text-lg">Errore nel caricamento: ' + err.message + '</div>';
-        aggiornaStatoSalvataggio('errore', 'Errore di rete');
-      });
-  function tornaAllaSelezioneSedi() {
-    document.getElementById('grigliaSedi').classList.remove('hidden');
-    document.getElementById('pannelloAzioni').classList.add('hidden');
-    document.getElementById('footerRiepilogo').classList.add('hidden');
-    document.getElementById('areaContenuto').innerHTML = `
-      <div class="max-w-4xl mx-auto text-center text-gray-400 mt-16 text-lg">
-        Seleziona un servizio dalla griglia in alto per visualizzare l'elenco dei bambini.
-      </div>
-    `;
-  }
-
-  function impostaFiltroStato(stato) {
-    filtroStatoAttivo = stato;
-    aggiornaStiliFiltriRapidi();
-    applicaFiltriComplessivi();
-  }
-
-  function aggiornaStiliFiltriRapidi() {
-    var filtri = ['tutti', 'da-segnare', 'presenti', 'assenti'];
-    filtri.forEach(f => {
-      var btn = document.getElementById('filtro-' + f);
-      if (!btn) return;
-      if (f === filtroStatoAttivo) {
-        btn.className = "px-3 py-1.5 rounded-xl text-xs sm:text-sm font-bold bg-blue-600 text-white shadow-sm transition active:scale-95";
-      } else {
-        btn.className = "px-3 py-1.5 rounded-xl text-xs sm:text-sm font-bold bg-gray-100 text-gray-700 hover:bg-gray-200 shadow-sm transition active:scale-95";
-      }
-    });
-  }
-
-  function applicaFiltriComplessivi(dataOdiernaParam, isDonMilaniParam) {
-    var queryInput = document.getElementById('inputRicerca');
-    var query = queryInput ? queryInput.value.toLowerCase().trim() : "";
-
-    var filtrati = elencoAlunniGlobale.filter(function(alunno) {
-      var corrispondeNome = alunno.nome.toLowerCase().includes(query);
-      var isPresente = (alunno.stato === 'P' || alunno.stato === 'PRESENTE');
-      var isAssente = (alunno.stato === 'A' || alunno.stato === 'ASSENTE');
-      var isDaSegnare = !isPresente && !isAssente;
-
-      var corrispondeStato = true;
-      if (filtroStatoAttivo === 'da-segnare') corrispondeStato = isDaSegnare;
-      if (filtroStatoAttivo === 'presenti') corrispondeStato = isPresente;
-      if (filtroStatoAttivo === 'assenti') corrispondeStato = isAssente;
-
-      return corrispondeNome && corrispondeStato;
-    });
-
-    var isDonMilani = isDonMilaniParam !== undefined ? isDonMilaniParam : (tabSelezionatoCorrente.toLowerCase().indexOf("donmilani") !== -1 && tabSelezionatoCorrente.toLowerCase().indexOf("integrazione") !== -1);
-    renderizzaLista(filtrati, dataOdiernaParam, isDonMilani);
-  }
-
-  function ordinaAlunniPerCognome(alunni) {
-    return alunni.slice().sort(function(a, b) {
-      var partiA = a.nome.trim().split(/\s+/);
-      var partiB = b.nome.trim().split(/\s+/);
-      var cognomeA = partiA.length > 1 ? partiA[partiA.length - 1].toLowerCase() : partiA[0].toLowerCase();
-      var cognomeB = partiB.length > 1 ? partiB[partiB.length - 1].toLowerCase() : partiB[0].toLowerCase();
-
-      if (cognomeA < cognomeB) return -1;
-      if (cognomeA > cognomeB) return 1;
-      return 0;
-    });
-  }
-
-  function renderizzaLista(alunniDaMostrare, dataOdierna, isDonMilani) {
-    var area = document.getElementById('areaContenuto');
-
-    if (alunniDaMostrare.length === 0) {
-      area.innerHTML = '<div class="max-w-4xl mx-auto text-center text-gray-500 mt-12 text-lg">Nessun alunno trovato con i criteri di ricerca o filtro attivi.</div>';
-      aggiornaBadgeRiepilogo();
-      return;
-    }
-
-    var html = '<div class="max-w-4xl mx-auto">';
-    if (dataOdierna) {
-      html += '<div class="mb-3 text-sm text-gray-500 text-right font-medium">Data odierna: ' + dataOdierna + '</div>';
-    }
-
-    if (isDonMilani) {
-      var gruppiClassi = {};
-      alunniDaMostrare.forEach(function(alunno) {
-        var classe = (alunno.valoreD || "Senza Classe").trim();
-        if (!gruppiClassi[classe]) {
-          gruppiClassi[classe] = [];
-        }
-        gruppiClassi[classe].push(alunno);
-      });
-
-      var classiOrdinate = Object.keys(gruppiClassi).sort();
-      html += '<div class="space-y-4 pb-12">';
-      
-      classiOrdinate.forEach(function(classe, index) {
-        var idClasseSafe = classe.replace(/[^a-zA-Z0-9]/g, '_');
-        var isAperta = (index === 0);
-        var displayStile = isAperta ? 'block' : 'hidden';
-        var frecciaRotazione = isAperta ? 'transform rotate-180' : '';
-        var alunniOrdinatiClasse = ordinaAlunniPerCognome(gruppiClassi[classe]);
-
-        html += `
-          <div class="border rounded-2xl bg-white shadow-sm overflow-hidden" id="sezione-classe-${idClasseSafe}">
-            <div onclick="toggleClasse('${idClasseSafe}')" class="bg-blue-50 text-blue-900 font-bold px-5 py-4 text-base flex justify-between items-center cursor-pointer hover:bg-blue-100 transition select-none">
+            cardDiv.innerHTML = `
               <div class="flex items-center gap-3">
-                <span>📚 Classe ${classe}</span>
-                <span class="text-xs bg-white text-blue-700 px-2.5 py-1 rounded-full border border-blue-200">${alunniOrdinatiClasse.length} alunni</span>
+                <div class="w-10 h-10 rounded-xl bg-blue-100 text-blue-600 flex items-center justify-center font-bold group-hover:scale-110 transition">
+                  <i class="fas ${icona}"></i>
+                </div>
+                <div>
+                  <div class="font-bold text-gray-800 text-sm sm:text-base">${nomeFormattato}</div>
+                  <div class="text-[11px] text-gray-400">Clicca per aprire il registro</div>
+                </div>
               </div>
-              <span id="freccia-${idClasseSafe}" class="text-blue-600 font-bold text-xl transition-transform duration-200 ${frecciaRotazione}">▼</span>
-            </div>
-            <div id="contenuto-classe-${idClasseSafe}" class="${displayStile} p-4 space-y-4 bg-gray-50 border-t">
-        `;
-
-        alunniOrdinatiClasse.forEach(function(alunno) {
-          html += generaHtmlCardAlunno(alunno, true);
+              <div class="text-blue-400 group-hover:translate-x-1 transition">
+                <i class="fas fa-chevron-right"></i>
+              </div>
+            `;
+            griglia.appendChild(cardDiv);
+          });
+        })
+        .catch(err => {
+          griglia.innerHTML = '<div class="p-4 rounded-2xl bg-red-50 text-center text-red-500 text-sm col-span-full">Errore caricamento: ' + err.message + '</div>';
         });
+    }
 
-        html += `
-            </div>
-          </div>
-        `;
+    function formattaNomeTab(nomeTab) {
+      var pulito = nomeTab.replace("PRESENZE_", "");
+      pulito = pulito.replace(/[-_]/g, " ");
+      pulito = pulito.replace(/donmilani/gi, "Don Milani");
+      pulito = pulito.replace(/donbalbiano/gi, "Don Balbiano");
+      pulito = pulito.replace(/iqbalmasih/gi, "Iqbal Masih");
+      pulito = pulito.replace(/prescuola/gi, "Pre Scuola");
+      pulito = pulito.replace(/postscuola/gi, "Post Scuola");
+      pulito = pulito.replace(/doposcuola/gi, "Dopo Scuola");
+      pulito = pulito.replace(/integrazioneorarioscolastico/gi, "Integrazione Orario Scolastico");
+
+      var parole = pulito.split(/\s+/);
+      var paroleFormattate = parole.map(function(parola) {
+        if (!parola) return "";
+        return parola.charAt(0).toUpperCase() + parola.slice(1).toLowerCase();
       });
-      html += '</div>';
-    } else {
-      var alunniOrdinatiStandard = ordinaAlunniPerCognome(alunniDaMostrare);
-      html += '<div class="space-y-4 pb-12">';
-      alunniOrdinatiStandard.forEach(function(alunno) {
-        html += generaHtmlCardAlunno(alunno, false);
-      });
-      html += '</div>';
+      return paroleFormattate.join(" ");
     }
 
-    html += '</div>';
-    area.innerHTML = html;
-    aggiornaBadgeRiepilogo();
-}
-function aggiornaBadgeRiepilogo() {
-  if (typeof elencoAlunniGlobale === 'undefined' || !Array.isArray(elencoAlunniGlobale)) {
-    return;
-  }
-
-  var presenti = 0;
-  var assenti = 0;
-  var daSegnare = 0;
-
-  elencoAlunniGlobale.forEach(function(alunno) {
-    var stato = String(alunno.stato || "").trim().toUpperCase();
-    
-    if (stato === 'P' || stato === 'PRESENTE') {
-      presenti++;
-    } else if (stato === 'A' || stato === 'ASSENTE') {
-      assenti++;
-    } else {
-      daSegnare++;
-    }
-  });
-
-  var badge = document.getElementById('badgeRiepilogo');
-  if (badge) {
-    badge.innerText = "P: " + presenti + " | A: " + assenti + " | Da segnare: " + daSegnare;
-  }
-}
-  function toggleClasse(idClasseSafe) {
-    var contenuto = document.getElementById('contenuto-classe-' + idClasseSafe);
-    var freccia = document.getElementById('freccia-' + idClasseSafe);
-
-    if (contenuto.classList.contains('hidden')) {
-      contenuto.classList.remove('hidden');
-      freccia.classList.add('rotate-180');
-    } else {
-      contenuto.classList.add('hidden');
-      freccia.classList.remove('rotate-180');
-    }
-  }
-
-  function generaHtmlCardAlunno(alunno, isDonMilani) {
-    var isPresente = (alunno.stato === 'P' || alunno.stato === 'PRESENTE');
-    var isAssente = (alunno.stato === 'A' || alunno.stato === 'ASSENTE');
-    
-    var classeCard = "p-4 sm:p-5 border rounded-2xl shadow-sm bg-white space-y-3.5 card-alunno";
-    if (!isDonMilani && typeof alunno.ingressi === 'number' && alunno.ingressi <= 0) {
-      classeCard += " border-red-400 bg-red-50";
-    }
-
-  var infoSecondaria = "";
-    var tipoIscrizioneStr = String(alunno.tipo || "").toLowerCase();
-    var eFisso = tipoIscrizioneStr.includes("fisso");
-
-    if (isDonMilani) {
-      infoSecondaria = alunno.tipo + ' • Classe: <span class="font-bold text-gray-700">' + (alunno.valoreD || '-') + '</span>';
-    } else {
-      // Mostra i residui solo se NON è un'iscrizione fissa e i residui sono diversi da '-'
-      var mostraResidui = !eFisso && alunno.ingressi !== '-' && alunno.ingressi !== undefined;
+    function selezionaServizioDaGriglia(nomeTab, nomeFormattato) {
+      tabSelezionatoCorrente = nomeTab;
+      document.getElementById('grigliaSedi').classList.add('hidden');
+      document.getElementById('pannelloAzioni').classList.remove('hidden');
+      document.getElementById('footerRiepilogo').classList.remove('hidden');
       
-      infoSecondaria = alunno.tipo + (mostraResidui ? ' • Residui: <span id="ingressi-' + alunno.riga + '" class="font-bold text-gray-700">' + alunno.ingressi + '</span>' : '');
+      var area = document.getElementById('areaContenuto');
+      area.innerHTML = '<div class="max-w-4xl mx-auto text-center text-blue-600 mt-16 text-lg animate-pulse">Caricamento registro per ' + nomeFormattato + '...</div>';
+
+      chiamaBackend('ottieniDatiRegistro', { tab: tabSelezionatoCorrente })
+        .then(risposta => {
+          if (risposta.errore) {
+            area.innerHTML = '<div class="max-w-4xl mx-auto text-center text-red-500 mt-12 text-lg">' + risposta.errore + '</div>';
+            return;
+          }
+          colonnaGiornoCorrente = risposta.colonnaGiorno;
+          if (colonnaGiornoCorrente === -1) {
+            area.innerHTML = '<div class="max-w-4xl mx-auto text-center text-orange-500 mt-12 font-semibold p-4 text-lg">Attenzione: Impossibile trovare la colonna per la data di oggi (' + risposta.dataOdierna + ') nel registro.</div>';
+            return;
+          }
+          elencoAlunniGlobale = risposta.alunni || [];
+          applicaFiltriComplessivi(risposta.dataOdierna, risposta.isDonMilaniIntegrazione);
+          aggiornaStatoSalvataggio('ok', 'Sincronizzato');
+        })
+        .catch(err => {
+          area.innerHTML = '<div class="max-w-4xl mx-auto text-center text-red-500 mt-12 text-lg">Errore nel caricamento: ' + err.message + '</div>';
+          aggiornaStatoSalvataggio('errore', 'Errore di rete');
+        });
     }
 
-    var isServizioExtraAttivo = alunno.servizioExtra === true || alunno.servizioExtra === 'SI' || alunno.servizioExtra === 'true';
-
-    // Gestione abilitazione campi extra in base alla presenza
-    var statoDisabilitato = !isPresente ? 'disabled' : '';
-    var stileDisabilitato = !isPresente ? 'opacity-50 cursor-not-allowed bg-gray-100' : 'bg-gray-50 cursor-pointer';
-
-    // Verifica se il plesso corrente è Iqbal Masih
-    var eIqbalMasih = typeof tabSelezionatoCorrente !== 'undefined' && 
-                      tabSelezionatoCorrente && 
-                      tabSelezionatoCorrente.toLowerCase().indexOf("iqbal") !== -1 && 
-                      tabSelezionatoCorrente.toLowerCase().indexOf("masih") !== -1;
-
-    // Genera il blocco extra solo per Iqbal Masih
-    var htmlServizioExtra = "";
-    if (eIqbalMasih) {
-      htmlServizioExtra = `
-        <div class="flex items-center justify-between gap-3 pt-1 border-t border-gray-100">
-          <label id="label-servizio-${alunno.riga}" class="flex items-center gap-2 select-none text-xs sm:text-sm font-medium text-gray-700 ${!isPresente ? 'opacity-50 cursor-not-allowed' : 'cursor-pointer'}">
-            <input type="checkbox" id="servizio-extra-${alunno.riga}" ${isServizioExtraAttivo ? 'checked' : ''} ${statoDisabilitato} onchange="salvaDatiExtra(${alunno.riga})" class="w-4 h-4 text-blue-600 border-gray-300 rounded focus:ring-blue-500">
-            <span>Servizio Extra</span>
-          </label>
-          <div class="w-32">
-            <input type="number" step="0.5" id="ore-extra-${alunno.riga}" value="${alunno.oreExtra || ''}" placeholder="Ore Extra" ${statoDisabilitato} onchange="salvaDatiExtra(${alunno.riga})" class="w-full px-3 py-2 text-xs sm:text-sm border border-gray-200 rounded-xl text-gray-700 ${stileDisabilitato} focus:bg-white focus:outline-none focus:ring-1 focus:ring-blue-600">
-          </div>
+    function tornaAllaSelezioneSedi() {
+      document.getElementById('grigliaSedi').classList.remove('hidden');
+      document.getElementById('pannelloAzioni').classList.add('hidden');
+      document.getElementById('footerRiepilogo').classList.add('hidden');
+      document.getElementById('areaContenuto').innerHTML = `
+        <div class="max-w-4xl mx-auto text-center text-gray-400 mt-16 text-lg">
+          Seleziona un servizio dalla griglia in alto per visualizzare l'elenco dei bambini.
         </div>
       `;
     }
 
-    return `
-      <div class="${classeCard}" id="card-${alunno.riga}" data-nome="${alunno.nome.toLowerCase()}">
-        <div>
-          <div class="flex justify-between items-start gap-2">
-            <div class="font-bold text-gray-900 text-lg sm:text-xl leading-snug cursor-pointer hover:text-blue-700 transition py-0.5" onclick="apriStorico(${alunno.riga}, '${alunno.nome.replace(/'/g, "\\'")}')">
-              ${alunno.nome} 🔍
-            </div>
-            <button onclick="apriDettagli(${alunno.riga}, '${alunno.nome.replace(/'/g, "\\'")}')" class="bg-indigo-50 text-indigo-700 hover:bg-indigo-100 px-3.5 py-2 rounded-xl text-xs sm:text-sm font-bold transition flex items-center gap-1 shadow-sm shrink-0 active:scale-95">
-              📋 Info
-            </button>
-          </div>
-          <div class="text-xs sm:text-sm text-gray-500 mt-1">
-            ${infoSecondaria}
-          </div>
-        </div>
-
-        <div class="flex gap-3">
-          <button onclick="registraStato(${alunno.riga}, 'P')" id="btn-p-${alunno.riga}" class="flex-1 py-3.5 sm:py-4 text-base font-bold rounded-xl transition active:scale-95 shadow-sm ${isPresente ? 'bg-green-600 text-white shadow-inner' : 'bg-gray-100 text-gray-700 hover:bg-green-100'}">
-            Presente
-          </button>
-          <button onclick="registraStato(${alunno.riga}, 'A')" id="btn-a-${alunno.riga}" class="flex-1 py-3.5 sm:py-4 text-base font-bold rounded-xl transition active:scale-95 shadow-sm ${isAssente ? 'bg-red-600 text-white shadow-inner' : 'bg-gray-100 text-gray-700 hover:bg-red-100'}">
-            Assente
-          </button>
-        </div>
-
-        <div>
-          <input type="text" id="nota-${alunno.riga}" value="${alunno.nota || ''}" placeholder="Aggiungi una nota..." onchange="salvaTestoNota(${alunno.riga})" class="w-full px-4 py-3 text-sm sm:text-base border border-gray-200 rounded-xl text-gray-700 bg-gray-50 focus:bg-white focus:outline-none focus:ring-1 focus:ring-blue-600">
-        </div>
-
-        ${htmlServizioExtra}
-      </div>
-    `;
-}
-  function registraStato(riga, statoScelto) {
-  try {
-    console.log("Inizio registraStato per riga:", riga, "stato:", statoScelto);
-    
-    var btnP = document.getElementById('btn-p-' + riga);
-    var btnA = document.getElementById('btn-a-' + riga);
-    
-    var isGiàPresente = btnP && btnP.classList.contains('bg-green-600');
-    var isGiàAssente = btnA && btnA.classList.contains('bg-red-600');
-
-    var nuovoStato = statoScelto;
-    if ((statoScelto === 'P' && isGiàPresente) || (statoScelto === 'A' && isGiàAssente)) {
-      nuovoStato = "";
+    function impostaFiltroStato(stato) {
+      filtroStatoAttivo = stato;
+      aggiornaStiliFiltriRapidi();
+      applicaFiltriComplessivi();
     }
 
-    if (btnP && btnA) {
-      btnP.className = "flex-1 py-3.5 sm:py-4 text-base font-bold rounded-xl transition active:scale-95 shadow-sm bg-gray-100 text-gray-700 hover:bg-green-100";
-      btnA.className = "flex-1 py-3.5 sm:py-4 text-base font-bold rounded-xl transition active:scale-95 shadow-sm bg-gray-100 text-gray-700 hover:bg-red-100";
+    function aggiornaStiliFiltriRapidi() {
+      var filtri = ['tutti', 'da-segnare', 'presenti', 'assenti'];
+      filtri.forEach(f => {
+        var btn = document.getElementById('filtro-' + f);
+        if (!btn) return;
+        if (f === filtroStatoAttivo) {
+          btn.className = "px-3 py-1.5 rounded-xl text-xs sm:text-sm font-bold bg-blue-600 text-white shadow-sm transition active:scale-95";
+        } else {
+          btn.className = "px-3 py-1.5 rounded-xl text-xs sm:text-sm font-bold bg-gray-100 text-gray-700 hover:bg-gray-200 shadow-sm transition active:scale-95";
+        }
+      });
+    }
 
-      if (nuovoStato === 'P') {
-        btnP.className = "flex-1 py-3.5 sm:py-4 text-base font-bold rounded-xl transition active:scale-95 bg-green-600 text-white shadow-inner";
-      } else if (nuovoStato === 'A') {
-        btnA.className = "flex-1 py-3.5 sm:py-4 text-base font-bold rounded-xl transition active:scale-95 bg-red-600 text-white shadow-inner";
+    function applicaFiltriComplessivi(dataOdiernaParam, isDonMilaniParam) {
+      var queryInput = document.getElementById('inputRicerca');
+      var query = queryInput ? queryInput.value.toLowerCase().trim() : "";
+
+      var filtrati = elencoAlunniGlobale.filter(function(alunno) {
+        var corrispondeNome = alunno.nome.toLowerCase().includes(query);
+        var isPresente = (alunno.stato === 'P' || alunno.stato === 'PRESENTE');
+        var isAssente = (alunno.stato === 'A' || alunno.stato === 'ASSENTE');
+        var isDaSegnare = !isPresente && !isAssente;
+
+        var corrispondeStato = true;
+        if (filtroStatoAttivo === 'da-segnare') corrispondeStato = isDaSegnare;
+        if (filtroStatoAttivo === 'presenti') corrispondeStato = isPresente;
+        if (filtroStatoAttivo === 'assenti') corrispondeStato = isAssente;
+
+        return corrispondeNome && corrispondeStato;
+      });
+
+      var isDonMilani = isDonMilaniParam !== undefined ? isDonMilaniParam : (tabSelezionatoCorrente.toLowerCase().indexOf("donmilani") !== -1 && tabSelezionatoCorrente.toLowerCase().indexOf("integrazione") !== -1);
+      renderizzaLista(filtrati, dataOdiernaParam, isDonMilani);
+    }
+
+    function ordinaAlunniPerCognome(alunni) {
+      return alunni.slice().sort(function(a, b) {
+        var partiA = a.nome.trim().split(/\s+/);
+        var partiB = b.nome.trim().split(/\s+/);
+        var cognomeA = partiA.length > 1 ? partiA[partiA.length - 1].toLowerCase() : partiA[0].toLowerCase();
+        var cognomeB = partiB.length > 1 ? partiB[partiB.length - 1].toLowerCase() : partiB[0].toLowerCase();
+
+        if (cognomeA < cognomeB) return -1;
+        if (cognomeA > cognomeB) return 1;
+        return 0;
+      });
+    }
+
+    function renderizzaLista(alunniDaMostrare, dataOdierna, isDonMilani) {
+      var area = document.getElementById('areaContenuto');
+
+      if (alunniDaMostrare.length === 0) {
+        area.innerHTML = '<div class="max-w-4xl mx-auto text-center text-gray-500 mt-12 text-lg">Nessun alunno trovato con i criteri di ricerca o filtro attivi.</div>';
+        aggiornaBadgeRiepilogo();
+        return;
       }
-    }
 
-    // Gestione dinamica campi extra
-    var checkServizio = document.getElementById('servizio-extra-' + riga);
-    var inputOre = document.getElementById('ore-extra-' + riga);
-    var labelServizio = document.getElementById('label-servizio-' + riga);
+      var html = '<div class="max-w-4xl mx-auto">';
+      if (dataOdierna) {
+        html += '<div class="mb-3 text-sm text-gray-500 text-right font-medium">Data odierna: ' + dataOdierna + '</div>';
+      }
 
-    if (checkServizio && inputOre && labelServizio) {
-      if (nuovoStato === 'P') {
-        checkServizio.disabled = false;
-        inputOre.disabled = false;
-        labelServizio.classList.remove('opacity-50', 'cursor-not-allowed');
-        labelServizio.classList.add('cursor-pointer');
-        inputOre.classList.remove('opacity-50', 'cursor-not-allowed', 'bg-gray-100');
-        inputOre.classList.add('bg-gray-50');
-      } else {
-        checkServizio.disabled = true;
-        checkServizio.checked = false;
-        inputOre.disabled = true;
-        inputOre.value = "";
-        labelServizio.classList.add('opacity-50', 'cursor-not-allowed');
-        labelServizio.classList.remove('cursor-pointer');
-        inputOre.classList.add('opacity-50', 'cursor-not-allowed', 'bg-gray-100');
-        inputOre.classList.remove('bg-gray-50');
-
-        if (typeof elencoAlunniGlobale !== 'undefined' && Array.isArray(elencoAlunniGlobale)) {
-          var alunnoExtra = elencoAlunniGlobale.find(a => a.riga === riga);
-          if (alunnoExtra) {
-            alunnoExtra.servizioExtra = false;
-            alunnoExtra.oreExtra = "";
+      if (isDonMilani) {
+        var gruppiClassi = {};
+        alunniDaMostrare.forEach(function(alunno) {
+          var classe = (alunno.valoreD || "Senza Classe").trim();
+          if (!gruppiClassi[classe]) {
+            gruppiClassi[classe] = [];
           }
-        }
-        if (typeof tabSelezionatoCorrente !== 'undefined') {
-      chiamaBackend('salvaExtra', { 
-        tab: tabSelezionatoCorrente, 
-        riga: riga, 
-        attivo: false, 
-        ore: "" 
-      }).catch(err => console.error("Errore salvataggio extra:", err));
-    }
+          gruppiClassi[classe].push(alunno);
+        });
 
-    chiamaBackend('salvaPresenza', {
-      tab: tabSelezionatoCorrente,
-      riga: riga,
-      colonna: null,
-      stato: nuovoStato
-    })
-    .then(risultato => {
-      console.log("Successo backend:", risultato);
-      if (typeof aggiornaStatoSalvataggio === 'function') {
-        aggiornaStatoSalvataggio('ok', 'Sincronizzato');
-      }
-      var spanIngressi = document.getElementById('ingressi-' + riga);
-      if (spanIngressi && risultato && risultato.nuoviIngressi !== undefined) {
-        spanIngressi.innerText = risultato.nuoviIngressi;
-        if (typeof elencoAlunniGlobale !== 'undefined') {
-          var alunnoSync = elencoAlunniGlobale.find(a => a.riga === riga);
-          if (alunnoSync) alunnoSync.ingressi = risultato.nuoviIngressi;
-        }
-
-        var card = document.getElementById('card-' + riga);
-        if (card) {
-          if (typeof risultato.nuoviIngressi === 'number' && risultato.nuoviIngressi <= 0) {
-            card.classList.add('border-red-400', 'bg-red-50');
-          } else {
-            card.classList.remove('border-red-400', 'bg-red-50');
-          }
-        }
-      }
-    })
-    .catch(err => {
-      console.error("Errore backend:", err);
-      if (typeof aggiornaStatoSalvataggio === 'function') {
-        aggiornaStatoSalvataggio('errore', 'Errore salvataggio');
-      }
-      alert("Errore durante il salvataggio: " + err.message);
-    });
-
-  } catch (e) {
-    console.error("Errore JS intercettato in registraStato:", e);
-    alert("Errore imprevisto nell'interfaccia: " + e.message);
-  }
-}
-
-  function selezionaTutti(statoForzato) {
-    if (!confirm(statoForzato === 'P' ? "Vuoi segnare TUTTI i bambini come presenti?" : "Vuoi azzerare tutte le presenze di oggi?")) {
-      return;
-    }
-    elencoAlunniGlobale.forEach(function(alunno) {
-      var btnP = document.getElementById('btn-p-' + alunno.riga);
-      var isPresente = btnP && btnP.classList.contains('bg-green-600');
-      if (statoForzato === 'P' && !isPresente) {
-        registraStato(alunno.riga, 'P');
-      } else if (statoForzato === '' && isPresente) {
-        registraStato(alunno.riga, '');
-      }
-    });
-  }
-
-  function salvaTestoNota(riga) {
-    var inputNota = document.getElementById('nota-' + riga);
-    if (!inputNota) return;
-    var testo = inputNota.value;
-
-    var alunnoTrovato = elencoAlunniGlobale.find(a => a.riga === riga);
-    if (alunnoTrovato) alunnoTrovato.nota = testo;
-
-    aggiornaStatoSalvataggio('salvataggio', 'Salvataggio nota...');
-  
-  chiamaBackend('salvaNota', {
-    tab: tabSelezionatoCorrente,
-    riga: riga,
-    testo: testo
-  })
-  .then(() => {
-    aggiornaStatoSalvataggio('ok', 'Sincronizzato');
-    console.log("Nota salvata per la riga " + riga);
-  })
-  .catch(err => {
-    aggiornaStatoSalvataggio('errore', 'Errore nota');
-    alert("Errore nel salvataggio della nota: " + err.message);
-  });
-}
-  function salvaDatiExtra(riga) {
-    var checkServizio = document.getElementById('servizio-extra-' + riga);
-    var inputOre = document.getElementById('ore-extra-' + riga);
-    if (!checkServizio || !inputOre) return;
-
-    var servizioExtra = checkServizio.checked; // Restituisce true o false
-    var oreExtra = inputOre.value;
-
-    // Aggiornamento locale dell'oggetto in memoria
-    var alunnoTrovato = elencoAlunniGlobale.find(a => a.riga === riga);
-    if (alunnoTrovato) {
-      alunnoTrovato.servizioExtra = servizioExtra;
-      alunnoTrovato.oreExtra = oreExtra;
-    }
-aggiornaStatoSalvataggio('salvataggio', 'Salvataggio extra...');
-  
-  chiamaBackend('salvaExtra', {
-    tab: tabSelezionatoCorrente,
-    riga: riga,
-    attivo: servizioExtra,
-    ore: oreExtra
-  })
-  .then(() => {
-    aggiornaStatoSalvataggio('ok', 'Sincronizzato');
-    console.log("Dati extra salvati per la riga " + riga);
-  })
-  .catch(err => {
-    aggiornaStatoSalvataggio('errore', 'Errore extra');
-    alert("Errore nel salvataggio dei dati extra: " + err.message);
-  });
-}
-  function apriStorico(riga, nomeBambino) {
-    var modale = document.getElementById('modaleStorico');
-    var titolo = document.getElementById('modaleTitolo');
-    var contenuto = document.getElementById('modaleContenuto');
-
-    titolo.innerText = "Storico: " + nomeBambino;
-    contenuto.innerHTML = '<div class="text-center text-blue-600 py-6 text-base">Caricamento presenze passate...</div>';
-    modale.classList.remove('hidden');
-
-    google.script.run
-      .withSuccessHandler(function(risultato) {
-        if (!risultato.giorni || risultato.giorni.length === 0) {
-          contenuto.innerHTML = '<div class="text-center text-gray-500 py-6 text-sm">Nessuna presenza registrata in precedenza per questo mese.</div>';
-          return;
-        }
-
-        function formattaData(dataStringa) {
-          try {
-            var d = new Date(dataStringa);
-            if (isNaN(d.getTime())) return dataStringa;
-            return d.toLocaleDateString('it-IT', { weekday: 'long', day: 'numeric', month: 'long', year: 'numeric' });
-          } catch (e) {
-            return dataStringa;
-          }
-        }
-
-        var html = '<div class="text-sm font-semibold text-gray-500 mb-2.5">Iscrizione: <span class="text-gray-800">' + risultato.tipo + '</span> (Residui: <span class="text-gray-800 font-bold">' + risultato.ingressi + '</span>)</div>';
-        html += '<div class="divide-y divide-gray-100 border rounded-2xl overflow-hidden">';
+        var classiOrdinate = Object.keys(gruppiClassi).sort();
+        html += '<div class="space-y-4 pb-12">';
         
-        risultato.giorni.forEach(function(item) {
-          var coloreStato = item.stato === 'Presente' ? 'text-green-600 bg-green-50' : 'text-red-600 bg-red-50';
-          var dataPulita = formattaData(item.data);
-          dataPulita = dataPulita.charAt(0).toUpperCase() + dataPulita.slice(1);
+        classiOrdinate.forEach(function(classe, index) {
+          var idClasseSafe = classe.replace(/[^a-zA-Z0-9]/g, '_');
+          var isAperta = (index === 0);
+          var displayStile = isAperta ? 'block' : 'hidden';
+          var frecciaRotazione = isAperta ? 'transform rotate-180' : '';
+          var alunniOrdinatiClasse = ordinaAlunniPerCognome(gruppiClassi[classe]);
 
           html += `
-            <div class="flex justify-between items-center p-3.5 bg-white text-sm">
-              <span class="font-medium text-gray-700">${dataPulita}</span>
-              <span class="px-3 py-1 rounded-full text-xs font-bold ${coloreStato}">${item.stato}</span>
+            <div class="border rounded-2xl bg-white shadow-sm overflow-hidden" id="sezione-classe-${idClasseSafe}">
+              <div onclick="toggleClasse('${idClasseSafe}')" class="bg-blue-50 text-blue-900 font-bold px-5 py-4 text-base flex justify-between items-center cursor-pointer hover:bg-blue-100 transition select-none">
+                <div class="flex items-center gap-3">
+                  <span>📚 Classe ${classe}</span>
+                  <span class="text-xs bg-white text-blue-700 px-2.5 py-1 rounded-full border border-blue-200">${alunniOrdinatiClasse.length} alunni</span>
+                </div>
+                <span id="freccia-${idClasseSafe}" class="text-blue-600 font-bold text-xl transition-transform duration-200 ${frecciaRotazione}">▼</span>
+              </div>
+              <div id="contenuto-classe-${idClasseSafe}" class="${displayStile} p-4 space-y-4 bg-gray-50 border-t">
+          `;
+
+          alunniOrdinatiClasse.forEach(function(alunno) {
+            html += generaHtmlCardAlunno(alunno, true);
+          });
+
+          html += `
+              </div>
             </div>
           `;
         });
         html += '</div>';
-        contenuto.innerHTML = html;
-      })
-      .withFailureHandler(function(err) {
-        contenuto.innerHTML = '<div class="text-center text-red-500 py-4 text-sm">Errore nel caricamento dello storico: ' + err.message + '</div>';
-      })
-      .ottieniStoricoAlunno(tabSelezionatoCorrente, riga);
-  }
+      } else {
+        var alunniOrdinatiStandard = ordinaAlunniPerCognome(alunniDaMostrare);
+        html += '<div class="space-y-4 pb-12">';
+        alunniOrdinatiStandard.forEach(function(alunno) {
+          html += generaHtmlCardAlunno(alunno, false);
+        });
+        html += '</div>';
+      }
 
-  function chiudiStorico() {
-    var modale = document.getElementById('modaleStorico');
-    modale.classList.add('hidden');
-  }
+      html += '</div>';
+      area.innerHTML = html;
+      aggiornaBadgeRiepilogo();
+    }
 
-  function apriDettagli(rigaMaster, nomeBambino) {
-    var modale = document.getElementById('modaleDettagli');
-    var titolo = document.getElementById('dettagliTitolo');
-    var contenuto = document.getElementById('dettagliContenuto');
+    function aggiornaBadgeRiepilogo() {
+      if (typeof elencoAlunniGlobale === 'undefined' || !Array.isArray(elencoAlunniGlobale)) return;
 
-    titolo.innerText = "Scheda Sicurezza: " + nomeBambino;
-    contenuto.innerHTML = '<div class="text-center text-blue-600 py-6 text-base">Caricamento informazioni in corso...</div>';
-    modale.classList.remove('hidden');
+      var presenti = 0;
+      var assenti = 0;
+      var daSegnare = 0;
 
-    google.script.run
-      .withSuccessHandler(function(dati) {
-        if (dati.errore) {
-          contenuto.innerHTML = '<div class="text-center text-red-500 py-4 text-sm">' + dati.errore + '</div>';
-          return;
+      elencoAlunniGlobale.forEach(function(alunno) {
+        var stato = String(alunno.stato || "").trim().toUpperCase();
+        if (stato === 'P' || stato === 'PRESENTE') {
+          presenti++;
+        } else if (stato === 'A' || stato === 'ASSENTE') {
+          assenti++;
+        } else {
+          daSegnare++;
         }
+      });
 
-        var html = `
-          <div class="space-y-3.5">
-            <div class="bg-gray-50 p-4 rounded-2xl border">
-              <div class="text-xs font-bold text-gray-400 uppercase tracking-wider mb-1">Contatti Genitori</div>
-              <div class="text-sm text-gray-800"><strong>📧 Email:</strong> ${dati.email}</div>
-              <div class="text-sm text-gray-800 mt-1"><strong>📞 Tel:</strong> ${dati.telefono}</div>
-            </div>
+      var badge = document.getElementById('badgeRiepilogo');
+      if (badge) {
+        badge.innerText = "P: " + presenti + " | A: " + assenti + " | Da segnare: " + daSegnare;
+      }
+    }
 
-            <div class="bg-red-50 p-4 rounded-2xl border border-red-100">
-              <div class="text-xs font-bold text-red-400 uppercase tracking-wider mb-1">Allergie e Salute</div>
-              <div class="text-sm text-red-900 font-medium">⚠️ ${dati.allergie}</div>
-            </div>
+    function toggleClasse(idClasseSafe) {
+      var contenuto = document.getElementById('contenuto-classe-' + idClasseSafe);
+      var freccia = document.getElementById('freccia-' + idClasseSafe);
 
-            <div class="bg-amber-50 p-4 rounded-2xl border border-amber-100">
-              <div class="text-xs font-bold text-amber-500 uppercase tracking-wider mb-1">Bisogni Speciali</div>
-              <div class="text-sm text-amber-900">${dati.bisogniSpeciali}</div>
-            </div>
+      if (contenuto.classList.contains('hidden')) {
+        contenuto.classList.remove('hidden');
+        freccia.classList.add('rotate-180');
+      } else {
+        contenuto.classList.add('hidden');
+        freccia.classList.remove('rotate-180');
+      }
+    }
 
-            <div class="bg-blue-50 p-4 rounded-2xl border border-blue-100">
-              <div class="text-xs font-bold text-blue-400 uppercase tracking-wider mb-1">Uscita e Deleghe</div>
-              <div class="text-sm text-blue-900 mb-1"><strong>🚪 Uscita autonoma:</strong> ${dati.uscitaAutonoma}</div>
-              <div class="text-sm text-blue-900"><strong>👥 Persone delegate:</strong><br>${dati.deleghe}</div>
+    function generaHtmlCardAlunno(alunno, isDonMilani) {
+      var isPresente = (alunno.stato === 'P' || alunno.stato === 'PRESENTE');
+      var isAssente = (alunno.stato === 'A' || alunno.stato === 'ASSENTE');
+      
+      var classeCard = "p-4 sm:p-5 border rounded-2xl shadow-sm bg-white space-y-3.5 card-alunno";
+      if (!isDonMilani && typeof alunno.ingressi === 'number' && alunno.ingressi <= 0) {
+        classeCard += " border-red-400 bg-red-50";
+      }
+
+      var infoSecondaria = "";
+      var tipoIscrizioneStr = String(alunno.tipo || "").toLowerCase();
+      var eFisso = tipoIscrizioneStr.includes("fisso");
+
+      if (isDonMilani) {
+        infoSecondaria = alunno.tipo + ' • Classe: <span class="font-bold text-gray-700">' + (alunno.valoreD || '-') + '</span>';
+      } else {
+        var mostraResidui = !eFisso && alunno.ingressi !== '-' && alunno.ingressi !== undefined;
+        infoSecondaria = alunno.tipo + (mostraResidui ? ' • Residui: <span id="ingressi-' + alunno.riga + '" class="font-bold text-gray-700">' + alunno.ingressi + '</span>' : '');
+      }
+
+      var isServizioExtraAttivo = alunno.servizioExtra === true || alunno.servizioExtra === 'SI' || alunno.servizioExtra === 'true';
+      var statoDisabilitato = !isPresente ? 'disabled' : '';
+      var stileDisabilitato = !isPresente ? 'opacity-50 cursor-not-allowed bg-gray-100' : 'bg-gray-50 cursor-pointer';
+
+      var eIqbalMasih = typeof tabSelezionatoCorrente !== 'undefined' && 
+                       tabSelezionatoCorrente && 
+                       tabSelezionatoCorrente.toLowerCase().indexOf("iqbal") !== -1 && 
+                       tabSelezionatoCorrente.toLowerCase().indexOf("masih") !== -1;
+
+      var htmlServizioExtra = "";
+      if (eIqbalMasih) {
+        htmlServizioExtra = `
+          <div class="flex items-center justify-between gap-3 pt-1 border-t border-gray-100">
+            <label id="label-servizio-${alunno.riga}" class="flex items-center gap-2 select-none text-xs sm:text-sm font-medium text-gray-700 ${!isPresente ? 'opacity-50 cursor-not-allowed' : 'cursor-pointer'}">
+              <input type="checkbox" id="servizio-extra-${alunno.riga}" ${isServizioExtraAttivo ? 'checked' : ''} ${statoDisabilitato} onchange="salvaDatiExtra(${alunno.riga})" class="w-4 h-4 text-blue-600 border-gray-300 rounded focus:ring-blue-500">
+              <span>Servizio Extra</span>
+            </label>
+            <div class="w-32">
+              <input type="number" step="0.5" id="ore-extra-${alunno.riga}" value="${alunno.oreExtra || ''}" placeholder="Ore Extra" ${statoDisabilitato} onchange="salvaDatiExtra(${alunno.riga})" class="w-full px-3 py-2 text-xs sm:text-sm border border-gray-200 rounded-xl text-gray-700 ${stileDisabilitato} focus:bg-white focus:outline-none focus:ring-1 focus:ring-blue-600">
             </div>
           </div>
         `;
-        contenuto.innerHTML = html;
-      })
-      .withFailureHandler(function(err) {
-        contenuto.innerHTML = '<div class="text-center text-red-500 py-4 text-sm">Errore di caricamento: ' + err.message + '</div>';
-      })
-      .ottieniDettagliAlunno(rigaMaster, nomeBambino);
-  }
-
-  function chiudiDettagli() {
-    var modale = document.getElementById('modaleDettagli');
-    modale.classList.add('hidden');
-  }
-  // Funzione unificata per la navigazione tra le sezioni
-function mostraSezione(tipo) {
-  var vistaRegistro = document.getElementById('vistaRegistroAlunni');
-  var sezioneTimbratura = document.getElementById('sezioneTimbratura');
-  var footerRiepilogo = document.getElementById('footerRiepilogo');
-  var btnRegistro = document.getElementById('btnTabRegistro');
-  var btnTimbratura = document.getElementById('btnTabTimbratura');
-
-  if (tipo === 'registro') {
-    if (vistaRegistro) vistaRegistro.classList.remove('hidden');
-    if (sezioneTimbratura) sezioneTimbratura.classList.add('hidden');
-    if (footerRiepilogo) footerRiepilogo.classList.remove('hidden');
-    
-    // Stili bottoni header
-    if (btnRegistro) {
-      btnRegistro.className = "flex-1 sm:flex-none px-5 py-2 rounded-xl text-xs sm:text-sm font-extrabold bg-white text-blue-800 shadow-md transition transform active:scale-95 flex items-center justify-center gap-2";
-    }
-    if (btnTimbratura) {
-      btnTimbratura.className = "flex-1 sm:flex-none px-5 py-2 rounded-xl text-xs sm:text-sm font-extrabold bg-blue-800/60 text-white hover:bg-blue-800 shadow-md transition transform active:scale-95 flex items-center justify-center gap-2";
-    }
-
-    if (typeof caricaSedi === 'function') caricaSedi();
-
-  } else if (tipo === 'timbratura') {
-    if (vistaRegistro) vistaRegistro.classList.add('hidden');
-    if (sezioneTimbratura) {
-      sezioneTimbratura.classList.remove('hidden');
-      sezioneTimbratura.style.display = 'flex'; // Forza il flexbox
-    }
-    if (footerRiepilogo) footerRiepilogo.classList.add('hidden');
-
-    // Stili bottoni header
-    if (btnRegistro) {
-      btnRegistro.className = "flex-1 sm:flex-none px-5 py-2 rounded-xl text-xs sm:text-sm font-extrabold bg-blue-800/60 text-white hover:bg-blue-800 shadow-md transition transform active:scale-95 flex items-center justify-center gap-2";
-    }
-    if (btnTimbratura) {
-      btnTimbratura.className = "flex-1 sm:flex-none px-5 py-2 rounded-xl text-xs sm:text-sm font-extrabold bg-white text-blue-800 shadow-md transition transform active:scale-95 flex items-center justify-center gap-2";
-    }
-
-    // Caricamento dei dati nei menu a tendina della timbratura
-    caricaDatiInizialiTimbraturaCustom();
-  }
-}
-
-// Funzione che chiama il backend Apps Script e popola i <select> della timbratura
-function caricaDatiInizialiTimbraturaCustom() {
-  var selOp = document.getElementById('selectOperatore');
-  var selServ = document.getElementById('selectServizio');
-
-  if (selOp) selOp.innerHTML = '<option value="">Caricamento operatori in corso...</option>';
-  if (selServ) selServ.innerHTML = '<option value="">Caricamento servizi in corso...</option>';
-
-  google.script.run
-    .withSuccessHandler(function(dati) {
-      // 1. Popola Operatori
-      if (selOp) {
-        selOp.innerHTML = '<option value="">-- Seleziona il tuo nome --</option>';
-        if (dati && dati.operatori && dati.operatori.length > 0) {
-          dati.operatori.forEach(function(op) {
-            var opt = document.createElement('option');
-            opt.value = op.nome;
-            opt.textContent = op.nome + (op.mansioni ? ' (' + op.mansioni + ')' : '');
-            selOp.appendChild(opt);
-          });
-        } else {
-          selOp.innerHTML = '<option value="">Nessun operatore attivo trovato</option>';
-        }
       }
 
-      // 2. Popola Servizi (Plessi)
-      if (selServ) {
-        selServ.innerHTML = '<option value="">-- Seleziona il plesso/servizio --</option>';
-        if (dati && dati.servizi && dati.servizi.length > 0) {
-          dati.servizi.forEach(function(serv) {
-            var opt = document.createElement('option');
-            opt.value = serv.etichetta;
-            opt.textContent = serv.etichetta;
-            selServ.appendChild(opt);
-          });
-        } else {
-          selServ.innerHTML = '<option value="">Nessun servizio trovato (PRESENZE_...)</option>';
+      return `
+        <div class="${classeCard}" id="card-${alunno.riga}" data-nome="${alunno.nome.toLowerCase()}">
+          <div>
+            <div class="flex justify-between items-start gap-2">
+              <div class="font-bold text-gray-900 text-lg sm:text-xl leading-snug cursor-pointer hover:text-blue-700 transition py-0.5" onclick="apriStorico(${alunno.riga}, '${alunno.nome.replace(/'/g, "\\'")}')">
+                ${alunno.nome} 🔍
+              </div>
+              <button onclick="apriDettagli(${alunno.riga}, '${alunno.nome.replace(/'/g, "\\'")}')" class="bg-indigo-50 text-indigo-700 hover:bg-indigo-100 px-3.5 py-2 rounded-xl text-xs sm:text-sm font-bold transition flex items-center gap-1 shadow-sm shrink-0 active:scale-95">
+                📋 Info
+              </button>
+            </div>
+            <div class="text-xs sm:text-sm text-gray-500 mt-1">
+              ${infoSecondaria}
+            </div>
+          </div>
+
+          <div class="flex gap-3">
+            <button onclick="registraStato(${alunno.riga}, 'P')" id="btn-p-${alunno.riga}" class="flex-1 py-3.5 sm:py-4 text-base font-bold rounded-xl transition active:scale-95 shadow-sm ${isPresente ? 'bg-green-600 text-white shadow-inner' : 'bg-gray-100 text-gray-700 hover:bg-green-100'}">
+              Presente
+            </button>
+            <button onclick="registraStato(${alunno.riga}, 'A')" id="btn-a-${alunno.riga}" class="flex-1 py-3.5 sm:py-4 text-base font-bold rounded-xl transition active:scale-95 shadow-sm ${isAssente ? 'bg-red-600 text-white shadow-inner' : 'bg-gray-100 text-gray-700 hover:bg-red-100'}">
+              Assente
+            </button>
+          </div>
+
+          <div>
+            <input type="text" id="nota-${alunno.riga}" value="${alunno.nota || ''}" placeholder="Aggiungi una nota..." onchange="salvaTestoNota(${alunno.riga})" class="w-full px-4 py-3 text-sm sm:text-base border border-gray-200 rounded-xl text-gray-700 bg-gray-50 focus:bg-white focus:outline-none focus:ring-1 focus:ring-blue-600">
+          </div>
+
+          ${htmlServizioExtra}
+        </div>
+      `;
+    }
+
+    function registraStato(riga, statoScelto) {
+      try {
+        var btnP = document.getElementById('btn-p-' + riga);
+        var btnA = document.getElementById('btn-a-' + riga);
+        
+        var isGiàPresente = btnP && btnP.classList.contains('bg-green-600');
+        var isGiàAssente = btnA && btnA.classList.contains('bg-red-600');
+
+        var nuovoStato = statoScelto;
+        if ((statoScelto === 'P' && isGiàPresente) || (statoScelto === 'A' && isGiàAssente)) {
+          nuovoStato = "";
         }
+
+        if (btnP && btnA) {
+          btnP.className = "flex-1 py-3.5 sm:py-4 text-base font-bold rounded-xl transition active:scale-95 shadow-sm bg-gray-100 text-gray-700 hover:bg-green-100";
+          btnA.className = "flex-1 py-3.5 sm:py-4 text-base font-bold rounded-xl transition active:scale-95 shadow-sm bg-gray-100 text-gray-700 hover:bg-red-100";
+
+          if (nuovoStato === 'P') {
+            btnP.className = "flex-1 py-3.5 sm:py-4 text-base font-bold rounded-xl transition active:scale-95 bg-green-600 text-white shadow-inner";
+          } else if (nuovoStato === 'A') {
+            btnA.className = "flex-1 py-3.5 sm:py-4 text-base font-bold rounded-xl transition active:scale-95 bg-red-600 text-white shadow-inner";
+          }
+        }
+
+        var checkServizio = document.getElementById('servizio-extra-' + riga);
+        var inputOre = document.getElementById('ore-extra-' + riga);
+        var labelServizio = document.getElementById('label-servizio-' + riga);
+
+        if (checkServizio && inputOre && labelServizio) {
+          if (nuovoStato === 'P') {
+            checkServizio.disabled = false;
+            inputOre.disabled = false;
+            labelServizio.classList.remove('opacity-50', 'cursor-not-allowed');
+            labelServizio.classList.add('cursor-pointer');
+            inputOre.classList.remove('opacity-50', 'cursor-not-allowed', 'bg-gray-100');
+            inputOre.classList.add('bg-gray-50');
+          } else {
+            checkServizio.disabled = true;
+            checkServizio.checked = false;
+            inputOre.disabled = true;
+            inputOre.value = "";
+            labelServizio.classList.add('opacity-50', 'cursor-not-allowed');
+            labelServizio.classList.remove('cursor-pointer');
+            inputOre.classList.add('opacity-50', 'cursor-not-allowed', 'bg-gray-100');
+            inputOre.classList.remove('bg-gray-50');
+
+            if (typeof elencoAlunniGlobale !== 'undefined' && Array.isArray(elencoAlunniGlobale)) {
+              var alunnoExtra = elencoAlunniGlobale.find(a => a.riga === riga);
+              if (alunnoExtra) {
+                alunnoExtra.servizioExtra = false;
+                alunnoExtra.oreExtra = "";
+              }
+            }
+          }
+        }
+
+        aggiornaStatoSalvataggio('salvataggio', 'Salvataggio...');
+
+        chiamaBackend('salvaPresenza', {
+          tab: tabSelezionatoCorrente,
+          riga: riga,
+          colonna: null,
+          stato: nuovoStato
+        })
+        .then(risultato => {
+          aggiornaStatoSalvataggio('ok', 'Sincronizzato');
+          var spanIngressi = document.getElementById('ingressi-' + riga);
+          if (spanIngressi && risultato && risultato.nuoviIngressi !== undefined) {
+            spanIngressi.innerText = risultato.nuoviIngressi;
+            if (typeof elencoAlunniGlobale !== 'undefined') {
+              var alunnoSync = elencoAlunniGlobale.find(a => a.riga === riga);
+              if (alunnoSync) alunnoSync.ingressi = risultato.nuoviIngressi;
+            }
+
+            var card = document.getElementById('card-' + riga);
+            if (card) {
+              if (typeof risultato.nuoviIngressi === 'number' && risultato.nuoviIngressi <= 0) {
+                card.classList.add('border-red-400', 'bg-red-50');
+              } else {
+                card.classList.remove('border-red-400', 'bg-red-50');
+              }
+            }
+          }
+          aggiornaBadgeRiepilogo();
+        })
+        .catch(err => {
+          aggiornaStatoSalvataggio('errore', 'Errore salvataggio');
+          alert("Errore durante il salvataggio: " + err.message);
+        });
+
+      } catch (e) {
+        alert("Errore imprevisto nell'interfaccia: " + e.message);
       }
-    })
-.withFailureHandler(function(err) {
-      console.error("Errore nel caricamento dei dati di timbratura:", err);
-      if (selOp) selOp.innerHTML = '<option value="">Errore caricamento operatori</option>';
-      if (selServ) selServ.innerHTML = '<option value="">Errore caricamento servizi</option>';
-    })
-    .ottieniDatiInizialiTimbratura(); 
-} // <-- Chiusura corretta della funzione precedente (es. caricaDatiInizialiTimbraturaCustom)
-</script>
-  
+    }
+
+    function selezionaTutti(statoForzato) {
+      if (!confirm(statoForzato === 'P' ? "Vuoi segnare TUTTI i bambini come presenti?" : "Vuoi azzerare tutte le presenze di oggi?")) {
+        return;
+      }
+      elencoAlunniGlobale.forEach(function(alunno) {
+        var btnP = document.getElementById('btn-p-' + alunno.riga);
+        var isPresente = btnP && btnP.classList.contains('bg-green-600');
+        if (statoForzato === 'P' && !isPresente) {
+          registraStato(alunno.riga, 'P');
+        } else if (statoForzato === '' && isPresente) {
+          registraStato(alunno.riga, '');
+        }
+      });
+    }
+
+    function salvaTestoNota(riga) {
+      var inputNota = document.getElementById('nota-' + riga);
+      if (!inputNota) return;
+      var testo = inputNota.value;
+
+      var alunnoTrovato = elencoAlunniGlobale.find(a => a.riga === riga);
+      if (alunnoTrovato) alunnoTrovato.nota = testo;
+
+      aggiornaStatoSalvataggio('salvataggio', 'Salvataggio nota...');
+      
+      chiamaBackend('salvaNota', {
+        tab: tabSelezionatoCorrente,
+        riga: riga,
+        testo: testo
+      })
+      .then(() => {
+        aggiornaStatoSalvataggio('ok', 'Sincronizzato');
+      })
+      .catch(err => {
+        aggiornaStatoSalvataggio('errore', 'Errore nota');
+        alert("Errore nel salvataggio della nota: " + err.message);
+      });
+    }
+
+    function salvaDatiExtra(riga) {
+      var checkServizio = document.getElementById('servizio-extra-' + riga);
+      var inputOre = document.getElementById('ore-extra-' + riga);
+      if (!checkServizio || !inputOre) return;
+
+      var servizioExtra = checkServizio.checked;
+      var oreExtra = inputOre.value;
+
+      var alunnoTrovato = elencoAlunniGlobale.find(a => a.riga === riga);
+      if (alunnoTrovato) {
+        alunnoTrovato.servizioExtra = servizioExtra;
+        alunnoTrovato.oreExtra = oreExtra;
+      }
+
+      aggiornaStatoSalvataggio('salvataggio', 'Salvataggio extra...');
+      
+      chiamaBackend('salvaExtra', {
+        tab: tabSelezionatoCorrente,
+        riga: riga,
+        attivo: servizioExtra,
+        ore: oreExtra
+      })
+      .then(() => {
+        aggiornaStatoSalvataggio('ok', 'Sincronizzato');
+      })
+      .catch(err => {
+        aggiornaStatoSalvataggio('errore', 'Errore extra');
+        alert("Errore nel salvataggio dei dati extra: " + err.message);
+      });
+    }
+
+    function apriStorico(riga, nomeBambino) {
+      var modale = document.getElementById('modaleStorico');
+      var titolo = document.getElementById('modaleTitolo');
+      var contenuto = document.getElementById('modaleContenuto');
+
+      titolo.innerText = "Storico: " + nomeBambino;
+      contenuto.innerHTML = '<div class="text-center text-blue-600 py-6 text-base">Caricamento presenze passate...</div>';
+      modale.classList.remove('hidden');
+
+      chiamaBackend('ottieniStoricoAlunno', { tab: tabSelezionatoCorrente, riga: riga })
+        .then(risultato => {
+          if (!risultato.giorni || risultato.giorni.length === 0) {
+            contenuto.innerHTML = '<div class="text-center text-gray-500 py-6 text-sm">Nessuna presenza registrata in precedenza per questo mese.</div>';
+            return;
+          }
+
+          function formattaData(dataStringa) {
+            try {
+              var d = new Date(dataStringa);
+              if (isNaN(d.getTime())) return dataStringa;
+              return d.toLocaleDateString('it-IT', { weekday: 'long', day: 'numeric', month: 'long', year: 'numeric' });
+            } catch (e) {
+              return dataStringa;
+            }
+          }
+
+          var html = '<div class="text-sm font-semibold text-gray-500 mb-2.5">Iscrizione: <span class="text-gray-800">' + risultato.tipo + '</span> (Residui: <span class="text-gray-800 font-bold">' + risultato.ingressi + '</span>)</div>';
+          html += '<div class="divide-y divide-gray-100 border rounded-2xl overflow-hidden">';
+          
+          risultato.giorni.forEach(function(item) {
+            var coloreStato = item.stato === 'Presente' ? 'text-green-600 bg-green-50' : 'text-red-600 bg-red-50';
+            var dataPulita = formattaData(item.data);
+            dataPulita = dataPulita.charAt(0).toUpperCase() + dataPulita.slice(1);
+
+            html += `
+              <div class="flex justify-between items-center p-3.5 bg-white text-sm">
+                <span class="font-medium text-gray-700">${dataPulita}</span>
+                <span class="px-3 py-1 rounded-full text-xs font-bold ${coloreStato}">${item.stato}</span>
+              </div>
+            `;
+          });
+          html += '</div>';
+          contenuto.innerHTML = html;
+        })
+        .catch(err => {
+          contenuto.innerHTML = '<div class="text-center text-red-500 py-4 text-sm">Errore nel caricamento dello storico: ' + err.message + '</div>';
+        });
+    }
+
+    function chiudiStorico() {
+      var modale = document.getElementById('modaleStorico');
+      modale.classList.add('hidden');
+    }
+
+    function apriDettagli(rigaMaster, nomeBambino) {
+      var modale = document.getElementById('modaleDettagli');
+      var titolo = document.getElementById('dettagliTitolo');
+      var contenuto = document.getElementById('dettagliContenuto');
+
+      titolo.innerText = "Scheda Sicurezza: " + nomeBambino;
+      contenuto.innerHTML = '<div class="text-center text-blue-600 py-6 text-base">Caricamento informazioni in corso...</div>';
+      modale.classList.remove('hidden');
+
+      chiamaBackend('ottieniDettagliAlunno', { tab: tabSelezionatoCorrente, riga: rigaMaster })
+        .then(dati => {
+          if (dati.errore) {
+            contenuto.innerHTML = '<div class="text-center text-red-500 py-4 text-sm">' + dati.errore + '</div>';
+            return;
+          }
+
+          var html = `
+            <div class="space-y-3.5">
+              <div class="bg-gray-50 p-4 rounded-2xl border">
+                <div class="text-xs font-bold text-gray-400 uppercase tracking-wider mb-1">Contatti Genitori</div>
+                <div class="text-sm text-gray-800"><strong>📧 Email:</strong> ${dati.email || '-'}</div>
+                <div class="text-sm text-gray-800 mt-1"><strong>📞 Tel:</strong> ${dati.telefono || '-'}</div>
+              </div>
+
+              <div class="bg-red-50 p-4 rounded-2xl border border-red-100">
+                <div class="text-xs font-bold text-red-400 uppercase tracking-wider mb-1">Allergie e Salute</div>
+                <div class="text-sm text-red-900 font-medium">⚠️ ${dati.allergie || 'Nessuna segnalata'}</div>
+              </div>
+
+              <div class="bg-amber-50 p-4 rounded-2xl border border-amber-100">
+                <div class="text-xs font-bold text-amber-500 uppercase tracking-wider mb-1">Bisogni Speciali</div>
+                <div class="text-sm text-amber-900">${dati.bisogniSpeciali || 'Nessuno'}</div>
+              </div>
+
+              <div class="bg-blue-50 p-4 rounded-2xl border border-blue-100">
+                <div class="text-xs font-bold text-blue-400 uppercase tracking-wider mb-1">Uscita e Deleghe</div>
+                <div class="text-sm text-blue-900 mb-1"><strong>🚪 Uscita autonoma:</strong> ${dati.uscitaAutonoma || '-'}</div>
+                <div class="text-sm text-blue-900"><strong>👥 Persone delegate:</strong><br>${dati.deleghe || '-'}</div>
+              </div>
+            </div>
+          `;
+          contenuto.innerHTML = html;
+        })
+        .catch(err => {
+          contenuto.innerHTML = '<div class="text-center text-red-500 py-4 text-sm">Errore nel caricamento dettagli: ' + err.message + '</div>';
+        });
+    }
+  </script>
+</body>
+</html>
