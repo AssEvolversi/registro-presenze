@@ -145,49 +145,27 @@
     let tabSelezionatoCorrente = "";
     let elencoAlunniGlobale = [];
     let filtroStatoAttivo = 'tutti';
-
-    // Funzione centralizzata per comunicare con il backend Apps Script via POST
+    
     // Funzione universale per comunicare con il backend Google Apps Script
   function chiamaBackend(azione, payload = {}) {
     payload.azione = azione;
     
-    // Se l'azione richiede il passaggio di parametri complessi o è un salvataggio, usa POST
-    // Altrimenti usa GET (ottimizzato per evitare i blocchi CORS sui dati in sola lettura)
-    const usaPost = (azione === 'ottieniDatiRegistro' || azione === 'salvaPresenza' || azione === 'salvaExtra' || azione === 'salvaNota');
+    // Serializziamo l'intero payload in un parametro JSON per farlo digerire a doGet(e)
+    const parametri = new URLSearchParams();
+    parametri.append('data', JSON.stringify(payload));
 
-    if (usaPost) {
-      return fetch(URL_WEB_APP, {
-        method: 'POST',
-        body: JSON.stringify(payload)
-      })
-      .then(response => {
-        if (!response.ok) throw new Error('Errore di rete dal server');
-        return response.json();
-      })
-      .then(risposta => {
-        if (risposta && risposta.errore) throw new Error(risposta.errore);
-        return risposta;
-      });
-    } else {
-      // Chiamata GET per letture semplici (es. ottieniElencoSedi)
-      const parametri = new URLSearchParams();
-      for (var key in payload) {
-        parametri.append(key, payload[key]);
-      }
-
-      return fetch(`${URL_WEB_APP}?${parametri.toString()}`, {
+    return fetch(`${URL_WEB_APP}?${parametri.toString()}`, {
         method: 'GET'
-      })
-      .then(response => {
+    })
+    .then(response => {
         if (!response.ok) throw new Error('Errore di rete dal server');
         return response.json();
-      })
-      .then(risposta => {
+    })
+    .then(risposta => {
         if (risposta && risposta.errore) throw new Error(risposta.errore);
         return risposta;
-      });
-    }
-  }
+    });
+}
     function apriSezione(tipo) {
       var home = document.getElementById('schermataHome');
       var reg = document.getElementById('wrapperRegistro');
