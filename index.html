@@ -396,65 +396,60 @@
     }
   }
 
-  function inviaTimbratura() {
-    var divMsg = document.getElementById("messaggioTimbratura");
-    
-    var operatoreEl = document.getElementById("selectOperatore");
-    var servizioEl = document.getElementById("selectServizio");
-    
-    if (!operatoreEl || !servizioEl) {
-      if (divMsg) divMsg.innerHTML = '<div class="p-3 rounded-xl bg-red-50 text-red-800 text-sm font-semibold">Errore critico: campi modulo non trovati.</div>';
-      return;
-    }
-
-    var operatore = operatoreEl.value;
-    var servizio = servizioEl.value;
-    
-    if (!operatore || !servizio) {
-      if (divMsg) divMsg.innerHTML = '<div class="p-3 rounded-xl bg-amber-50 text-amber-800 text-sm font-semibold">Seleziona sia l\'operatore che il servizio!</div>';
-      return;
-    }
-
-    var tipo = "ENTRATA";
-    var tipoEl = document.getElementById("valoreTipoTimbratura");
-    if (tipoEl) {
-      tipo = tipoEl.value || "ENTRATA";
-    }
-
-    var noteEl = document.getElementById("inputNote");
-    var note = (noteEl && noteEl.value) ? noteEl.value : "";
-    
-    if (divMsg) {
-      divMsg.innerHTML = '<div class="p-3 rounded-xl bg-blue-50 text-blue-800 text-sm font-semibold animate-pulse">Registrazione in corso...</div>';
-    }
-    
-    if (typeof google !== 'undefined' && google.script && google.script.run) {
-      google.script.run
-        .withSuccessHandler(function(risultato) {
-          if (divMsg) {
-            divMsg.innerHTML = '<div class="p-3 rounded-xl bg-green-50 text-green-800 text-sm font-semibold">' + (risultato && risultato.messaggio ? risultato.messaggio : "Registrato con successo!") + '</div>';
-          }
-          if (noteEl) noteEl.value = "";
-          // Aggiorna lo storico immediatamente dopo il successo
-          caricaStoricoOperatore(operatore);
-          setTimeout(function() { 
-            if (divMsg) divMsg.innerHTML = ""; 
-          }, 4000);
-        })
-        .withFailureHandler(function(err) {
-          if (divMsg) {
-            divMsg.innerHTML = '<div class="p-3 rounded-xl bg-red-50 text-red-800 text-sm font-semibold">Errore: ' + (err && err.message ? err.message : err) + '</div>';
-          }
-        })
-        .salvaTimbratura(operatore, servizio, tipo, note);
-    } else {
-      setTimeout(function() {
-        if (divMsg) {
-          divMsg.innerHTML = '<div class="p-3 rounded-xl bg-green-50 text-green-800 text-sm font-semibold">Timbratura di test simulata con successo!</div>';
-        }
-      }, 1000);
-    }
+function inviaTimbratura() {
+  var divMsg = document.getElementById("messaggioTimbratura");
+  
+  var operatoreEl = document.getElementById("selectOperatore");
+  var servizioEl = document.getElementById("selectServizio");
+  
+  if (!operatoreEl || !servizioEl) {
+    if (divMsg) divMsg.innerHTML = '<div class="p-3 rounded-xl bg-red-50 text-red-800 text-sm font-semibold">Errore critico: campi modulo non trovati.</div>';
+    return;
   }
+
+  var operatore = operatoreEl.value;
+  var servizio = servizioEl.value;
+  
+  if (!operatore || !servizio) {
+    if (divMsg) divMsg.innerHTML = '<div class="p-3 rounded-xl bg-amber-50 text-amber-800 text-sm font-semibold">Seleziona sia l\'operatore che il servizio!</div>';
+    return;
+  }
+
+  var tipo = "ENTRATA";
+  var tipoEl = document.getElementById("valoreTipoTimbratura");
+  if (tipoEl) {
+    tipo = tipoEl.value || "ENTRATA";
+  }
+
+  var noteEl = document.getElementById("inputNote");
+  var note = (noteEl && noteEl.value) ? noteEl.value : "";
+  
+  if (divMsg) {
+    divMsg.innerHTML = '<div class="p-3 rounded-xl bg-blue-50 text-blue-800 text-sm font-semibold animate-pulse">Registrazione in corso...</div>';
+  }
+  
+  chiamaBackend('salvaTimbratura', { 
+    operatore: operatore, 
+    servizio: servizio, 
+    tipo: tipo, 
+    note: note 
+  })
+    .then(function(risultato) {
+      if (divMsg) {
+        divMsg.innerHTML = '<div class="p-3 rounded-xl bg-green-50 text-green-800 text-sm font-semibold">' + (risultato && risultato.messaggio ? risultato.messaggio : "Registrato con successo!") + '</div>';
+      }
+      if (noteEl) noteEl.value = "";
+      caricaStoricoOperatore(operatore);
+      setTimeout(function() { 
+        if (divMsg) divMsg.innerHTML = ""; 
+      }, 4000);
+    })
+    .catch(function(err) {
+      if (divMsg) {
+        divMsg.innerHTML = '<div class="p-3 rounded-xl bg-red-50 text-red-800 text-sm font-semibold">Errore: ' + (err && err.message ? err.message : err) + '</div>';
+      }
+    });
+}
 
   function mostraErrore(err) {
     console.error("Errore di caricamento dati:", err);
