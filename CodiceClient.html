@@ -147,24 +147,47 @@
     let filtroStatoAttivo = 'tutti';
 
     // Funzione centralizzata per comunicare con il backend Apps Script via POST
-    function chiamaBackend(azione, dati = {}) {
+    // Funzione universale per comunicare con il backend Google Apps Script
+  function chiamaBackend(azione, payload = {}) {
+    payload.azione = azione;
+    
+    // Se l'azione richiede il passaggio di parametri complessi o è un salvataggio, usa POST
+    // Altrimenti usa GET (ottimizzato per evitare i blocchi CORS sui dati in sola lettura)
+    const usaPost = (azione === 'ottieniDatiRegistro' || azione === 'salvaPresenza' || azione === 'salvaExtra' || azione === 'salvaNota');
+
+    if (usaPost) {
       return fetch(URL_WEB_APP, {
         method: 'POST',
-        mode: 'cors',
-        headers: { 'Content-Type': 'text/plain;charset=utf-8' },
-        body: JSON.stringify({ azione: azione, ...dati })
+        body: JSON.stringify(payload)
       })
-      .then(response => response.json())
-      .then(data => {
-        if (data.status === 'error') throw new Error(data.message);
-        return data;
+      .then(response => {
+        if (!response.ok) throw new Error('Errore di rete dal server');
+        return response.json();
+      })
+      .then(risposta => {
+        if (risposta && risposta.errore) throw new Error(risposta.errore);
+        return risposta;
+      });
+    } else {
+      // Chiamata GET per letture semplici (es. getOperatori, ottieniElencoSedi)
+      const parametri = new URLSearchParams();
+      for (var key in payload) {
+        parametri.append(key, payload[key]);
+      }
+
+      return fetch(`${URL_WEB_APP}?${parametri.toString()}`, {
+        method: 'GET'
+      })
+      .then(response => {
+        if (!response.ok) throw new Error('Errore di rete dal server');
+        return response.json();
+      })
+      .then(risposta => {
+        if (risposta && risposta.errore) throw new Error(risposta.errore);
+        return risposta;
       });
     }
-
-    window.onload = function() {
-      console.log("Pagina caricata correttamente. In attesa di selezione utente.");
-    };
-
+  }
     function apriSezione(tipo) {
       var home = document.getElementById('schermataHome');
       var reg = document.getElementById('wrapperRegistro');
