@@ -316,11 +316,12 @@
 
       console.log("Sto per chiamare il backend...");
       chiamaBackend('ottieniDatiRegistro', { tab: tabSelezionatoCorrente })
-          .then(risposta => {
-        console.log("Risposta grezza dal backend:", risposta); // <-- AGGIUNGI QUESTO
-        if (risposta && risposta.errore) throw new Error(risposta.errore);
-        return risposta;
-    })
+        .then(risposta => {
+          console.log("Risposta grezza dal backend:", risposta);
+          if (risposta && risposta.errore) throw new Error(risposta.errore);
+          return risposta;
+        })
+        .then(risposta => {
           if (risposta.errore) {
             area.innerHTML = '<div class="max-w-4xl mx-auto text-center text-red-500 mt-12 text-lg">' + risposta.errore + '</div>';
             return;
