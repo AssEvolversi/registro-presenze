@@ -96,8 +96,8 @@ function popolaMenuServizi(servizi) {
 
     griglia.innerHTML = '<div class="p-4 rounded-2xl border-2 border-dashed border-blue-200 bg-white text-center text-blue-500 text-sm col-span-full animate-pulse">Caricamento sedi in corso...</div>';
 
-    google.script.run
-      .withSuccessHandler(function(listaSedi) {
+    chiamaBackend('ottieniElencoSedi')
+      .then(listaSedi => {
         console.log("Lista sedi ricevuta dal server:", listaSedi);
         griglia.innerHTML = '';
 
@@ -146,13 +146,11 @@ function popolaMenuServizi(servizi) {
           griglia.appendChild(cardDiv);
         });
       })
-      .withFailureHandler(function(err) {
+      .catch(err => {
         console.error("Fallimento chiamata sedi:", err);
         griglia.innerHTML = '<div class="p-4 rounded-2xl bg-red-50 text-center text-red-500 text-sm col-span-full">Errore caricamento: ' + err.message + '</div>';
-      })
-      .ottieniElencoSedi();
+      });
   }
-
   function formattaNomeTab(nomeTab) {
     var pulito = nomeTab.replace("PRESENZE_", "");
     pulito = pulito.replace(/[-_]/g, " ");
@@ -172,28 +170,8 @@ function popolaMenuServizi(servizi) {
     return paroleFormattate.join(" ");
   }
 
-  function selezionaServizioDaGriglia(nomeTab, nomeFormattato) {
-    tabSelezionatoCorrente = nomeTab;
-    document.getElementById('grigliaSedi').classList.add('hidden');
-    document.getElementById('pannelloAzioni').classList.remove('hidden');
-    document.getElementById('titoloServizioSelezionato').innerText = "Servizio attivo: " + nomeFormattato;
-    document.getElementById('footerRiepilogo').classList.remove('hidden');
-    document.getElementById('inputRicerca').value = "";
-    filtroStatoAttivo = 'tutti';
-    aggiornaStiliFiltriRapidi();
-
-    var area = document.getElementById('areaContenuto');
-    area.innerHTML = `
-      <div class="max-w-4xl mx-auto space-y-4 animate-pulse-slow mt-4">
-        <div class="h-6 bg-gray-200 rounded-xl w-48 ml-auto mb-4"></div>
-        <div class="h-24 bg-gray-200 rounded-2xl w-full"></div>
-        <div class="h-24 bg-gray-200 rounded-2xl w-full"></div>
-        <div class="h-24 bg-gray-200 rounded-2xl w-full"></div>
-      </div>
-    `;
-
-    google.script.run
-      .withSuccessHandler(function(risposta) {
+  chiamaBackend('ottieniDatiRegistro', { tab: tabSelezionatoCorrente })
+      .then(risposta => {
         if (risposta.errore) {
           area.innerHTML = '<div class="max-w-4xl mx-auto text-center text-red-500 mt-12 text-lg">' + risposta.errore + '</div>';
           return;
@@ -207,13 +185,10 @@ function popolaMenuServizi(servizi) {
         applicaFiltriComplessivi(risposta.dataOdierna, risposta.isDonMilaniIntegrazione);
         aggiornaStatoSalvataggio('ok', 'Sincronizzato');
       })
-      .withFailureHandler(function(err) {
+      .catch(err => {
         area.innerHTML = '<div class="max-w-4xl mx-auto text-center text-red-500 mt-12 text-lg">Errore nel caricamento: ' + err.message + '</div>';
         aggiornaStatoSalvataggio('errore', 'Errore di rete');
-      })
-      .ottieniDatiRegistro(tabSelezionatoCorrente);
-  }
-
+      });
   function tornaAllaSelezioneSedi() {
     document.getElementById('grigliaSedi').classList.remove('hidden');
     document.getElementById('pannelloAzioni').classList.add('hidden');
