@@ -560,5 +560,33 @@
         });
       }
     </script>
+    <script>
+  // Sostituisci questo URL con quello che hai copiato quando hai pubblicato la Web App su Apps Script
+  const URL_WEB_APP = "https://assevolversi.github.io/registro-presenze/";
+
+  // Funzione universale per caricare i dati da Google Sheets
+  function chiamaBackend(azione, payload = {}) {
+    payload.azione = azione;
+    
+    return fetch(URL_WEB_APP, {
+      method: 'POST',
+      body: JSON.stringify(payload)
+    })
+    .then(response => response.json())
+    .catch(error => {
+      console.error("Errore di comunicazione con il backend:", error);
+    });
+  }
+
+  // Esempio: Appena si apre la sezione timbratura, carichiamo gli operatori
+  function caricaDatiInizialiTimbratura() {
+    console.p("Richiesta operatori in corso...");
+    chiamaBackend('getOperatori')
+      .then(data => {
+        // Qui inserisci la logica per popolare la tendina o la lista degli operatori
+        console.log("Operatori ricevuti:", data);
+      });
+  }
+</script>
   </body>
 </html>
