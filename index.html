@@ -89,7 +89,7 @@
       </div>
     </section>
 
-    <!-- Wrapper Registro Presenze (Sedi e Servizi formattati) -->
+    <!-- Wrapper Registro Presenze -->
     <section id="wrapperRegistro" class="hidden space-y-4">
       <button onclick="tornaAllaHome()" class="text-blue-600 text-sm font-semibold flex items-center gap-2 mb-2 hover:translate-x-[-4px] transition transform cursor-pointer">
         <i class="fa-solid fa-arrow-left"></i> Torna alla home
@@ -111,7 +111,7 @@
       </div>
     </section>
 
-    <!-- Wrapper Sede Specifica (Elenco iscritti con Presenze) -->
+    <!-- Wrapper Sede Specifica -->
     <section id="wrapperSedeSpecifica" class="hidden space-y-4">
       <div class="flex justify-between items-center mb-2">
         <button onclick="apriRegistroPresenze()" class="text-blue-600 text-sm font-semibold flex items-center gap-2 hover:translate-x-[-4px] transition transform cursor-pointer">
@@ -130,7 +130,7 @@
           <span id="dataOdiernaBadge" class="text-xs bg-blue-50 text-blue-600 font-bold px-3 py-1 rounded-full w-fit">Data odierna</span>
         </div>
 
-        <!-- Barra di Riepilogo (Presenti, Assenti, Da Segnare) -->
+        <!-- Barra di Riepilogo -->
         <div class="grid grid-cols-3 gap-3 text-center">
           <div class="bg-emerald-50 border border-emerald-200/60 p-3 rounded-2xl shadow-inner">
             <span class="block text-xs font-bold text-emerald-600 uppercase tracking-wide">Presenti</span>
@@ -363,7 +363,6 @@
             document.getElementById('dataOdiernaBadge').innerText = `Data odierna: ${data.dataOdierna}`;
           }
 
-          // Ordina alfabeticamente per cognome (l'ultima parola della stringa Nome Cognome)
           listaAlunniGlobale.sort((a, b) => {
             let cognomeA = estraiCognome(a.nome);
             let cognomeB = estraiCognome(b.nome);
@@ -414,29 +413,49 @@
         var isPresente = (statoNorm === "P" || statoNorm === "PRESENTE");
         var isAssente = (statoNorm === "A" || statoNorm === "ASSENTE");
 
+        // Mostra la tipologia iscrizione solo se corrisponde agli ingressi o se il tipo include ingressi/pacchetto (escludendo i fissi puri)
+        var tipoLower = (alunno.tipo || "").toLowerCase();
+        var mostraTipologiaIngressi = tipoLower.includes("ingresso") || tipoLower.includes("pacchetto") || tipoLower.includes("carnet") || !tipoLower.includes("fisso");
+
         var item = document.createElement('div');
-        item.className = "bg-white/90 p-4 rounded-2xl border border-slate-200/60 shadow-sm flex flex-col sm:flex-row sm:items-center justify-between gap-3 transition";
+        item.className = "bg-white/90 p-4 rounded-2xl border border-slate-200/60 shadow-sm flex flex-col gap-3 transition";
         item.id = `iscritto-row-${alunno.riga}`;
 
         item.innerHTML = `
-          <div class="flex items-center gap-3">
-            <div class="w-10 h-10 rounded-xl bg-blue-50 text-blue-600 flex items-center justify-center font-bold text-xs shadow-inner shrink-0">
-              ID ${alunno.id || '-'}
+          <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+            <div class="flex items-center gap-3">
+              <div class="w-10 h-10 rounded-xl bg-blue-50 text-blue-600 flex items-center justify-center font-bold text-base shadow-inner shrink-0">
+                <i class="fa-solid fa-child"></i>
+              </div>
+              <div>
+                <span class="font-bold text-slate-800 text-base block">${alunno.nome}</span>
+                <span class="text-xs text-slate-400">
+                  ${mostraTipologiaIngressi ? `Tipologia: <strong class="text-slate-600">${alunno.tipo}</strong> | Ingressi residui: <span id="ingressi-val-${alunno.riga}" class="font-bold text-blue-600">${alunno.ingressi}</span>` : ''}
+                </span>
+              </div>
             </div>
-            <div>
-              <span class="font-bold text-slate-800 block">${alunno.nome}</span>
-              <span class="text-xs text-slate-400">Tipo: ${alunno.tipo || 'Standard'} | Ingressi: ${alunno.ingressi !== undefined ? alunno.ingressi : '-'}</span>
+            <div class="flex items-center gap-2 self-end sm:self-center">
+              <button onclick="impostaStatoPresenza(${alunno.riga}, 'P')" 
+                class="btn-presente-${alunno.riga} px-4 py-2 rounded-xl text-xs font-bold transition shadow-sm cursor-pointer ${isPresente ? 'bg-emerald-600 text-white shadow-emerald-200 scale-105' : 'bg-slate-100 text-slate-600 hover:bg-emerald-100 hover:text-emerald-700'}">
+                <i class="fa-solid fa-check mr-1"></i> Presente
+              </button>
+              <button onclick="impostaStatoPresenza(${alunno.riga}, 'A')" 
+                class="btn-assente-${alunno.riga} px-4 py-2 rounded-xl text-xs font-bold transition shadow-sm cursor-pointer ${isAssente ? 'bg-rose-600 text-white shadow-rose-200 scale-105' : 'bg-slate-100 text-slate-600 hover:bg-rose-100 hover:text-rose-700'}">
+                <i class="fa-solid fa-xmark mr-1"></i> Assente
+              </button>
+              <button onclick="toggleInfo(${alunno.riga})" 
+                class="bg-slate-100 hover:bg-blue-100 text-slate-600 hover:text-blue-600 p-2.5 rounded-xl text-xs font-bold transition shadow-sm cursor-pointer" title="Informazioni utente">
+                <i class="fa-solid fa-circle-info"></i>
+              </button>
             </div>
           </div>
-          <div class="flex items-center gap-2 self-end sm:self-center">
-            <button onclick="impostaStatoPresenza(${alunno.riga}, 'P')" 
-              class="btn-presente-${alunno.riga} px-4 py-2 rounded-xl text-xs font-bold transition shadow-sm cursor-pointer ${isPresente ? 'bg-emerald-600 text-white shadow-emerald-200 scale-105' : 'bg-slate-100 text-slate-600 hover:bg-emerald-100 hover:text-emerald-700'}">
-              <i class="fa-solid fa-check mr-1"></i> Presente
-            </button>
-            <button onclick="impostaStatoPresenza(${alunno.riga}, 'A')" 
-              class="btn-assente-${alunno.riga} px-4 py-2 rounded-xl text-xs font-bold transition shadow-sm cursor-pointer ${isAssente ? 'bg-rose-600 text-white shadow-rose-200 scale-105' : 'bg-slate-100 text-slate-600 hover:bg-rose-100 hover:text-rose-700'}">
-              <i class="fa-solid fa-xmark mr-1"></i> Assente
-            </button>
+
+          <!-- Box Info Espandibile -->
+          <div id="info-box-${alunno.riga}" class="hidden mt-2 pt-3 border-t border-slate-100 text-xs text-slate-600 grid grid-cols-1 sm:grid-cols-2 gap-2 bg-slate-50 p-3 rounded-xl">
+            <div><strong class="text-slate-700">Email:</strong> ${alunno.email || '-'}</div>
+            <div><strong class="text-slate-700">Cellulare:</strong> ${alunno.cellulare || '-'}</div>
+            <div><strong class="text-slate-700">Deleghe:</strong> ${alunno.deleghe || '-'}</div>
+            <div><strong class="text-slate-700">Uscita Autonoma:</strong> ${alunno.uscitaAutonoma || '-'}</div>
           </div>
         `;
         ul.appendChild(item);
@@ -445,41 +464,63 @@
       container.appendChild(ul);
     }
 
+    function toggleInfo(riga) {
+      var box = document.getElementById(`info-box-${riga}`);
+      if (box) {
+        box.classList.toggle('hidden');
+      }
+    }
+
     function impostaStatoPresenza(riga, nuovoStato) {
       var alunno = listaAlunniGlobale.find(a => a.riga === riga);
       if (!alunno) return;
 
-      // Se clicca lo stesso stato già attivo, lo azzera
+      var eraPresente = (alunno.stato === "P" || alunno.stato === "PRESENTE");
+
       if (alunno.stato === nuovoStato) {
         alunno.stato = "";
       } else {
         alunno.stato = nuovoStato;
       }
 
-      // Aggiorna visivamente l'elemento nella lista
-      aggiornaUIElementoSingolo(riga, alunno.stato);
+      var oraPresente = (alunno.stato === "P" || alunno.stato === "PRESENTE");
+
+      // Scala automaticamente in locale se passa da non presente a presente
+      var tipoLower = (alunno.tipo || "").toLowerCase();
+      var gestisceIngressi = tipoLower.includes("ingresso") || tipoLower.includes("pacchetto") || tipoLower.includes("carnet") || !tipoLower.includes("fisso");
+
+      if (gestisceIngressi && !eraPresente && oraPresente) {
+        alunno.ingressi = Math.max(0, Number(alunno.ingressi || 0) - 1);
+      } else if (gestisceIngressi && eraPresente && !oraPresente) {
+        alunno.ingressi = Number(alunno.ingressi || 0) + 1;
+      }
+
+      // Aggiorna UI elemento singolo e contatore ingressi
+      aggiornaUIElementoSingolo(riga, alunno.stato, alunno.ingressi);
       aggiornaRiepilogoStatistiche();
 
-      // Invia la chiamata al backend per salvare la presenza in tempo reale sulla cella del giorno
+      // Invia la chiamata al backend per salvare la presenza in tempo reale
       chiamaBackend('salvaPresenza', {
         tab: sedeSelezionataCorrente.originale,
         riga: riga,
         colonna: colonnaGiornoGlobale,
         stato: alunno.stato
       }).then(res => {
-        // Se il backend restituisce nuovi ingressi aggiornati (per ingressi residui), aggiorna l'oggetto locale
         if (res && res.nuoviIngressi !== undefined && res.nuoviIngressi !== "-") {
           alunno.ingressi = res.nuoviIngressi;
-          alunno.valoreD = res.nuoviIngressi;
+          var spanIngressi = document.getElementById(`ingressi-val-${riga}`);
+          if (spanIngressi) spanIngressi.innerText = res.nuoviIngressi;
         }
       }).catch(err => {
         console.error("Errore salvataggio presenza:", err);
       });
     }
 
-    function aggiornaUIElementoSingolo(riga, stato) {
+    function aggiornaUIElementoSingolo(riga, stato, ingressi Aggiornati) {
       var btnP = document.querySelector(`.btn-presente-${riga}`);
       var btnA = document.querySelector(`.btn-assente-${riga}`);
+      var spanIngressi = document.getElementById(`ingressi-val-${riga}`);
+      
       if (!btnP || !btnA) return;
 
       var isPresente = (stato === "P" || stato === "PRESENTE");
@@ -487,6 +528,10 @@
 
       btnP.className = `btn-presente-${riga} px-4 py-2 rounded-xl text-xs font-bold transition shadow-sm cursor-pointer ${isPresente ? 'bg-emerald-600 text-white shadow-emerald-200 scale-105' : 'bg-slate-100 text-slate-600 hover:bg-emerald-100 hover:text-emerald-700'}`;
       btnA.className = `btn-assente-${riga} px-4 py-2 rounded-xl text-xs font-bold transition shadow-sm cursor-pointer ${isAssente ? 'bg-rose-600 text-white shadow-rose-200 scale-105' : 'bg-slate-100 text-slate-600 hover:bg-rose-100 hover:text-rose-700'}`;
+      
+      if (spanIngressi && ingressiAggiornati !== undefined) {
+        spanIngressi.innerText = ingressiAggiornati;
+      }
     }
 
     function aggiornaRiepilogoStatistiche() {
@@ -511,9 +556,8 @@
 
       listaAlunniGlobale.forEach(a => {
         a.stato = statoForzato;
-        aggiornaUIElementoSingolo(a.riga, statoForzato);
+        aggiornaUIElementoSingolo(a.riga, statoForzato, a.ingressi);
         
-        // Sincronizza sul backend ogni singola variazione di massa
         chiamaBackend('salvaPresenza', {
           tab: sedeSelezionataCorrente.originale,
           riga: a.riga,
@@ -526,7 +570,7 @@
     }
 
     document.addEventListener("DOMContentLoaded", function() {
-      console.log("Interfaccia Registro Presenze Avanzata pronta");
+      console.log("Interfaccia Registro Presenze Evoluta e Completa");
     });
   </script>
 </body>
