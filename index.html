@@ -1388,44 +1388,36 @@ function inviaTimbratura() {
       }
     </script>
     <script>
-  // Sostituisci questo URL con quello che hai copiato quando hai pubblicato la Web App su Apps Script
-  const URL_WEB_APP = "https://script.google.com/macros/s/AKfycbySXKKSHEbvS1fRRR1Fh9foXKaSFjzN1hPlzP_wpUQOalclx9DDzUf2wTgU9qxQcIML/exec";
-      
- // Funzione universale per leggere i dati da Google Sheets (usa GET per evitare i blocchi CORS)
-  function chiamaBackend(azione, payload = {}) {
-    payload.azione = azione;
-    
-    // Trasforma il payload in parametri URL per una chiamata GET sicura
-    const parametri = new URLSearchParams();
-    for (key in payload) {
-      parametri.append(key, payload[key]);
-    }
+ <script>
+      // Sostituisci questo URL con quello che hai copiato quando hai pubblicato la Web App su Apps Script
+      const URL_WEB_APP = "https://script.google.com/macros/s/AKfycbySXKKSHEbvS1fRRR1Fh9foXKaSFjzN1hPlzP_wpUQOalclx9DDzUf2wTgU9qxQcIML/exec";
+          
+      // Funzione universale per leggere i dati da Google Sheets (usa GET per evitare i blocchi CORS)
+      function chiamaBackend(azione, payload = {}) {
+        payload.azione = azione;
+        
+        // Trasforma il payload in parametri URL per una chiamata GET sicura
+        const parametri = new URLSearchParams();
+        for (let key in payload) {
+          parametri.append(key, payload[key]);
+        }
 
-    return fetch(`${URL_WEB_APP}?${parametri.toString()}`, {
-      method: 'GET'
-    })
-    .then(response => {
-      if (!response.ok) {
-        throw new Error('Errore di rete dal server');
+        return fetch(`${URL_WEB_APP}?${parametri.toString()}`, {
+          method: 'GET'
+        })
+        .then(response => {
+          if (!response.ok) {
+            throw new Error('Errore di rete dal server');
+          }
+          return response.json();
+        })
+        .catch(error => {
+          console.error("Errore di comunicazione con il backend:", error);
+          return null;
+        });
       }
-      return response.json();
-    })
-    .catch(error => {
-      console.error("Errore di comunicazione con il backend:", error);
-      return null;
-    });
-  }
-  // Esempio: Appena si apre la sezione timbratura, carichiamo gli operatori
- // Chiamata al backend tramite fetch per i dati di timbratura
-  chiamaBackend('ottieniDatiInizialiTimbratura')
-    .then(function(dati) {
-      popolaMenu(dati);
-    })
-    .catch(function(err) {
-      console.error("Errore nel recupero dati iniziali:", err);
-      mostraErrore(err);
-    });
-const QUEUE_KEY = 'evolversi_offline_queue';
+
+      const QUEUE_KEY = 'evolversi_offline_queue';
 
 function salvaInCodaLocale(dati) {
   let coda = JSON.parse(localStorage.getItem(QUEUE_KEY)) || [];
