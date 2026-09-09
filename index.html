@@ -184,8 +184,7 @@
 
   </main>
 
-  <!-- Blocco JavaScript -->
- <!-- Blocco JavaScript -->
+ <!-- Blocco JavaScript Completo con Controlli Extra In-line per Iqbal Masih -->
   <script>
     const URL_WEB_APP = "https://script.google.com/macros/s/AKfycbxfB-OYCrKJMJI6cNamkOpNuDxCfjrAq4erhdL9FvcWXMmqPUjCtk8aGiGwbgS-el7r/exec";
     let sedeSelezionataCorrente = null;
@@ -369,7 +368,7 @@
             return cognomeA.localeCompare(cognomeB);
           });
 
-          renderizzaIscritti(listaAlunniGlobale);
+          renderizzaListaHTML(listaAlunniGlobale);
         })
         .catch(err => {
           container.innerHTML = `<p class="text-rose-400 text-sm py-4 text-center">Impossibile caricare gli iscritti per questo servizio.</p>`;
@@ -390,10 +389,6 @@
       renderizzaListaHTML(filtrati);
     }
 
-    function renderizzaIscritti(listaAlunni) {
-      renderizzaListaHTML(listaAlunni);
-    }
-
     function renderizzaListaHTML(lista) {
       var container = document.getElementById('contenutoSedeSpecifica');
       container.innerHTML = "";
@@ -408,7 +403,7 @@
       var tabOriginaleUpper = (sedeSelezionataCorrente && sedeSelezionataCorrente.originale) ? sedeSelezionataCorrente.originale.toUpperCase() : "";
       var isIqbalMasih = tabOriginaleUpper.includes("IQBAL");
 
-      // Se è Don Milani / Integrazione Orario Scolastico, raggruppiamo per Classe (ingressi)
+      // Se è Don Milani / Integrazione Orario Scolastico, raggruppiamo in sottomenù per Classe (colonna D)
       if (isDonMilaniIntegrazioneGlobale) {
         var gruppiClassi = {};
         lista.forEach(alunno => {
@@ -429,15 +424,15 @@
           var headerGruppo = document.createElement('button');
           headerGruppo.className = "w-full flex justify-between items-center text-left font-bold text-slate-800 py-1 px-2 cursor-pointer focus:outline-none";
           headerGruppo.innerHTML = `
-            <span class="flex items-center gap-2 text-blue-700">
-              <i class="fa-solid fa-users-rectangle"></i> Classe: ${classe} <span class="text-xs bg-blue-100 text-blue-700 px-2 py-0.5 rounded-full ml-2">${alunniClasse.length} iscritti</span>
+            <span class="flex items-center gap-2 text-blue-700 text-base">
+              <i class="fa-solid fa-users-rectangle"></i> Classe: ${classe} <span class="text-xs bg-blue-100 text-blue-700 px-2.5 py-0.5 rounded-full ml-2">${alunniClasse.length} iscritti</span>
             </span>
             <i class="fa-solid fa-chevron-down text-slate-400 transition transform" id="icon-${idAccordion}"></i>
           `;
 
           var contenitoreAlunniGruppo = document.createElement('div');
           contenitoreAlunniGruppo.id = idAccordion;
-          contenitoreAlunniGruppo.className = "space-y-3 pt-2";
+          contenitoreAlunniGruppo.className = "space-y-3 pt-2 hidden"; // Chiuso di default
 
           headerGruppo.onclick = function() {
             var el = document.getElementById(idAccordion);
@@ -461,7 +456,6 @@
         });
 
       } else {
-        // Elenco standard per le altre sedi
         var ul = document.createElement('div');
         ul.className = "space-y-3";
         lista.forEach(alunno => {
@@ -479,24 +473,52 @@
       var tipoLower = (alunno.tipo || "").toLowerCase();
       var mostraTipologiaIngressi = !isDonMilani && (tipoLower.includes("ingresso") || tipoLower.includes("pacchetto") || tipoLower.includes("carnet") || !tipoLower.includes("fisso"));
 
+      // Valutazione checkbox Servizio Extra (es. se contiene "SÌ", "SI", "TRUE", "X" o è valorizzato)
+      var servizioExtraChecked = false;
+      if (alunno.servizioExtra) {
+        var valSe = String(alunno.servizioExtra).trim().toUpperCase();
+        servizioExtraChecked = (valSe === "SÌ" || valSe === "SI" || valSe === "TRUE" || valSe === "X" || valSe === "1" || valSe === "VERO");
+      }
+
       var item = document.createElement('div');
       item.className = "bg-white/90 p-4 rounded-2xl border border-slate-200/60 shadow-sm flex flex-col gap-3 transition";
       item.id = `iscritto-row-${alunno.riga}`;
 
       item.innerHTML = `
-        <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+        <div class="flex flex-col md:flex-row md:items-center justify-between gap-3">
           <div class="flex items-center gap-3">
             <div class="w-10 h-10 rounded-xl bg-blue-50 text-blue-600 flex items-center justify-center font-bold text-base shadow-inner shrink-0">
               <i class="fa-solid fa-child"></i>
             </div>
             <div>
               <span class="font-bold text-slate-800 text-base block">${alunno.nome}</span>
-              <span class="text-xs text-slate-400">
-                ${mostraTipologiaIngressi ? `Tipologia: <strong class="text-slate-600">${alunno.tipo}</strong> | Ingressi residui: <span id="ingressi-val-${alunno.riga}" class="font-bold text-blue-600">${alunno.ingressi}</span>` : ''}
+              <span class="text-xs text-slate-400 block mt-0.5">
+                Tipologia: <strong class="text-slate-600">${alunno.tipo || 'Standard'}</strong>
+                ${mostraTipologiaIngressi ? ` | Ingressi residui: <span id="ingressi-val-${alunno.riga}" class="font-bold text-blue-600">${alunno.ingressi}</span>` : ''}
               </span>
             </div>
           </div>
-          <div class="flex items-center gap-2 self-end sm:self-center">
+
+          <!-- Sezione Controlli Iqbal Masih (Servizio Extra & Ore Extra) -->
+          ${isIqbalMasih ? `
+            <div class="flex items-center gap-3 bg-blue-50/50 px-3 py-1.5 rounded-xl border border-blue-100 self-start md:self-center">
+              <label class="flex items-center gap-1.5 cursor-pointer text-xs font-semibold text-slate-700">
+                <input type="checkbox" id="servizio-extra-${alunno.riga}" ${servizioExtraChecked ? 'checked' : ''} 
+                  onchange="aggiornaServizioExtra(${alunno.riga})" 
+                  class="w-4 h-4 text-blue-600 rounded border-slate-300 focus:ring-blue-500 cursor-pointer">
+                Servizio Extra
+              </label>
+              <div class="h-4 w-px bg-blue-200"></div>
+              <div class="flex items-center gap-1.5">
+                <label for="ore-extra-${alunno.riga}" class="text-xs font-semibold text-slate-700">Ore Extra:</label>
+                <input type="number" id="ore-extra-${alunno.riga}" value="${alunno.oreExtra !== undefined && alunno.oreExtra !== "" ? alunno.oreExtra : 0}" min="0" step="1" 
+                  onchange="aggiornaOreExtra(${alunno.riga})" 
+                  class="w-16 px-2 py-1 text-xs font-bold text-center bg-white border border-slate-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500">
+              </div>
+            </div>
+          ` : ''}
+
+          <div class="flex items-center gap-2 self-end md:self-center">
             <button onclick="impostaStatoPresenza(${alunno.riga}, 'P')" 
               class="btn-presente-${alunno.riga} px-4 py-2 rounded-xl text-xs font-bold transition shadow-sm cursor-pointer ${isPresente ? 'bg-emerald-600 text-white shadow-emerald-200 scale-105' : 'bg-slate-100 text-slate-600 hover:bg-emerald-100 hover:text-emerald-700'}">
               <i class="fa-solid fa-check mr-1"></i> Presente
@@ -512,16 +534,12 @@
           </div>
         </div>
 
-        <!-- Box Info Espandibile -->
+        <!-- Box Info Anagrafico Espandibile (Senza Servizio/Ore Extra ora posizionati sopra) -->
         <div id="info-box-${alunno.riga}" class="hidden mt-2 pt-3 border-t border-slate-100 text-xs text-slate-600 grid grid-cols-1 sm:grid-cols-2 gap-2 bg-slate-50 p-3 rounded-xl">
           <div><strong class="text-slate-700">Email:</strong> ${alunno.email || '-'}</div>
           <div><strong class="text-slate-700">Cellulare:</strong> ${alunno.cellulare || '-'}</div>
           <div><strong class="text-slate-700">Deleghe:</strong> ${alunno.deleghe || '-'}</div>
           <div><strong class="text-slate-700">Uscita Autonoma:</strong> ${alunno.uscitaAutonoma || '-'}</div>
-          ${isIqbalMasih ? `
-            <div><strong class="text-slate-700">Servizio Extra:</strong> ${alunno.servizioExtra || '-'}</div>
-            <div><strong class="text-slate-700">Ore Extra:</strong> ${alunno.oreExtra || '-'}</div>
-          ` : ''}
         </div>
       `;
       return item;
@@ -532,6 +550,38 @@
       if (box) {
         box.classList.toggle('hidden');
       }
+    }
+
+    function aggiornaServizioExtra(riga) {
+      var alunno = listaAlunniGlobale.find(a => a.riga === riga);
+      if (!alunno) return;
+
+      var checkbox = document.getElementById(`servizio-extra-${riga}`);
+      var nuovoValore = checkbox.checked ? "Sì" : "";
+      alunno.servizioExtra = nuovoValore;
+
+      chiamaBackend('salvaCampoExtra', {
+        tab: sedeSelezionataCorrente.originale,
+        riga: riga,
+        colonna: 38, // Colonna AM per Servizio Extra
+        valore: nuovoValore
+      }).catch(err => console.error("Errore salvataggio Servizio Extra:", err));
+    }
+
+    function aggiornaOreExtra(riga) {
+      var alunno = listaAlunniGlobale.find(a => a.riga === riga);
+      if (!alunno) return;
+
+      var inputNum = document.getElementById(`ore-extra-${riga}`);
+      var nuovoValore = inputNum.value;
+      alunno.oreExtra = nuovoValore;
+
+      chiamaBackend('salvaCampoExtra', {
+        tab: sedeSelezionataCorrente.originale,
+        riga: riga,
+        colonna: 39, // Colonna AN per Ore Extra
+        valore: nuovoValore
+      }).catch(err => console.error("Errore salvataggio Ore Extra:", err));
     }
 
     function impostaStatoPresenza(riga, nuovoStato) {
@@ -630,7 +680,7 @@
     }
 
     document.addEventListener("DOMContentLoaded", function() {
-      console.log("Interfaccia Registro Presenze Evoluta con Sottomenù Classi e Campi Extra");
+      console.log("Interfaccia aggiornata con controlli Servizio Extra e Ore Extra in-line.");
     });
   </script>
 </body>
