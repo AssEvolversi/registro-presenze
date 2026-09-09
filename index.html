@@ -208,9 +208,9 @@
     }
 
  function formattaNomeSede(nomeTab) {
-      let pulito = nomeTab.replace(/^PRESENZE_?/i, '').trim();
+      let pulito = nomeTab.replace(/^PRESENZE_?/i, '').trim().toUpperCase();
       
-      // Mappatura puntuale per i servizi noti
+      // Dizionario di mappatura esatta per i tuoi servizi
       const dizionarioSedi = {
         'DON_BALBIANO': 'Don Balbiano',
         'DONBALBIANO': 'Don Balbiano',
@@ -218,20 +218,28 @@
         'DONMILANI': 'Don Milani',
         'IQBAL_MASIH': 'Iqbal Masih',
         'IQBALMASIH': 'Iqbal Masih',
+        'ISQBALMASIH': 'Iqbal Masih',
         'INTEGRAZIONE_ORARIO_SCOLASTICO': 'Integrazione Orario Scolastico',
         'INTEGRAZIONEORARIOSCOLASTICO': 'Integrazione Orario Scolastico'
       };
 
-      let upper = pulito.toUpperCase();
-      if (dizionarioSedi[upper]) {
-        return dizionarioSedi[upper];
+      if (dizionarioSedi[pulito]) {
+        return dizionarioSedi[pulito];
       }
 
-      // Fallback intelligente per qualsiasi altro tab
+      // Spezza le parole unite più comuni se non presenti nel dizionario
+      pulito = pulito
+        .replace(/DONBALBIANO/g, 'Don Balbiano')
+        .replace(/DONMILANI/g, 'Don Milani')
+        .replace(/IQBALMASIH/g, 'Iqbal Masih')
+        .replace(/ISQBALMASIH/g, 'Iqbal Masih')
+        .replace(/INTEGRAZIONEORARIOSCOLASTICO/g, 'Integrazione Orario Scolastico')
+        .replace(/_/g, ' ' );
+
       return pulito
-        .replace(/_/g, ' ')
         .toLowerCase()
         .split(' ')
+        .filter(word => word.length > 0)
         .map(word => word.charAt(0).toUpperCase() + word.slice(1))
         .join(' ');
     }
