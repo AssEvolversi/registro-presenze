@@ -185,11 +185,13 @@
   </main>
 
   <!-- Blocco JavaScript -->
+ <!-- Blocco JavaScript -->
   <script>
     const URL_WEB_APP = "https://script.google.com/macros/s/AKfycbxfB-OYCrKJMJI6cNamkOpNuDxCfjrAq4erhdL9FvcWXMmqPUjCtk8aGiGwbgS-el7r/exec";
     let sedeSelezionataCorrente = null;
     let listaAlunniGlobale = [];
     let colonnaGiornoGlobale = -1;
+    let isDonMilaniIntegrazioneGlobale = false;
 
     function chiamaBackend(azione, payload = {}) {
       aggiornaStatoSalvataggio('salvataggio', 'Sincronizzazione...');
@@ -264,15 +266,12 @@
         return dizionarioSedi[pulito];
       }
 
-      pulito = pulito
+      return pulito
         .replace(/DONBALBIANO/g, 'Don Balbiano')
         .replace(/DONMILANI/g, 'Don Milani')
         .replace(/IQBALMASIH/g, 'Iqbal Masih')
-        .replace(/ISQBALMASIH/g, 'Iqbal Masih')
         .replace(/INTEGRAZIONEORARIOSCOLASTICO/g, 'Integrazione Orario Scolastico')
-        .replace(/_/g, ' ');
-
-      return pulito
+        .replace(/_/g, ' ')
         .toLowerCase()
         .split(' ')
         .filter(word => word.length > 0)
@@ -358,6 +357,7 @@
         .then(data => {
           listaAlunniGlobale = data.alunni || [];
           colonnaGiornoGlobale = data.colonnaGiorno || -1;
+          isDonMilaniIntegrazioneGlobale = !!data.isDonMilaniIntegrazione;
           
           if (data.dataOdierna) {
             document.getElementById('dataOdiernaBadge').innerText = `Data odierna: ${data.dataOdierna}`;
@@ -369,7 +369,7 @@
             return cognomeA.localeCompare(cognomeB);
           });
 
-          renderizzaIscritti(listaAlunniGlobale, data.isDonMilaniIntegrazione);
+          renderizzaIscritti(listaAlunniGlobale);
         })
         .catch(err => {
           container.innerHTML = `<p class="text-rose-400 text-sm py-4 text-center">Impossibile caricare gli iscritti per questo servizio.</p>`;
@@ -390,7 +390,7 @@
       renderizzaListaHTML(filtrati);
     }
 
-    function renderizzaIscritti(listaAlunni, isDonMilani) {
+    function renderizzaIscritti(listaAlunni) {
       renderizzaListaHTML(listaAlunni);
     }
 
@@ -405,63 +405,126 @@
         return;
       }
 
-      var ul = document.createElement('div');
-      ul.className = "space-y-3";
+      var tabOriginaleUpper = (sedeSelezionataCorrente && sedeSelezionataCorrente.originale) ? sedeSelezionataCorrente.originale.toUpperCase() : "";
+      var isIqbalMasih = tabOriginaleUpper.includes("IQBAL");
 
-      lista.forEach((alunno) => {
-        var statoNorm = (alunno.stato || "").trim().toUpperCase();
-        var isPresente = (statoNorm === "P" || statoNorm === "PRESENTE");
-        var isAssente = (statoNorm === "A" || statoNorm === "ASSENTE");
+      // Se è Don Milani / Integrazione Orario Scolastico, raggruppiamo per Classe (ingressi)
+      if (isDonMilaniIntegrazioneGlobale) {
+        var gruppiClassi = {};
+        lista.forEach(alunno => {
+          var classe = (alunno.ingressi && String(alunno.ingressi).trim() !== "") ? String(alunno.ingressi).trim() : "Altre Classi";
+          if (!gruppiClassi[classe]) gruppiClassi[classe] = [];
+          gruppiClassi[classe].push(alunno);
+        });
 
-        // Mostra la tipologia iscrizione solo se corrisponde agli ingressi o se il tipo include ingressi/pacchetto (escludendo i fissi puri)
-        var tipoLower = (alunno.tipo || "").toLowerCase();
-        var mostraTipologiaIngressi = tipoLower.includes("ingresso") || tipoLower.includes("pacchetto") || tipoLower.includes("carnet") || !tipoLower.includes("fisso");
+        var classiOrdinate = Object.keys(gruppiClassi).sort();
 
-        var item = document.createElement('div');
-        item.className = "bg-white/90 p-4 rounded-2xl border border-slate-200/60 shadow-sm flex flex-col gap-3 transition";
-        item.id = `iscritto-row-${alunno.riga}`;
+        classiOrdinate.forEach((classe, idx) => {
+          var alunniClasse = gruppiClassi[classe];
+          var idAccordion = `accordion-classe-${idx}`;
 
-        item.innerHTML = `
-          <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
-            <div class="flex items-center gap-3">
-              <div class="w-10 h-10 rounded-xl bg-blue-50 text-blue-600 flex items-center justify-center font-bold text-base shadow-inner shrink-0">
-                <i class="fa-solid fa-child"></i>
-              </div>
-              <div>
-                <span class="font-bold text-slate-800 text-base block">${alunno.nome}</span>
-                <span class="text-xs text-slate-400">
-                  ${mostraTipologiaIngressi ? `Tipologia: <strong class="text-slate-600">${alunno.tipo}</strong> | Ingressi residui: <span id="ingressi-val-${alunno.riga}" class="font-bold text-blue-600">${alunno.ingressi}</span>` : ''}
-                </span>
-              </div>
+          var wrapperGruppo = document.createElement('div');
+          wrapperGruppo.className = "bg-white/60 border border-slate-200 rounded-2xl p-4 space-y-3 shadow-sm";
+
+          var headerGruppo = document.createElement('button');
+          headerGruppo.className = "w-full flex justify-between items-center text-left font-bold text-slate-800 py-1 px-2 cursor-pointer focus:outline-none";
+          headerGruppo.innerHTML = `
+            <span class="flex items-center gap-2 text-blue-700">
+              <i class="fa-solid fa-users-rectangle"></i> Classe: ${classe} <span class="text-xs bg-blue-100 text-blue-700 px-2 py-0.5 rounded-full ml-2">${alunniClasse.length} iscritti</span>
+            </span>
+            <i class="fa-solid fa-chevron-down text-slate-400 transition transform" id="icon-${idAccordion}"></i>
+          `;
+
+          var contenitoreAlunniGruppo = document.createElement('div');
+          contenitoreAlunniGruppo.id = idAccordion;
+          contenitoreAlunniGruppo.className = "space-y-3 pt-2";
+
+          headerGruppo.onclick = function() {
+            var el = document.getElementById(idAccordion);
+            var ico = document.getElementById(`icon-${idAccordion}`);
+            if (el.classList.contains('hidden')) {
+              el.classList.remove('hidden');
+              ico.classList.add('rotate-180');
+            } else {
+              el.classList.add('hidden');
+              ico.classList.remove('rotate-180');
+            }
+          };
+
+          alunniClasse.forEach(alunno => {
+            contenitoreAlunniGruppo.appendChild(creaElementoAlunnoHTML(alunno, isIqbalMasih, true));
+          });
+
+          wrapperGruppo.appendChild(headerGruppo);
+          wrapperGruppo.appendChild(contenitoreAlunniGruppo);
+          container.appendChild(wrapperGruppo);
+        });
+
+      } else {
+        // Elenco standard per le altre sedi
+        var ul = document.createElement('div');
+        ul.className = "space-y-3";
+        lista.forEach(alunno => {
+          ul.appendChild(creaElementoAlunnoHTML(alunno, isIqbalMasih, false));
+        });
+        container.appendChild(ul);
+      }
+    }
+
+    function creaElementoAlunnoHTML(alunno, isIqbalMasih, isDonMilani) {
+      var statoNorm = (alunno.stato || "").trim().toUpperCase();
+      var isPresente = (statoNorm === "P" || statoNorm === "PRESENTE");
+      var isAssente = (statoNorm === "A" || statoNorm === "ASSENTE");
+
+      var tipoLower = (alunno.tipo || "").toLowerCase();
+      var mostraTipologiaIngressi = !isDonMilani && (tipoLower.includes("ingresso") || tipoLower.includes("pacchetto") || tipoLower.includes("carnet") || !tipoLower.includes("fisso"));
+
+      var item = document.createElement('div');
+      item.className = "bg-white/90 p-4 rounded-2xl border border-slate-200/60 shadow-sm flex flex-col gap-3 transition";
+      item.id = `iscritto-row-${alunno.riga}`;
+
+      item.innerHTML = `
+        <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+          <div class="flex items-center gap-3">
+            <div class="w-10 h-10 rounded-xl bg-blue-50 text-blue-600 flex items-center justify-center font-bold text-base shadow-inner shrink-0">
+              <i class="fa-solid fa-child"></i>
             </div>
-            <div class="flex items-center gap-2 self-end sm:self-center">
-              <button onclick="impostaStatoPresenza(${alunno.riga}, 'P')" 
-                class="btn-presente-${alunno.riga} px-4 py-2 rounded-xl text-xs font-bold transition shadow-sm cursor-pointer ${isPresente ? 'bg-emerald-600 text-white shadow-emerald-200 scale-105' : 'bg-slate-100 text-slate-600 hover:bg-emerald-100 hover:text-emerald-700'}">
-                <i class="fa-solid fa-check mr-1"></i> Presente
-              </button>
-              <button onclick="impostaStatoPresenza(${alunno.riga}, 'A')" 
-                class="btn-assente-${alunno.riga} px-4 py-2 rounded-xl text-xs font-bold transition shadow-sm cursor-pointer ${isAssente ? 'bg-rose-600 text-white shadow-rose-200 scale-105' : 'bg-slate-100 text-slate-600 hover:bg-rose-100 hover:text-rose-700'}">
-                <i class="fa-solid fa-xmark mr-1"></i> Assente
-              </button>
-              <button onclick="toggleInfo(${alunno.riga})" 
-                class="bg-slate-100 hover:bg-blue-100 text-slate-600 hover:text-blue-600 p-2.5 rounded-xl text-xs font-bold transition shadow-sm cursor-pointer" title="Informazioni utente">
-                <i class="fa-solid fa-circle-info"></i>
-              </button>
+            <div>
+              <span class="font-bold text-slate-800 text-base block">${alunno.nome}</span>
+              <span class="text-xs text-slate-400">
+                ${mostraTipologiaIngressi ? `Tipologia: <strong class="text-slate-600">${alunno.tipo}</strong> | Ingressi residui: <span id="ingressi-val-${alunno.riga}" class="font-bold text-blue-600">${alunno.ingressi}</span>` : ''}
+              </span>
             </div>
           </div>
-
-          <!-- Box Info Espandibile -->
-          <div id="info-box-${alunno.riga}" class="hidden mt-2 pt-3 border-t border-slate-100 text-xs text-slate-600 grid grid-cols-1 sm:grid-cols-2 gap-2 bg-slate-50 p-3 rounded-xl">
-            <div><strong class="text-slate-700">Email:</strong> ${alunno.email || '-'}</div>
-            <div><strong class="text-slate-700">Cellulare:</strong> ${alunno.cellulare || '-'}</div>
-            <div><strong class="text-slate-700">Deleghe:</strong> ${alunno.deleghe || '-'}</div>
-            <div><strong class="text-slate-700">Uscita Autonoma:</strong> ${alunno.uscitaAutonoma || '-'}</div>
+          <div class="flex items-center gap-2 self-end sm:self-center">
+            <button onclick="impostaStatoPresenza(${alunno.riga}, 'P')" 
+              class="btn-presente-${alunno.riga} px-4 py-2 rounded-xl text-xs font-bold transition shadow-sm cursor-pointer ${isPresente ? 'bg-emerald-600 text-white shadow-emerald-200 scale-105' : 'bg-slate-100 text-slate-600 hover:bg-emerald-100 hover:text-emerald-700'}">
+              <i class="fa-solid fa-check mr-1"></i> Presente
+            </button>
+            <button onclick="impostaStatoPresenza(${alunno.riga}, 'A')" 
+              class="btn-assente-${alunno.riga} px-4 py-2 rounded-xl text-xs font-bold transition shadow-sm cursor-pointer ${isAssente ? 'bg-rose-600 text-white shadow-rose-200 scale-105' : 'bg-slate-100 text-slate-600 hover:bg-rose-100 hover:text-rose-700'}">
+              <i class="fa-solid fa-xmark mr-1"></i> Assente
+            </button>
+            <button onclick="toggleInfo(${alunno.riga})" 
+              class="bg-slate-100 hover:bg-blue-100 text-slate-600 hover:text-blue-600 p-2.5 rounded-xl text-xs font-bold transition shadow-sm cursor-pointer" title="Informazioni utente">
+              <i class="fa-solid fa-circle-info"></i>
+            </button>
           </div>
-        `;
-        ul.appendChild(item);
-      });
+        </div>
 
-      container.appendChild(ul);
+        <!-- Box Info Espandibile -->
+        <div id="info-box-${alunno.riga}" class="hidden mt-2 pt-3 border-t border-slate-100 text-xs text-slate-600 grid grid-cols-1 sm:grid-cols-2 gap-2 bg-slate-50 p-3 rounded-xl">
+          <div><strong class="text-slate-700">Email:</strong> ${alunno.email || '-'}</div>
+          <div><strong class="text-slate-700">Cellulare:</strong> ${alunno.cellulare || '-'}</div>
+          <div><strong class="text-slate-700">Deleghe:</strong> ${alunno.deleghe || '-'}</div>
+          <div><strong class="text-slate-700">Uscita Autonoma:</strong> ${alunno.uscitaAutonoma || '-'}</div>
+          ${isIqbalMasih ? `
+            <div><strong class="text-slate-700">Servizio Extra:</strong> ${alunno.servizioExtra || '-'}</div>
+            <div><strong class="text-slate-700">Ore Extra:</strong> ${alunno.oreExtra || '-'}</div>
+          ` : ''}
+        </div>
+      `;
+      return item;
     }
 
     function toggleInfo(riga) {
@@ -485,9 +548,8 @@
 
       var oraPresente = (alunno.stato === "P" || alunno.stato === "PRESENTE");
 
-      // Scala automaticamente in locale se passa da non presente a presente
       var tipoLower = (alunno.tipo || "").toLowerCase();
-      var gestisceIngressi = tipoLower.includes("ingresso") || tipoLower.includes("pacchetto") || tipoLower.includes("carnet") || !tipoLower.includes("fisso");
+      var gestisceIngressi = !isDonMilaniIntegrazioneGlobale && (tipoLower.includes("ingresso") || tipoLower.includes("pacchetto") || tipoLower.includes("carnet") || !tipoLower.includes("fisso"));
 
       if (gestisceIngressi && !eraPresente && oraPresente) {
         alunno.ingressi = Math.max(0, Number(alunno.ingressi || 0) - 1);
@@ -495,11 +557,9 @@
         alunno.ingressi = Number(alunno.ingressi || 0) + 1;
       }
 
-      // Aggiorna UI elemento singolo e contatore ingressi
       aggiornaUIElementoSingolo(riga, alunno.stato, alunno.ingressi);
       aggiornaRiepilogoStatistiche();
 
-      // Invia la chiamata al backend per salvare la presenza in tempo reale
       chiamaBackend('salvaPresenza', {
         tab: sedeSelezionataCorrente.originale,
         riga: riga,
@@ -516,7 +576,7 @@
       });
     }
 
-   function aggiornaUIElementoSingolo(riga, stato, ingressiAggiornati) {
+    function aggiornaUIElementoSingolo(riga, stato, ingressiAggiornati) {
       var btnP = document.querySelector(`.btn-presente-${riga}`);
       var btnA = document.querySelector(`.btn-assente-${riga}`);
       var spanIngressi = document.getElementById(`ingressi-val-${riga}`);
@@ -529,7 +589,7 @@
       btnP.className = `btn-presente-${riga} px-4 py-2 rounded-xl text-xs font-bold transition shadow-sm cursor-pointer ${isPresente ? 'bg-emerald-600 text-white shadow-emerald-200 scale-105' : 'bg-slate-100 text-slate-600 hover:bg-emerald-100 hover:text-emerald-700'}`;
       btnA.className = `btn-assente-${riga} px-4 py-2 rounded-xl text-xs font-bold transition shadow-sm cursor-pointer ${isAssente ? 'bg-rose-600 text-white shadow-rose-200 scale-105' : 'bg-slate-100 text-slate-600 hover:bg-rose-100 hover:text-rose-700'}`;
       
-      if (spanIngressi && ingressiAggiornati !== undefined) {
+      if (spanIngressi && ingressiAggiornati !== undefined && !isDonMilaniIntegrazioneGlobale) {
         spanIngressi.innerText = ingressiAggiornati;
       }
     }
@@ -570,7 +630,7 @@
     }
 
     document.addEventListener("DOMContentLoaded", function() {
-      console.log("Interfaccia Registro Presenze Evoluta e Completa");
+      console.log("Interfaccia Registro Presenze Evoluta con Sottomenù Classi e Campi Extra");
     });
   </script>
 </body>
