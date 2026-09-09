@@ -3,60 +3,81 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Registro Presenze</title>
+  <title>Associazione Evolversi</title>
   <!-- Tailwind CSS CDN -->
   <script src="https://cdn.tailwindcss.com"></script>
   <!-- FontAwesome CDN -->
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
-  <style>
-    /* Eventuali stili personalizzati extra */
-  </style>
 </head>
 <body class="bg-gray-50 text-gray-800 antialiased min-h-screen flex flex-col">
 
-  <!-- Header / Barra di stato -->
-  <header class="bg-white shadow-sm border-b border-gray-100 p-4 flex justify-between items-center">
-    <h1 class="font-bold text-lg text-blue-600 flex items-center gap-2">
-      <i class="fa-solid fa-clipboard-user"></i> Gestione Presenze
-    </h1>
-    <div id="statoConnessione" class="flex items-center gap-2 text-xs text-gray-500">
-      <span id="puntoStato" class="w-2.5 h-2.5 rounded-full inline-block bg-green-400 shadow-sm"></span>
-      <span id="testoStato">Pronto</span>
+  <!-- Header Blu con Logo e Social -->
+  <header class="bg-blue-600 text-white shadow-md p-4 flex justify-between items-center">
+    <div class="flex items-center gap-3">
+      <i class="fa-solid fa-users-rectangle text-2xl"></i>
+      <span class="font-bold text-lg tracking-wide">ASSOCIAZIONE EVOLVERSI</span>
+    </div>
+    <div class="flex items-center gap-4 text-xl">
+      <a href="#" target="_blank" class="hover:text-blue-200 transition" aria-label="Facebook"><i class="fa-brands fa-facebook"></i></a>
+      <a href="#" target="_blank" class="hover:text-pink-200 transition" aria-label="Instagram"><i class="fa-brands fa-instagram"></i></a>
     </div>
   </header>
 
-  <!-- Contenitore Principale -->
-  <main class="flex-1 max-w-4xl w-full mx-auto p-4">
+  <!-- Indicatore di stato discreto in basso a destra o sotto l'header -->
+  <div class="bg-white border-b border-gray-100 px-4 py-2 flex justify-end items-center text-xs text-gray-500">
+    <div id="statoConnessione" class="flex items-center gap-2">
+      <span id="puntoStato" class="w-2.5 h-2.5 rounded-full inline-block bg-green-400 shadow-sm"></span>
+      <span id="testoStato">Pronto</span>
+    </div>
+  </div>
 
-    <!-- Schermata Home / Selezione Sedi -->
-    <section id="schermataHome" class="space-y-4">
-      <div class="bg-white p-6 rounded-2xl shadow-sm border border-gray-100">
-        <h2 class="text-xl font-bold mb-4">Seleziona Sede / Servizio</h2>
-        <div id="grigliaSedi" class="grid grid-cols-1 sm:grid-cols-2 gap-3">
-          <!-- Le card delle sedi verranno generate qui dinamicamente -->
-        </div>
+  <!-- Contenitore Principale -->
+  <main class="flex-1 max-w-4xl w-full mx-auto p-4 flex flex-col justify-center">
+
+    <!-- Schermata Home con i due bottoni principali -->
+    <section id="schermataHome" class="space-y-6 py-6">
+      <div class="text-center mb-8">
+        <h2 class="text-2xl font-bold text-gray-800">Gestione Attività</h2>
+        <p class="text-gray-500 text-sm">Seleziona una sezione per iniziare</p>
+      </div>
+      <div class="grid grid-cols-1 sm:grid-cols-2 gap-6">
+        <button onclick="mostraSezione('wrapperRegistro')" class="bg-white hover:bg-blue-50 border-2 border-blue-100 hover:border-blue-500 p-8 rounded-2xl shadow-sm transition flex flex-col items-center justify-center gap-4 group cursor-pointer">
+          <div class="w-16 h-16 bg-blue-100 group-hover:bg-blue-600 text-blue-600 group-hover:text-white rounded-full flex items-center justify-center text-2xl transition shadow-sm">
+            <i class="fa-solid fa-clipboard-user"></i>
+          </div>
+          <span class="text-xl font-bold text-gray-800 group-hover:text-blue-600">Registro Presenze</span>
+        </button>
+
+        <button onclick="mostraSezione('wrapperTimbratura')" class="bg-white hover:bg-green-50 border-2 border-green-100 hover:border-green-500 p-8 rounded-2xl shadow-sm transition flex flex-col items-center justify-center gap-4 group cursor-pointer">
+          <div class="w-16 h-16 bg-green-100 group-hover:bg-green-600 text-green-600 group-hover:text-white rounded-full flex items-center justify-center text-2xl transition shadow-sm">
+            <i class="fa-solid fa-clock"></i>
+          </div>
+          <span class="text-xl font-bold text-gray-800 group-hover:text-green-600">Timbrature</span>
+        </button>
       </div>
     </section>
 
     <!-- Wrapper Registro (nascosto di default) -->
     <section id="wrapperRegistro" class="hidden space-y-4">
-      <button onclick="tornaAllaHome()" class="text-blue-600 text-sm font-medium flex items-center gap-1 mb-2">
-        <i class="fa-solid fa-arrow-left"></i> Torna alla selezione
+      <button onclick="tornaAllaHome()" class="text-blue-600 text-sm font-medium flex items-center gap-1 mb-2 hover:underline">
+        <i class="fa-solid fa-arrow-left"></i> Torna alla home
       </button>
       <div class="bg-white p-6 rounded-2xl shadow-sm border border-gray-100">
-        <h3 id="titoloRegistro" class="text-lg font-bold mb-4">Registro</h3>
-        <!-- Contenuto del registro -->
+        <h3 class="text-lg font-bold mb-4 text-blue-600"><i class="fa-solid fa-clipboard-user mr-2"></i>Registro Presenze</h3>
+        <!-- Qui andrà il contenuto del registro -->
+        <p class="text-gray-500 text-sm">Sezione registro in caricamento...</p>
       </div>
     </section>
 
     <!-- Wrapper Timbratura (nascosto di default) -->
     <section id="wrapperTimbratura" class="hidden space-y-4">
-      <button onclick="tornaAllaHome()" class="text-blue-600 text-sm font-medium flex items-center gap-1 mb-2">
-        <i class="fa-solid fa-arrow-left"></i> Torna alla selezione
+      <button onclick="tornaAllaHome()" class="text-blue-600 text-sm font-medium flex items-center gap-1 mb-2 hover:underline">
+        <i class="fa-solid fa-arrow-left"></i> Torna alla home
       </button>
       <div class="bg-white p-6 rounded-2xl shadow-sm border border-gray-100">
-        <h3 class="text-lg font-bold mb-4">Timbratura</h3>
-        <!-- Contenuto timbratura -->
+        <h3 class="text-lg font-bold mb-4 text-green-600"><i class="fa-solid fa-clock mr-2"></i>Timbrature</h3>
+        <!-- Qui andrà il contenuto delle timbrature -->
+        <p class="text-gray-500 text-sm">Sezione timbrature in caricamento...</p>
       </div>
     </section>
 
@@ -64,10 +85,8 @@
 
   <!-- Blocco JavaScript -->
   <script>
-    // INSERISCI QUI IL TUO URL DI GOOGLE APPS SCRIPT
-    const URL_WEB_APP = "INCOLLA_QUI_IL_ TUO_URL_APPS_SCRIPT";
+    const URL_WEB_APP = "INCOLLA_QUI_IL_TUO_URL_APPS_SCRIPT";
 
-    // Funzione centralizzata per le chiamate al backend
     function chiamaBackend(azione, payload = {}) {
       aggiornaStatoSalvataggio('salvataggio', 'Sincronizzazione...');
       
@@ -78,7 +97,7 @@
 
       return fetch(URL_WEB_APP, {
         method: 'POST',
-        mode: 'no-cors', // O gestisci CORS a seconda di come è configurato il tuo script
+        mode: 'no-cors',
         headers: {
           'Content-Type': 'text/plain;charset=utf-8',
         },
@@ -107,6 +126,19 @@
       if (testo) testo.innerText = messaggio;
     }
 
+    function mostraSezione(idSezione) {
+      var home = document.getElementById('schermataHome');
+      var reg = document.getElementById('wrapperRegistro');
+      var timb = document.getElementById('wrapperTimbratura');
+
+      if (home) home.classList.add('hidden');
+      if (reg) reg.classList.add('hidden');
+      if (timb) timb.classList.add('hidden');
+
+      var target = document.getElementById(idSezione);
+      if (target) target.classList.remove('hidden');
+    }
+
     function tornaAllaHome() {
       var home = document.getElementById('schermataHome');
       var reg = document.getElementById('wrapperRegistro');
@@ -117,11 +149,8 @@
       if (timb) timb.classList.add('hidden');
     }
 
-    // Aggiungi qui sotto il resto delle tue funzioni (caricaSedi, selezionaServizio, ecc.)
-    
     document.addEventListener("DOMContentLoaded", function() {
-      console.log("App avviata correttamente");
-      // Esegui qui le chiamate iniziali se necessarie
+      console.log("Interfaccia Associazione Evolversi caricata correttamente");
     });
   </script>
 </body>
