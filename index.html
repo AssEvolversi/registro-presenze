@@ -1321,6 +1321,33 @@ function inviaTimbratura() {
 
     observer.observe(sezione, { attributes: true, attributeFilter: ['class', 'style'] });
   });
+  function caricaDatiIniziali() {
+    // Evitiamo chiamate doppie se i dati sono già stati caricati
+    var selectOp = document.getElementById("selectOperatore");
+    if (selectOp && selectOp.dataset.caricato === "true") return;
+
+    chiamaBackend('ottieniDatiInizialiTimbratura')
+        .then(risposta => {
+            if (!risposta) return;
+
+            // Popola il menu degli operatori (ricevuto dal backend)
+            if (selectOp && risposta.operatori) {
+                selectOp.innerHTML = '<option value="" disabled selected>Seleziona operatore...</option>';
+                risposta.operatori.forEach(op => {
+                    var opt = document.createElement('option');
+                    opt.value = op;
+                    opt.textContent = op;
+                    selectOp.appendChild(opt);
+                });
+                selectOp.dataset.caricato = "true";
+            }
+
+            // Se ci sono altri elementi da popolare legati alla timbratura, gestiscili qui
+        })
+        .catch(err => {
+            mostraErrore(err);
+        });
+}
 </script>
     </div>
 
