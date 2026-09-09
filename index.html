@@ -1290,180 +1290,180 @@ function inviaTimbratura() {
 </script>
     </div>
 
-    <!-- Script di navigazione locale -->
-    <script>
-      function apriSezione(tipo) {
-        var home = document.getElementById('schermataHome');
-        var reg = document.getElementById('wrapperRegistro');
-        var timb = document.getElementById('wrapperTimbratura');
+<!-- Blocco Script Unificato e Sicuro -->
+<script>
+  // 1. Dichiara la costante globale una sola volta in modo sicuro
+  if (typeof URL_WEB_APP === 'undefined') {
+    var URL_WEB_APP = "https://script.google.com/macros/s/AKfycbySXKKSHEbvS1fRRR1Fh9foXKaSFjzN1hPlzP_wpUQOalclx9DDzUf2wTgU9qxQcIML/exec";
+  }
 
-        // Nascondi tutto
-        if (home) home.classList.add('hidden');
-        if (reg) reg.classList.add('hidden');
-        if (timb) timb.classList.add('hidden');
+  // 2. Navigazione locale
+  function apriSezione(tipo) {
+    var home = document.getElementById('schermataHome');
+    var reg = document.getElementById('wrapperRegistro');
+    var timb = document.getElementById('wrapperTimbratura');
 
-        if (tipo === 'registro') {
-          if (reg) reg.classList.remove('hidden');
-          if (typeof caricaSedi === 'function') caricaSedi();
-        } else if (tipo === 'timbratura') {
-          if (timb) timb.classList.remove('hidden');
-          if (typeof caricaDatiIniziali === 'function') {
-            caricaDatiIniziali();
-          } else if (typeof caricaDatiInizialiTimbratura === 'function') {
-            caricaDatiInizialiTimbratura();
-          }
-        }
+    if (home) home.classList.add('hidden');
+    if (reg) reg.classList.add('hidden');
+    if (timb) timb.classList.add('hidden');
+
+    if (tipo === 'registro') {
+      if (reg) reg.classList.remove('hidden');
+      if (typeof caricaSedi === 'function') caricaSedi();
+    } else if (tipo === 'timbratura') {
+      if (timb) timb.classList.remove('hidden');
+      if (typeof caricaDatiIniziali === 'function') {
+        caricaDatiIniziali();
+      } else if (typeof caricaDatiInizialiTimbratura === 'function') {
+        caricaDatiInizialiTimbratura();
       }
+    }
+  }
 
-      function tornaAllaHome() {
-        var home = document.getElementById('schermataHome');
-        var reg = document.getElementById('wrapperRegistro');
-        var timb = document.getElementById('wrapperTimbratura');
+  function tornaAllaHome() {
+    var home = document.getElementById('schermataHome');
+    var reg = document.getElementById('wrapperRegistro');
+    var timb = document.getElementById('wrapperTimbratura');
 
-        if (home) home.classList.remove('hidden');
-        if (reg) reg.classList.add('hidden');
-        if (timb) timb.classList.add('hidden');
-        
-        if (typeof tornaAllaSelezioneSedi === 'function') {
-          tornaAllaSelezioneSedi();
-        }
+    if (home) home.classList.remove('hidden');
+    if (reg) reg.classList.add('hidden');
+    if (timb) timb.classList.add('hidden');
+    
+    if (typeof tornaAllaSelezioneSedi === 'function') {
+      tornaAllaSelezioneSedi();
+    }
+  }
+
+  // 3. Comunicazione con il Backend (con protezione contro chiamate vuote)
+  function chiamaBackend(azione, payload = {}) {
+    if (!azione) {
+      console.warn("Chiamata backend ignorata: nessuna azione specificata.");
+      return Promise.resolve(null);
+    }
+    payload.azione = azione;
+    
+    const parametri = new URLSearchParams();
+    for (let key in payload) {
+      parametri.append(key, payload[key]);
+    }
+
+    return fetch(`${URL_WEB_APP}?${parametri.toString()}`, {
+      method: 'GET'
+    })
+    .then(response => {
+      if (!response.ok) {
+        throw new Error('Errore di rete dal server');
       }
-    </script>
-<!-- Script Service Worker per la gestione PWA e aggiornamenti -->
-    <script>
-      if ('serviceWorker' in navigator) {
-        window.addEventListener('load', () => {
-          navigator.serviceWorker.register('./sw.js')
-            .then(reg => {
-              console.log('Service Worker registrato con successo:', reg.scope);
-              
-              reg.onupdatefound = () => {
-                const installingWorker = reg.installing;
-                installingWorker.onstatechange = () => {
-                  if (installingWorker.state === 'installed') {
-                    if (navigator.serviceWorker.controller) {
-                      console.log('Nuova versione disponibile, ricaricamento in corso...');
-                      window.location.reload();
-                    }
-                  }
-                };
-              };
-            })
-            .catch(err => {
-              console.log('Registrazione Service Worker fallita:', err);
-            });
-        });
-      }
-    </script>
-    <script>
-      // Sostituisci questo URL con quello che hai copiato quando hai pubblicato la Web App su Apps Script
-      const URL_WEB_APP = "https://script.google.com/macros/s/AKfycbySXKKSHEbvS1fRRR1Fh9foXKaSFjzN1hPlzP_wpUQOalclx9DDzUf2wTgU9qxQcIML/exec";
-          
-      // Funzione universale per leggere i dati da Google Sheets (usa GET per evitare i blocchi CORS)
-      function chiamaBackend(azione, payload = {}) {
-        payload.azione = azione;
-        
-        // Trasforma il payload in parametri URL per una chiamata GET sicura
+      return response.json();
+    })
+    .catch(error => {
+      console.error("Errore di comunicazione con il backend:", error);
+      return null;
+    });
+  }
+
+  // 4. Gestione Coda Offline
+  const QUEUE_KEY = 'evolversi_offline_queue';
+
+  function salvaInCodaLocale(dati) {
+    let coda = JSON.parse(localStorage.getItem(QUEUE_KEY)) || [];
+    coda.push({
+      dati: dati,
+      timestamp: new Date().toISOString()
+    });
+    localStorage.setItem(QUEUE_KEY, JSON.stringify(coda));
+    aggiornaIndicatoreCoda();
+  }
+
+  async function sincronizzaCodaOffline() {
+    if (!navigator.onLine) return;
+
+    let coda = JSON.parse(localStorage.getItem(QUEUE_KEY)) || [];
+    if (coda.length === 0) return;
+
+    let elementiRimanenti = [];
+
+    for (let item of coda) {
+      try {
+        const payload = item.dati;
         const parametri = new URLSearchParams();
         for (let key in payload) {
           parametri.append(key, payload[key]);
         }
 
-        return fetch(`${URL_WEB_APP}?${parametri.toString()}`, {
+        const response = await fetch(`${URL_WEB_APP}?${parametri.toString()}`, {
           method: 'GET'
-        })
-        .then(response => {
-          if (!response.ok) {
-            throw new Error('Errore di rete dal server');
-          }
-          return response.json();
-        })
-        .catch(error => {
-          console.error("Errore di comunicazione con il backend:", error);
-          return null;
         });
+
+        if (!response.ok) {
+          throw new Error('Errore di rete');
+        }
+      } catch (e) {
+        elementiRimanenti.push(item);
       }
+    }
 
-      const QUEUE_KEY = 'evolversi_offline_queue';
+    localStorage.setItem(QUEUE_KEY, JSON.stringify(elementiRimanenti));
+    aggiornaIndicatoreCoda();
 
-function salvaInCodaLocale(dati) {
-  let coda = JSON.parse(localStorage.getItem(QUEUE_KEY)) || [];
-  coda.push({
-    dati: dati,
-    timestamp: new Date().toISOString()
+    if (elementiRimanenti.length === 0 && coda.length > 0) {
+      mostraNotifica("🔄 Tutti i dati offline sono stati sincronizzati con Google Fogli!", "success");
+    }
+  }
+
+  window.addEventListener('online', () => {
+    sincronizzaCodaOffline();
   });
-  localStorage.setItem(QUEUE_KEY, JSON.stringify(coda));
-  aggiornaIndicatoreCoda();
-}
 
-async function sincronizzaCodaOffline() {
-  if (!navigator.onLine) return;
+  window.addEventListener('DOMContentLoaded', () => {
+    sincronizzaCodaOffline();
+    aggiornaIndicatoreCoda();
+  });
 
-  let coda = JSON.parse(localStorage.getItem(QUEUE_KEY)) || [];
-  if (coda.length === 0) return;
-
-  let elementiRimanenti = [];
-
-  for (let item of coda) {
-    try {
-      // Ricreiamo i parametri GET coerenti con la nuova architettura
-      const payload = item.dati;
-      const parametri = new URLSearchParams();
-      for (let key in payload) {
-        parametri.append(key, payload[key]);
+  function aggiornaIndicatoreCoda() {
+    let coda = JSON.parse(localStorage.getItem(QUEUE_KEY)) || [];
+    const badge = document.getElementById('offline-badge');
+    if (badge) {
+      if (coda.length > 0) {
+        badge.innerText = `⏳ In attesa di invio: ${coda.length}`;
+        badge.style.display = 'block';
+      } else {
+        badge.style.display = 'none';
       }
-
-      const response = await fetch(`${URL_WEB_APP}?${parametri.toString()}`, {
-        method: 'GET'
-      });
-
-      if (!response.ok) {
-        throw new Error('Errore di rete');
-      }
-      // Se la richiesta va a buon fine, l'elemento non viene reinserito nell'array
-    } catch (e) {
-      // Se fallisce, lo teniamo in coda per il prossimo tentativo
-      elementiRimanenti.push(item);
     }
   }
 
-  localStorage.setItem(QUEUE_KEY, JSON.stringify(elementiRimanenti));
-  aggiornaIndicatoreCoda();
-
-  if (elementiRimanenti.length === 0 && coda.length > 0) {
-    mostraNotifica("🔄 Tutti i dati offline sono stati sincronizzati con Google Fogli!", "success");
+  function mostraNotifica(testo, tipo) {
+    console.log(`[${tipo.toUpperCase()}] ${testo}`);
+    alert(testo);  
   }
-}
+</script>
 
-// Ascolta il ritorno della connessione per far partire subito la sincronizzazione
-window.addEventListener('online', () => {
-  sincronizzaCodaOffline();
-});
-
-// Controlla la coda all'avvio della pagina
-window.addEventListener('DOMContentLoaded', () => {
-  sincronizzaCodaOffline();
-  aggiornaIndicatoreCoda();
-});
-
-// Funzione di utilità per mostrare un badge visivo se ci sono dati in attesa
-function aggiornaIndicatoreCoda() {
-  let coda = JSON.parse(localStorage.getItem(QUEUE_KEY)) || [];
-  const badge = document.getElementById('offline-badge'); // Un eventuale elemento grafico nella tua UI
-  if (badge) {
-    if (coda.length > 0) {
-      badge.innerText = `⏳ In attesa di invio: ${coda.length}`;
-      badge.style.display = 'block';
-    } else {
-      badge.style.display = 'none';
-    }
+<!-- 5. Service Worker separato per evitare conflitti di scope -->
+<script>
+  if ('serviceWorker' in navigator) {
+    window.addEventListener('load', () => {
+      navigator.serviceWorker.register('./sw.js')
+        .then(reg => {
+          console.log('Service Worker registrato con successo:', reg.scope);
+          
+          reg.onupdatefound = () => {
+            const installingWorker = reg.installing;
+            installingWorker.onstatechange = () => {
+              if (installingWorker.state === 'installed') {
+                if (navigator.serviceWorker.controller) {
+                  console.log('Nuova versione disponibile, ricaricamento in corso...');
+                  window.location.reload();
+                }
+              }
+            };
+          };
+        })
+        .catch(err => {
+          console.log('Registrazione Service Worker fallita:', err);
+        });
+    });
   }
-}
-function mostraNotifica(testo, tipo) {
-  // Sostituisci questo con il sistema di notifiche/alert grafico che usi già nell'app
-  console.log(`[${tipo.toUpperCase()}] ${testo}`);
-  alert(testo); 
-}
 </script>
   </body>
 </html>
