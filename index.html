@@ -149,6 +149,7 @@
   </main>
 
   <!-- Blocco JavaScript -->
+  <!-- Blocco JavaScript -->
   <script>
     const URL_WEB_APP = "https://script.google.com/macros/s/AKfycbxfB-OYCrKJMJI6cNamkOpNuDxCfjrAq4erhdL9FvcWXMmqPUjCtk8aGiGwbgS-el7r/exec";
     let sedeSelezionataCorrente = null;
@@ -156,28 +157,24 @@
     function chiamaBackend(azione, payload = {}) {
       aggiornaStatoSalvataggio('salvataggio', 'Sincronizzazione...');
       
-      const datiInvio = {
+      // Costruisce la query string per le richieste GET gestite dal tuo router .gs
+      const parametri = new URLSearchParams({
         azione: azione,
         ...payload
-      };
-
-      return fetch(URL_WEB_APP, {
-        method: 'POST',
-        mode: 'no-cors',
-        headers: {
-          'Content-Type': 'text/plain;charset=utf-8',
-        },
-        body: JSON.stringify(datiInvio)
-      })
-      .then(response => {
-        aggiornaStatoSalvataggio('pronto', 'Aggiornato');
-        return response.json().catch(() => ({ success: true }));
-      })
-      .catch(error => {
-        aggiornaStatoSalvataggio('errore', 'Errore di connessione');
-        console.error("Errore backend:", error);
-        throw error;
       });
+
+      return fetch(`${URL_WEB_APP}?${parametri.toString()}`)
+        .then(response => response.json())
+        .then(data => {
+          aggiornaStatoSalvataggio('pronto', 'Aggiornato');
+          if (data.errore) throw new Error(data.errore);
+          return data;
+        })
+        .catch(error => {
+          aggiornaStatoSalvataggio('errore', 'Errore di connessione');
+          console.error("Errore backend:", error);
+          throw error;
+        });
     }
 
     function aggiornaStatoSalvataggio(stato, messaggio) {
@@ -212,17 +209,13 @@
       caricaSediPresenze();
     }
 
-    // Funzione per formattare il nome del tab PRESENZE_... in una forma leggibile ed elegante
     function formattaNomeSede(nomeTab) {
-      // Rimuove il prefisso "PRESENZE_" se presente
       let pulito = nomeTab.replace(/^PRESENZE_?/, '');
-      // Sostituisce underscore con spazi
       pulito = pulito.replace(/_/g, ' ');
-      // Mette in maiuscola le iniziali delle parole
       return pulito.toLowerCase().replace(/(?:^|\s)\S/g, function(a) { return a.toUpperCase(); });
     }
 
-    // Carica l'elenco dei tab PRESENZE dal foglio
+    // Richiama l'azione 'ottieniElencoSedi' sul backend
     function caricaSediPresenze() {
       var griglia = document.getElementById('grigliaSediPresenze');
       griglia.innerHTML = `
@@ -231,21 +224,14 @@
         </div>
       `;
 
-      fetch(URL_WEB_APP + "?azione=getSediPresenze")
-        .then(response => response.json())
+      chiamaBackend('ottieniElencoSedi')
         .then(data => {
-          renderizzaSedi(data.sedi || data);
+          // Gestisce sia se il backend restituisce un array diretto sia un oggetto con proprietà
+          var listaSedi = Array.isArray(data) ? data : (data.sedi || data.risultato || []);
+          renderizzaSedi(listaSedi);
         })
         .catch(err => {
-          console.warn("Richiesta GET fallita, provo con POST o fallback:", err);
-          chiamaBackend('getSediPresenze')
-            .then(res => {
-              renderizzaSedi(res.sedi || ["PRESENZE_DON_BALBIANO_DOPOSCUOLA", "PRESENZE_VOLVERA_CAMPO", "PRESENZE_GERBOLE"]);
-            })
-            .catch(() => {
-              // Fallback di test se il backend non è ancora agganciato
-              renderizzaSedi(["PRESENZE_DON_BALBIANO_DOPOSCUOLA", "PRESENZE_VOLVERA_CAMPO", "PRESENZE_GERBOLE"]);
-            });
+          griglia.innerHTML = `<div class="col-span-full text-center py-6 text-rose-400 text-sm">Errore di caricamento sedi. Controlla la console.</div>`;
         });
     }
 
@@ -269,7 +255,7 @@
             </div>
             <div>
               <span class="font-bold text-slate-800 group-hover:text-blue-600 transition block">${nomeFormattato}</span>
-              <span class="text-xs text-slate-400">Apri elenco iscritti</span>
+              <span class="text-xs text-slate-400">Apri registro presenze</span>
             </div>
           </div>
           <i class="fa-solid fa-chevron-right text-slate-300 group-hover:text-blue-600 transition"></i>
@@ -281,7 +267,6 @@
       });
     }
 
-    // Seleziona la sede e carica in tempo reale gli iscritti (Colonna B del tab)
     function selezionaSede(nomeTabOriginale, nomeFormattato) {
       sedeSelezionataCorrente = { originale: nomeTabOriginale, formattato: nomeFormattato };
       
@@ -297,27 +282,23 @@
       }
     }
 
+    // Richiama l'azione 'ottieniDatiRegistro' passando il tab selezionato
     function caricaIscrittiSede(nomeTab) {
       var container = document.getElementById('contenutoSedeSpecifica');
       container.innerHTML = `
         <div class="text-center py-8 text-slate-400 text-sm">
-          <i class="fa-solid fa-spinner animate-spin text-blue-600 text-lg mr-2"></i> Aggiornamento iscritti dal foglio in corso...
+          <i class="fa-solid fa-spinner animate-spin text-blue-600 text-lg mr-2"></i> Caricamento iscritti in corso...
         </div>
       `;
 
-      fetch(URL_WEB_APP + "?azione=getIscritti&tab=" + encodeURIComponent(nomeTab))
-        .then(response => response.json())
+      chiamaBackend('ottieniDatiRegistro', { tab: nomeTab })
         .then(data => {
-          renderizzaIscritti(data.iscritti || data);
+          // Estrae la lista degli iscritti strutturata dal backend
+          var iscritti = data.iscritti || data.righe || data.dati || data;
+          renderizzaIscritti(iscritti);
         })
         .catch(err => {
-          console.warn("Errore caricamento iscritti, uso dati di esempio:", err);
-          // Esempio basato sulla colonna B del foglio
-          renderizzaIscritti([
-            { id: "001", nome: "Mario Rossi" },
-            { id: "002", nome: "Giulia Bianchi" },
-            { id: "003", nome: "Luca Verdi" }
-          ]);
+          container.innerHTML = `<p class="text-rose-400 text-sm py-4 text-center">Impossibile caricare gli iscritti per questo servizio.</p>`;
         });
     }
 
@@ -334,9 +315,9 @@
       ul.className = "space-y-3";
 
       listaIscritti.forEach((iscritto, index) => {
-        // Supporta sia oggetti strutturati che semplici stringhe (nome e cognome da colonna B)
-        let nomeCognome = typeof iscritto === 'string' ? iscritto : (iscritto.nome || iscritto.nomeCognome || "Iscritto " + (index + 1));
-        let idIscritto = iscritto.id || (index + 1);
+        // Gestisce sia oggetti che array di righe provenienti da Apps Script
+        let idIscritto = iscritto.id || iscritto[0] || (index + 1);
+        let nomeCognome = iscritto.nome || iscritto.nomeCognome || iscritto[1] || "Iscritto " + (index + 1);
 
         var item = document.createElement('div');
         item.className = "bg-white/80 p-4 rounded-2xl border border-slate-100 shadow-sm flex items-center justify-between";
@@ -356,7 +337,7 @@
     }
 
     document.addEventListener("DOMContentLoaded", function() {
-      console.log("Interfaccia Registro Presenze Evolversi pronta");
+      console.log("Interfaccia allineata con successo al backend Apps Script");
     });
   </script>
 </body>
