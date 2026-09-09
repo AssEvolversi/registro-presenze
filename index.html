@@ -207,10 +207,29 @@
       caricaSediPresenze();
     }
 
-  function formattaNomeSede(nomeTab) {
-      let pulito = nomeTab.replace(/^PRESENZE_?/i, '');
-      pulito = pulito.replace(/_/g, ' ');
+ function formattaNomeSede(nomeTab) {
+      let pulito = nomeTab.replace(/^PRESENZE_?/i, '').trim();
+      
+      // Mappatura puntuale per i servizi noti
+      const dizionarioSedi = {
+        'DON_BALBIANO': 'Don Balbiano',
+        'DONBALBIANO': 'Don Balbiano',
+        'DON_MILANI': 'Don Milani',
+        'DONMILANI': 'Don Milani',
+        'IQBAL_MASIH': 'Iqbal Masih',
+        'IQBALMASIH': 'Iqbal Masih',
+        'INTEGRAZIONE_ORARIO_SCOLASTICO': 'Integrazione Orario Scolastico',
+        'INTEGRAZIONEORARIOSCOLASTICO': 'Integrazione Orario Scolastico'
+      };
+
+      let upper = pulito.toUpperCase();
+      if (dizionarioSedi[upper]) {
+        return dizionarioSedi[upper];
+      }
+
+      // Fallback intelligente per qualsiasi altro tab
       return pulito
+        .replace(/_/g, ' ')
         .toLowerCase()
         .split(' ')
         .map(word => word.charAt(0).toUpperCase() + word.slice(1))
