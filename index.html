@@ -156,37 +156,7 @@
       </div>
     </div>
   </div>
-
-  <!-- SCRIPT PRINCIPALE -->
-  <script>
-    // URL di configurazione della Web App Google Apps Script
-    const URL_WEB_APP = "https://script.google.com/macros/s/AKfycbySXKKSHEbvS1fRRR1Fh9foXKaSFjzN1hPlzP_wpUQOalclx9DDzUf2wTgU9qxQcIML/exec";
-    let colonnaGiornoCorrente = -1;
-    let tabSelezionatoCorrente = "";
-    let elencoAlunniGlobale = [];
-    let filtroStatoAttivo = 'tutti';
-    
-    // Funzione universale per comunicare con il backend Google Apps Script
-  function chiamaBackend(azione, payload = {}) {
-    // Uniamo l'azione e il payload in un nuovo oggetto pulito
-    const payloadCompleto = { azione, ...payload };
-    
-    const parametri = new URLSearchParams();
-    parametri.append('data', JSON.stringify(payloadCompleto));
-
-    return fetch(`${URL_WEB_APP}?${parametri.toString()}`, {
-        method: 'GET',
-        redirect: 'follow' // Esplicito per sicurezza con i redirect di Google
-    })
-    .then(response => {
-        if (!response.ok) throw new Error('Errore di rete dal server');
-        return response.json();
-    })
-    .then(risposta => {
-        if (risposta && risposta.errore) throw new Error(risposta.errore);
-        return risposta;
-    });
-}
+  
     function apriSezione(tipo) {
       var home = document.getElementById('schermataHome');
       var reg = document.getElementById('wrapperRegistro');
