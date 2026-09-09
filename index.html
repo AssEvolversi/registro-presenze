@@ -373,9 +373,7 @@
         var cognomeA = partiA.length > 1 ? partiA[partiA.length - 1].toLowerCase() : partiA[0].toLowerCase();
         var cognomeB = partiB.length > 1 ? partiB[partiB.length - 1].toLowerCase() : partiB[0].toLowerCase();
 
-        if (cognomeA < cognomeB) return -1;
-        if (cognomeA > cognomeB) return 1;
-        return 0;
+       return cognomeA.localeCompare(cognomeB);
       });
     }
 
