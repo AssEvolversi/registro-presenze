@@ -103,7 +103,6 @@
             <i class="fa-solid fa-rotate"></i> Aggiorna
           </button>
         </div>
-        <!-- Griglia dinamica dei tab PRESENZE_... formattati -->
         <div id="grigliaSediPresenze" class="grid grid-cols-1 sm:grid-cols-2 gap-4">
           <div class="col-span-full text-center py-8 text-slate-400 text-sm">
             <i class="fa-solid fa-spinner animate-spin text-blue-600 text-lg mr-2"></i> Caricamento servizi in corso...
@@ -112,7 +111,7 @@
       </div>
     </section>
 
-    <!-- Wrapper Sede Specifica (Elenco iscritti) -->
+    <!-- Wrapper Sede Specifica (Elenco iscritti con Presenze) -->
     <section id="wrapperSedeSpecifica" class="hidden space-y-4">
       <div class="flex justify-between items-center mb-2">
         <button onclick="apriRegistroPresenze()" class="text-blue-600 text-sm font-semibold flex items-center gap-2 hover:translate-x-[-4px] transition transform cursor-pointer">
@@ -122,13 +121,50 @@
           <i class="fa-solid fa-rotate"></i> Sincronizza iscritti
         </button>
       </div>
-      <div class="card-3d p-6 sm:p-8 rounded-3xl border border-white/50">
-        <h3 id="titoloSedeSelezionata" class="text-xl font-black text-blue-600 mb-6 flex items-center gap-2">
-          <i class="fa-solid fa-clipboard-list"></i> Elenco Iscritti
-        </h3>
+      
+      <div class="card-3d p-6 sm:p-8 rounded-3xl border border-white/50 space-y-5">
+        <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
+          <h3 id="titoloSedeSelezionata" class="text-xl font-black text-blue-600 flex items-center gap-2">
+            <i class="fa-solid fa-clipboard-list"></i> Registro Presenze
+          </h3>
+          <span id="dataOdiernaBadge" class="text-xs bg-blue-50 text-blue-600 font-bold px-3 py-1 rounded-full w-fit">Data odierna</span>
+        </div>
+
+        <!-- Barra di Riepilogo (Presenti, Assenti, Da Segnare) -->
+        <div class="grid grid-cols-3 gap-3 text-center">
+          <div class="bg-emerald-50 border border-emerald-200/60 p-3 rounded-2xl shadow-inner">
+            <span class="block text-xs font-bold text-emerald-600 uppercase tracking-wide">Presenti</span>
+            <span id="statPresenti" class="text-xl font-black text-emerald-700">0</span>
+          </div>
+          <div class="bg-rose-50 border border-rose-200/60 p-3 rounded-2xl shadow-inner">
+            <span class="block text-xs font-bold text-rose-600 uppercase tracking-wide">Assenti</span>
+            <span id="statAssenti" class="text-xl font-black text-rose-700">0</span>
+          </div>
+          <div class="bg-amber-50 border border-amber-200/60 p-3 rounded-2xl shadow-inner">
+            <span class="block text-xs font-bold text-amber-600 uppercase tracking-wide">Da Segnare</span>
+            <span id="statDaSegnare" class="text-xl font-black text-amber-700">0</span>
+          </div>
+        </div>
+
+        <!-- Azioni Rapide & Barra di Ricerca -->
+        <div class="flex flex-col sm:flex-row items-center gap-3 pt-2">
+          <div class="relative flex-1 w-full">
+            <i class="fa-solid fa-search absolute left-4 top-1/2 -translate-y-1/2 text-slate-400"></i>
+            <input type="text" id="inputRicercaIscritto" oninput="filtraIscritti()" placeholder="Cerca iscritto per nome o cognome..." class="w-full bg-white/90 border border-slate-200 rounded-2xl pl-11 pr-4 py-2.5 text-sm font-medium focus:outline-none focus:ring-2 focus:ring-blue-500 shadow-sm">
+          </div>
+          <div class="flex items-center gap-2 w-full sm:w-auto">
+            <button onclick="segnaTutti('P')" class="flex-1 sm:flex-initial bg-emerald-600 hover:bg-emerald-700 text-white text-xs font-bold px-4 py-3 rounded-2xl transition shadow-sm cursor-pointer">
+              Segna tutti P
+            </button>
+            <button onclick="segnaTutti('')" class="flex-1 sm:flex-initial bg-slate-200 hover:bg-slate-300 text-slate-700 text-xs font-bold px-4 py-3 rounded-2xl transition shadow-sm cursor-pointer">
+              Azzera
+            </button>
+          </div>
+        </div>
+
         <!-- Contenitore elenco iscritti dinamico -->
-        <div id="contenutoSedeSpecifica">
-          <p class="text-slate-500 text-sm py-4">Caricamento iscritti...</p>
+        <div id="contenutoSedeSpecifica" class="space-y-3 pt-2">
+          <p class="text-slate-500 text-sm py-4 text-center">Caricamento iscritti...</p>
         </div>
       </div>
     </section>
@@ -152,6 +188,8 @@
   <script>
     const URL_WEB_APP = "https://script.google.com/macros/s/AKfycbxfB-OYCrKJMJI6cNamkOpNuDxCfjrAq4erhdL9FvcWXMmqPUjCtk8aGiGwbgS-el7r/exec";
     let sedeSelezionataCorrente = null;
+    let listaAlunniGlobale = [];
+    let colonnaGiornoGlobale = -1;
 
     function chiamaBackend(azione, payload = {}) {
       aggiornaStatoSalvataggio('salvataggio', 'Sincronizzazione...');
@@ -207,10 +245,9 @@
       caricaSediPresenze();
     }
 
- function formattaNomeSede(nomeTab) {
+    function formattaNomeSede(nomeTab) {
       let pulito = nomeTab.replace(/^PRESENZE_?/i, '').trim().toUpperCase();
       
-      // Dizionario di mappatura esatta per i tuoi servizi
       const dizionarioSedi = {
         'DON_BALBIANO': 'Don Balbiano',
         'DONBALBIANO': 'Don Balbiano',
@@ -227,14 +264,13 @@
         return dizionarioSedi[pulito];
       }
 
-      // Spezza le parole unite più comuni se non presenti nel dizionario
       pulito = pulito
         .replace(/DONBALBIANO/g, 'Don Balbiano')
         .replace(/DONMILANI/g, 'Don Milani')
         .replace(/IQBALMASIH/g, 'Iqbal Masih')
         .replace(/ISQBALMASIH/g, 'Iqbal Masih')
         .replace(/INTEGRAZIONEORARIOSCOLASTICO/g, 'Integrazione Orario Scolastico')
-        .replace(/_/g, ' ' );
+        .replace(/_/g, ' ');
 
       return pulito
         .toLowerCase()
@@ -298,6 +334,7 @@
       sedeSelezionataCorrente = { originale: nomeTabOriginale, formattato: nomeFormattato };
       
       document.getElementById('titoloSedeSelezionata').innerHTML = `<i class="fa-solid fa-clipboard-list"></i> ${nomeFormattato}`;
+      document.getElementById('inputRicercaIscritto').value = "";
       mostraSezione('wrapperSedeSpecifica');
       
       caricaIscrittiSede(nomeTabOriginale);
@@ -319,48 +356,87 @@
 
       chiamaBackend('ottieniDatiRegistro', { tab: nomeTab })
         .then(data => {
-          var listaAlunni = data.alunni || [];
-          renderizzaIscritti(listaAlunni, data.isDonMilaniIntegrazione);
+          listaAlunniGlobale = data.alunni || [];
+          colonnaGiornoGlobale = data.colonnaGiorno || -1;
+          
+          if (data.dataOdierna) {
+            document.getElementById('dataOdiernaBadge').innerText = `Data odierna: ${data.dataOdierna}`;
+          }
+
+          // Ordina alfabeticamente per cognome (l'ultima parola della stringa Nome Cognome)
+          listaAlunniGlobale.sort((a, b) => {
+            let cognomeA = estraiCognome(a.nome);
+            let cognomeB = estraiCognome(b.nome);
+            return cognomeA.localeCompare(cognomeB);
+          });
+
+          renderizzaIscritti(listaAlunniGlobale, data.isDonMilaniIntegrazione);
         })
         .catch(err => {
           container.innerHTML = `<p class="text-rose-400 text-sm py-4 text-center">Impossibile caricare gli iscritti per questo servizio.</p>`;
         });
     }
 
+    function estraiCognome(nomeCompleto) {
+      if (!nomeCompleto) return "";
+      let parti = nomeCompleto.trim().split(" ");
+      return parti[parti.length - 1].toLowerCase();
+    }
+
+    function filtraIscritti() {
+      var query = document.getElementById('inputRicercaIscritto').value.toLowerCase().trim();
+      var filtrati = listaAlunniGlobale.filter(alunno => {
+        return alunno.nome && alunno.nome.toLowerCase().includes(query);
+      });
+      renderizzaListaHTML(filtrati);
+    }
+
     function renderizzaIscritti(listaAlunni, isDonMilani) {
+      renderizzaListaHTML(listaAlunni);
+    }
+
+    function renderizzaListaHTML(lista) {
       var container = document.getElementById('contenutoSedeSpecifica');
       container.innerHTML = "";
 
-      if (!listaAlunni || listaAlunni.length === 0) {
-        container.innerHTML = `<p class="text-slate-400 text-sm py-4 text-center">Nessun iscritto registrato in questo servizio.</p>`;
+      aggiornaRiepilogoStatistiche();
+
+      if (!lista || lista.length === 0) {
+        container.innerHTML = `<p class="text-slate-400 text-sm py-6 text-center">Nessun iscritto trovato.</p>`;
         return;
       }
 
       var ul = document.createElement('div');
       ul.className = "space-y-3";
 
-      listaAlunni.forEach((alunno, index) => {
+      lista.forEach((alunno) => {
+        var statoNorm = (alunno.stato || "").trim().toUpperCase();
+        var isPresente = (statoNorm === "P" || statoNorm === "PRESENTE");
+        var isAssente = (statoNorm === "A" || statoNorm === "ASSENTE");
+
         var item = document.createElement('div');
-        item.className = "bg-white/80 p-4 rounded-2xl border border-slate-100 shadow-sm flex items-center justify-between";
-        
-        var etichettaD = alunno.etichettaD || (isDonMilani ? "Classe" : "Ingressi residui");
-        var valoreD = alunno.ingressi !== undefined ? alunno.ingressi : "-";
+        item.className = "bg-white/90 p-4 rounded-2xl border border-slate-200/60 shadow-sm flex flex-col sm:flex-row sm:items-center justify-between gap-3 transition";
+        item.id = `iscritto-row-${alunno.riga}`;
 
         item.innerHTML = `
           <div class="flex items-center gap-3">
-            <div class="w-8 h-8 rounded-full bg-blue-50 text-blue-600 flex items-center justify-center font-bold text-xs shadow-inner">
-              ${index + 1}
+            <div class="w-10 h-10 rounded-xl bg-blue-50 text-blue-600 flex items-center justify-center font-bold text-xs shadow-inner shrink-0">
+              ID ${alunno.id || '-'}
             </div>
             <div>
               <span class="font-bold text-slate-800 block">${alunno.nome}</span>
-              <span class="text-xs text-slate-400">Tipo: ${alunno.tipo || 'Standard'}</span>
+              <span class="text-xs text-slate-400">Tipo: ${alunno.tipo || 'Standard'} | Ingressi: ${alunno.ingressi !== undefined ? alunno.ingressi : '-'}</span>
             </div>
           </div>
-          <div class="text-right">
-            <span class="text-xs bg-blue-50 text-blue-600 px-2.5 py-1 rounded-full font-semibold block mb-1">
-              ${etichettaD}: ${valoreD}
-            </span>
-            <span class="text-[10px] text-slate-400">ID: ${alunno.id}</span>
+          <div class="flex items-center gap-2 self-end sm:self-center">
+            <button onclick="impostaStatoPresenza(${alunno.riga}, 'P')" 
+              class="btn-presente-${alunno.riga} px-4 py-2 rounded-xl text-xs font-bold transition shadow-sm cursor-pointer ${isPresente ? 'bg-emerald-600 text-white shadow-emerald-200 scale-105' : 'bg-slate-100 text-slate-600 hover:bg-emerald-100 hover:text-emerald-700'}">
+              <i class="fa-solid fa-check mr-1"></i> Presente
+            </button>
+            <button onclick="impostaStatoPresenza(${alunno.riga}, 'A')" 
+              class="btn-assente-${alunno.riga} px-4 py-2 rounded-xl text-xs font-bold transition shadow-sm cursor-pointer ${isAssente ? 'bg-rose-600 text-white shadow-rose-200 scale-105' : 'bg-slate-100 text-slate-600 hover:bg-rose-100 hover:text-rose-700'}">
+              <i class="fa-solid fa-xmark mr-1"></i> Assente
+            </button>
           </div>
         `;
         ul.appendChild(item);
@@ -369,8 +445,88 @@
       container.appendChild(ul);
     }
 
+    function impostaStatoPresenza(riga, nuovoStato) {
+      var alunno = listaAlunniGlobale.find(a => a.riga === riga);
+      if (!alunno) return;
+
+      // Se clicca lo stesso stato già attivo, lo azzera
+      if (alunno.stato === nuovoStato) {
+        alunno.stato = "";
+      } else {
+        alunno.stato = nuovoStato;
+      }
+
+      // Aggiorna visivamente l'elemento nella lista
+      aggiornaUIElementoSingolo(riga, alunno.stato);
+      aggiornaRiepilogoStatistiche();
+
+      // Invia la chiamata al backend per salvare la presenza in tempo reale sulla cella del giorno
+      chiamaBackend('salvaPresenza', {
+        tab: sedeSelezionataCorrente.originale,
+        riga: riga,
+        colonna: colonnaGiornoGlobale,
+        stato: alunno.stato
+      }).then(res => {
+        // Se il backend restituisce nuovi ingressi aggiornati (per ingressi residui), aggiorna l'oggetto locale
+        if (res && res.nuoviIngressi !== undefined && res.nuoviIngressi !== "-") {
+          alunno.ingressi = res.nuoviIngressi;
+          alunno.valoreD = res.nuoviIngressi;
+        }
+      }).catch(err => {
+        console.error("Errore salvataggio presenza:", err);
+      });
+    }
+
+    function aggiornaUIElementoSingolo(riga, stato) {
+      var btnP = document.querySelector(`.btn-presente-${riga}`);
+      var btnA = document.querySelector(`.btn-assente-${riga}`);
+      if (!btnP || !btnA) return;
+
+      var isPresente = (stato === "P" || stato === "PRESENTE");
+      var isAssente = (stato === "A" || stato === "ASSENTE");
+
+      btnP.className = `btn-presente-${riga} px-4 py-2 rounded-xl text-xs font-bold transition shadow-sm cursor-pointer ${isPresente ? 'bg-emerald-600 text-white shadow-emerald-200 scale-105' : 'bg-slate-100 text-slate-600 hover:bg-emerald-100 hover:text-emerald-700'}`;
+      btnA.className = `btn-assente-${riga} px-4 py-2 rounded-xl text-xs font-bold transition shadow-sm cursor-pointer ${isAssente ? 'bg-rose-600 text-white shadow-rose-200 scale-105' : 'bg-slate-100 text-slate-600 hover:bg-rose-100 hover:text-rose-700'}`;
+    }
+
+    function aggiornaRiepilogoStatistiche() {
+      var presenti = 0;
+      var assenti = 0;
+      var daSegnare = 0;
+
+      listaAlunniGlobale.forEach(a => {
+        var st = (a.stato || "").trim().toUpperCase();
+        if (st === "P" || st === "PRESENTE") presenti++;
+        else if (st === "A" || st === "ASSENTE") assenti++;
+        else daSegnare++;
+      });
+
+      document.getElementById('statPresenti').innerText = presenti;
+      document.getElementById('statAssenti').innerText = assenti;
+      document.getElementById('statDaSegnare').innerText = daSegnare;
+    }
+
+    function segnaTutti(statoForzato) {
+      if (!listaAlunniGlobale || listaAlunniGlobale.length === 0) return;
+
+      listaAlunniGlobale.forEach(a => {
+        a.stato = statoForzato;
+        aggiornaUIElementoSingolo(a.riga, statoForzato);
+        
+        // Sincronizza sul backend ogni singola variazione di massa
+        chiamaBackend('salvaPresenza', {
+          tab: sedeSelezionataCorrente.originale,
+          riga: a.riga,
+          colonna: colonnaGiornoGlobale,
+          stato: statoForzato
+        }).catch(err => console.error("Errore salvataggio di massa:", err));
+      });
+
+      aggiornaRiepilogoStatistiche();
+    }
+
     document.addEventListener("DOMContentLoaded", function() {
-      console.log("Interfaccia Evolversi 3D pienamente operativa");
+      console.log("Interfaccia Registro Presenze Avanzata pronta");
     });
   </script>
 </body>
