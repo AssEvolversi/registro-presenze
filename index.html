@@ -1137,65 +1137,6 @@
 
 <!-- Script Logica Timbrature -->
 <script>
-  window.caricaDatiIniziali = function() {
-    var selectOp = document.getElementById("selectOperatore");
-    var selectServ = document.getElementById("selectServizio");
-    
-    if (!selectOp || !selectServ) {
-      console.warn("Elementi select non trovati nel DOM!");
-      return;
-    }
-
-    selectOp.innerHTML = '<option value="" disabled selected>Caricamento operatori...</option>';
-    selectServ.innerHTML = '<option value="" disabled selected>Caricamento servizi...</option>';
-
-   // Aggiunta dell'evento onchange sulla select operatore per aggiornare lo storico
-  selectOp.onchange = function() {
-    caricaStoricoOperatore(this.value);
-  };
-
-  // Chiamata al backend tramite fetch verso la Web App di Google Apps Script su GitHub Pages
-  chiamaBackend('ottieniDatiInizialiTimbratura')
-    .then(function(dati) {
-      popolaMenu(dati);
-    })
-    .catch(function(err) {
-      console.error("Errore nel recupero dati iniziali:", err);
-      mostraErrore(err);
-    });
-};
-
-  function popolaMenu(dati) {
-    var selectOp = document.getElementById("selectOperatore");
-    var selectServ = document.getElementById("selectServizio");
-    
-    if (!selectOp || !selectServ) return;
-
-    selectOp.innerHTML = '<option value="" disabled selected>Seleziona il tuo nome...</option>';
-    if (dati && dati.operatori && dati.operatori.length > 0) {
-      dati.operatori.forEach(function(op) {
-        var opt = document.createElement("option");
-        opt.value = op.nome; 
-        opt.textContent = op.nome + (op.mansioni ? ' (' + op.mansioni + ')' : '');
-        selectOp.appendChild(opt);
-      });
-    } else {
-      selectOp.innerHTML = '<option value="" disabled selected>Nessun operatore trovato</option>';
-    }
-    
-    selectServ.innerHTML = '<option value="" disabled selected>Seleziona plesso e servizio...</option>';
-    if (dati && dati.servizi && dati.servizi.length > 0) {
-      dati.servizi.forEach(function(serv) {
-        var opt = document.createElement("option");
-        opt.value = serv.etichetta; 
-        opt.textContent = serv.etichetta;
-        selectServ.appendChild(opt);
-      });
-    } else {
-      selectServ.innerHTML = '<option value="" disabled selected>Nessun servizio trovato</option>';
-    }
-  }
-
   function caricaStoricoOperatore(nomeOperatore) {
   var boxStorico = document.getElementById("boxStorico");
   var listaStorico = document.getElementById("listaStorico");
@@ -1322,31 +1263,61 @@ function inviaTimbratura() {
     observer.observe(sezione, { attributes: true, attributeFilter: ['class', 'style'] });
   });
   function caricaDatiIniziali() {
-    // Evitiamo chiamate doppie se i dati sono già stati caricati
-    var selectOp = document.getElementById("selectOperatore");
-    if (selectOp && selectOp.dataset.caricato === "true") return;
+  var selectOp = document.getElementById("selectOperatore");
+  var selectServ = document.getElementById("selectServizio");
+  
+  if (!selectOp || !selectServ) return;
 
-    chiamaBackend('ottieniDatiInizialiTimbratura')
-        .then(risposta => {
-            if (!risposta) return;
+  // Evitiamo chiamate doppie se i dati sono già stati caricati
+  if (selectOp.dataset.caricato === "true") return;
 
-            // Popola il menu degli operatori (ricevuto dal backend)
-            if (selectOp && risposta.operatori) {
-                selectOp.innerHTML = '<option value="" disabled selected>Seleziona operatore...</option>';
-                risposta.operatori.forEach(op => {
-                    var opt = document.createElement('option');
-                    opt.value = op;
-                    opt.textContent = op;
-                    selectOp.appendChild(opt);
-                });
-                selectOp.dataset.caricato = "true";
-            }
+  selectOp.innerHTML = '<option value="" disabled selected>Caricamento operatori...</option>';
+  selectServ.innerHTML = '<option value="" disabled selected>Caricamento servizi...</option>';
 
-            // Se ci sono altri elementi da popolare legati alla timbratura, gestiscili qui
-        })
-        .catch(err => {
-            mostraErrore(err);
+  // Binding dell'evento onchange per lo storico operatore
+  selectOp.onchange = function() {
+    caricaStoricoOperatore(this.value);
+  };
+
+  chiamaBackend('ottieniDatiInizialiTimbratura')
+    .then(function(dati) {
+      if (!dati) return;
+
+      // Popola operatori
+      selectOp.innerHTML = '<option value="" disabled selected>Seleziona il tuo nome...</option>';
+      if (dati.operatori && dati.operatori.length > 0) {
+        dati.operatori.forEach(function(op) {
+          var nomeOp = typeof op === 'object' ? op.nome : op;
+          var mansioneOp = typeof op === 'object' && op.mansioni ? ' (' + op.mansioni + ')' : '';
+          
+          var opt = document.createElement("option");
+          opt.value = nomeOp; 
+          opt.textContent = nomeOp + mansioneOp;
+          selectOp.appendChild(opt);
         });
+        selectOp.dataset.caricato = "true";
+      } else {
+        selectOp.innerHTML = '<option value="" disabled selected>Nessun operatore trovato</option>';
+      }
+
+      // Popola servizi
+      selectServ.innerHTML = '<option value="" disabled selected>Seleziona plesso e servizio...</option>';
+      if (dati.servizi && dati.servizi.length > 0) {
+        dati.servizi.forEach(function(serv) {
+          var etichettaServ = typeof serv === 'object' ? serv.etichetta : serv;
+          
+          var opt = document.createElement("option");
+          opt.value = etichettaServ; 
+          opt.textContent = etichettaServ;
+          selectServ.appendChild(opt);
+        });
+      } else {
+        selectServ.innerHTML = '<option value="" disabled selected>Nessun servizio trovato</option>';
+      }
+    })
+    .catch(function(err) {
+      mostraErrore(err);
+    });
 }
 </script>
     </div>
