@@ -184,7 +184,7 @@
 
   </main>
 
- <!-- Blocco JavaScript Completo con Controlli Extra In-line per Iqbal Masih -->
+ <!-- Blocco JavaScript Aggiornato: Rimossa tipologia, mantenuti solo ingressi residui -->
   <script>
     const URL_WEB_APP = "https://script.google.com/macros/s/AKfycbxfB-OYCrKJMJI6cNamkOpNuDxCfjrAq4erhdL9FvcWXMmqPUjCtk8aGiGwbgS-el7r/exec";
     let sedeSelezionataCorrente = null;
@@ -403,7 +403,6 @@
       var tabOriginaleUpper = (sedeSelezionataCorrente && sedeSelezionataCorrente.originale) ? sedeSelezionataCorrente.originale.toUpperCase() : "";
       var isIqbalMasih = tabOriginaleUpper.includes("IQBAL");
 
-      // Se è Don Milani / Integrazione Orario Scolastico, raggruppiamo in sottomenù per Classe (colonna D)
       if (isDonMilaniIntegrazioneGlobale) {
         var gruppiClassi = {};
         lista.forEach(alunno => {
@@ -432,7 +431,7 @@
 
           var contenitoreAlunniGruppo = document.createElement('div');
           contenitoreAlunniGruppo.id = idAccordion;
-          contenitoreAlunniGruppo.className = "space-y-3 pt-2 hidden"; // Chiuso di default
+          contenitoreAlunniGruppo.className = "space-y-3 pt-2 hidden";
 
           headerGruppo.onclick = function() {
             var el = document.getElementById(idAccordion);
@@ -471,9 +470,9 @@
       var isAssente = (statoNorm === "A" || statoNorm === "ASSENTE");
 
       var tipoLower = (alunno.tipo || "").toLowerCase();
-      var mostraTipologiaIngressi = !isDonMilani && (tipoLower.includes("ingresso") || tipoLower.includes("pacchetto") || tipoLower.includes("carnet") || !tipoLower.includes("fisso"));
+      // Mostra gli ingressi residui SOLO se la tipologia contiene riferimenti agli ingressi/pacchetti/carnet (escludendo i fissi puri)
+      var mostraIngressiResidui = !isDonMilani && (tipoLower.includes("ingresso") || tipoLower.includes("pacchetto") || tipoLower.includes("carnet") || tipoLower.includes("pacchetto ingressi"));
 
-      // Valutazione checkbox Servizio Extra (es. se contiene "SÌ", "SI", "TRUE", "X" o è valorizzato)
       var servizioExtraChecked = false;
       if (alunno.servizioExtra) {
         var valSe = String(alunno.servizioExtra).trim().toUpperCase();
@@ -492,14 +491,15 @@
             </div>
             <div>
               <span class="font-bold text-slate-800 text-base block">${alunno.nome}</span>
-              <span class="text-xs text-slate-400 block mt-0.5">
-                Tipologia: <strong class="text-slate-600">${alunno.tipo || 'Standard'}</strong>
-                ${mostraTipologiaIngressi ? ` | Ingressi residui: <span id="ingressi-val-${alunno.riga}" class="font-bold text-blue-600">${alunno.ingressi}</span>` : ''}
-              </span>
+              ${mostraIngressiResidui ? `
+                <span class="text-xs text-slate-400 block mt-0.5">
+                  Ingressi residui: <span id="ingressi-val-${alunno.riga}" class="font-bold text-blue-600">${alunno.ingressi}</span>
+                </span>
+              ` : ''}
             </div>
           </div>
 
-          <!-- Sezione Controlli Iqbal Masih (Servizio Extra & Ore Extra) -->
+          <!-- Controlli Iqbal Masih -->
           ${isIqbalMasih ? `
             <div class="flex items-center gap-3 bg-blue-50/50 px-3 py-1.5 rounded-xl border border-blue-100 self-start md:self-center">
               <label class="flex items-center gap-1.5 cursor-pointer text-xs font-semibold text-slate-700">
@@ -534,7 +534,7 @@
           </div>
         </div>
 
-        <!-- Box Info Anagrafico Espandibile (Senza Servizio/Ore Extra ora posizionati sopra) -->
+        <!-- Box Info Anagrafico Espandibile -->
         <div id="info-box-${alunno.riga}" class="hidden mt-2 pt-3 border-t border-slate-100 text-xs text-slate-600 grid grid-cols-1 sm:grid-cols-2 gap-2 bg-slate-50 p-3 rounded-xl">
           <div><strong class="text-slate-700">Email:</strong> ${alunno.email || '-'}</div>
           <div><strong class="text-slate-700">Cellulare:</strong> ${alunno.cellulare || '-'}</div>
@@ -563,7 +563,7 @@
       chiamaBackend('salvaCampoExtra', {
         tab: sedeSelezionataCorrente.originale,
         riga: riga,
-        colonna: 38, // Colonna AM per Servizio Extra
+        colonna: 38,
         valore: nuovoValore
       }).catch(err => console.error("Errore salvataggio Servizio Extra:", err));
     }
@@ -579,7 +579,7 @@
       chiamaBackend('salvaCampoExtra', {
         tab: sedeSelezionataCorrente.originale,
         riga: riga,
-        colonna: 39, // Colonna AN per Ore Extra
+        colonna: 39,
         valore: nuovoValore
       }).catch(err => console.error("Errore salvataggio Ore Extra:", err));
     }
@@ -599,7 +599,7 @@
       var oraPresente = (alunno.stato === "P" || alunno.stato === "PRESENTE");
 
       var tipoLower = (alunno.tipo || "").toLowerCase();
-      var gestisceIngressi = !isDonMilaniIntegrazioneGlobale && (tipoLower.includes("ingresso") || tipoLower.includes("pacchetto") || tipoLower.includes("carnet") || !tipoLower.includes("fisso"));
+      var gestisceIngressi = !isDonMilaniIntegrazioneGlobale && (tipoLower.includes("ingresso") || tipoLower.includes("pacchetto") || tipoLower.includes("carnet"));
 
       if (gestisceIngressi && !eraPresente && oraPresente) {
         alunno.ingressi = Math.max(0, Number(alunno.ingressi || 0) - 1);
@@ -680,7 +680,7 @@
     }
 
     document.addEventListener("DOMContentLoaded", function() {
-      console.log("Interfaccia aggiornata con controlli Servizio Extra e Ore Extra in-line.");
+      console.log("Interfaccia aggiornata: tipologie nascoste, visibili solo gli ingressi residui ove previsto.");
     });
   </script>
 </body>
