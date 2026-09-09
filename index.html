@@ -112,7 +112,7 @@
       </div>
     </section>
 
-    <!-- Wrapper Sede Specifica (Elenco iscritti colonna B) -->
+    <!-- Wrapper Sede Specifica (Elenco iscritti) -->
     <section id="wrapperSedeSpecifica" class="hidden space-y-4">
       <div class="flex justify-between items-center mb-2">
         <button onclick="apriRegistroPresenze()" class="text-blue-600 text-sm font-semibold flex items-center gap-2 hover:translate-x-[-4px] transition transform cursor-pointer">
@@ -149,7 +149,6 @@
   </main>
 
   <!-- Blocco JavaScript -->
-  <!-- Blocco JavaScript -->
   <script>
     const URL_WEB_APP = "https://script.google.com/macros/s/AKfycbxfB-OYCrKJMJI6cNamkOpNuDxCfjrAq4erhdL9FvcWXMmqPUjCtk8aGiGwbgS-el7r/exec";
     let sedeSelezionataCorrente = null;
@@ -157,7 +156,6 @@
     function chiamaBackend(azione, payload = {}) {
       aggiornaStatoSalvataggio('salvataggio', 'Sincronizzazione...');
       
-      // Costruisce la query string per le richieste GET gestite dal tuo router .gs
       const parametri = new URLSearchParams({
         azione: azione,
         ...payload
@@ -215,7 +213,6 @@
       return pulito.toLowerCase().replace(/(?:^|\s)\S/g, function(a) { return a.toUpperCase(); });
     }
 
-    // Richiama l'azione 'ottieniElencoSedi' sul backend
     function caricaSediPresenze() {
       var griglia = document.getElementById('grigliaSediPresenze');
       griglia.innerHTML = `
@@ -226,12 +223,11 @@
 
       chiamaBackend('ottieniElencoSedi')
         .then(data => {
-          // Gestisce sia se il backend restituisce un array diretto sia un oggetto con proprietà
           var listaSedi = Array.isArray(data) ? data : (data.sedi || data.risultato || []);
           renderizzaSedi(listaSedi);
         })
         .catch(err => {
-          griglia.innerHTML = `<div class="col-span-full text-center py-6 text-rose-400 text-sm">Errore di caricamento sedi. Controlla la console.</div>`;
+          griglia.innerHTML = `<div class="col-span-full text-center py-6 text-rose-400 text-sm">Errore di caricamento sedi. Controlla la connessione.</div>`;
         });
     }
 
@@ -282,7 +278,6 @@
       }
     }
 
-    // Richiama l'azione 'ottieniDatiRegistro' passando il tab selezionato
     function caricaIscrittiSede(nomeTab) {
       var container = document.getElementById('contenutoSedeSpecifica');
       container.innerHTML = `
@@ -293,20 +288,19 @@
 
       chiamaBackend('ottieniDatiRegistro', { tab: nomeTab })
         .then(data => {
-          // Estrae la lista degli iscritti strutturata dal backend
-          var iscritti = data.iscritti || data.righe || data.dati || data;
-          renderizzaIscritti(iscritti);
+          var listaAlunni = data.alunni || [];
+          renderizzaIscritti(listaAlunni, data.isDonMilaniIntegrazione);
         })
         .catch(err => {
           container.innerHTML = `<p class="text-rose-400 text-sm py-4 text-center">Impossibile caricare gli iscritti per questo servizio.</p>`;
         });
     }
 
-    function renderizzaIscritti(listaIscritti) {
+    function renderizzaIscritti(listaAlunni, isDonMilani) {
       var container = document.getElementById('contenutoSedeSpecifica');
       container.innerHTML = "";
 
-      if (!listaIscritti || listaIscritti.length === 0) {
+      if (!listaAlunni || listaAlunni.length === 0) {
         container.innerHTML = `<p class="text-slate-400 text-sm py-4 text-center">Nessun iscritto registrato in questo servizio.</p>`;
         return;
       }
@@ -314,21 +308,29 @@
       var ul = document.createElement('div');
       ul.className = "space-y-3";
 
-      listaIscritti.forEach((iscritto, index) => {
-        // Gestisce sia oggetti che array di righe provenienti da Apps Script
-        let idIscritto = iscritto.id || iscritto[0] || (index + 1);
-        let nomeCognome = iscritto.nome || iscritto.nomeCognome || iscritto[1] || "Iscritto " + (index + 1);
-
+      listaAlunni.forEach((alunno, index) => {
         var item = document.createElement('div');
         item.className = "bg-white/80 p-4 rounded-2xl border border-slate-100 shadow-sm flex items-center justify-between";
+        
+        var etichettaD = alunno.etichettaD || (isDonMilani ? "Classe" : "Ingressi residui");
+        var valoreD = alunno.ingressi !== undefined ? alunno.ingressi : "-";
+
         item.innerHTML = `
           <div class="flex items-center gap-3">
             <div class="w-8 h-8 rounded-full bg-blue-50 text-blue-600 flex items-center justify-center font-bold text-xs shadow-inner">
               ${index + 1}
             </div>
-            <span class="font-bold text-slate-800">${nomeCognome}</span>
+            <div>
+              <span class="font-bold text-slate-800 block">${alunno.nome}</span>
+              <span class="text-xs text-slate-400">Tipo: ${alunno.tipo || 'Standard'}</span>
+            </div>
           </div>
-          <span class="text-xs bg-slate-100 text-slate-500 px-2.5 py-1 rounded-full font-medium">ID: ${idIscritto}</span>
+          <div class="text-right">
+            <span class="text-xs bg-blue-50 text-blue-600 px-2.5 py-1 rounded-full font-semibold block mb-1">
+              ${etichettaD}: ${valoreD}
+            </span>
+            <span class="text-[10px] text-slate-400">ID: ${alunno.id}</span>
+          </div>
         `;
         ul.appendChild(item);
       });
@@ -337,7 +339,7 @@
     }
 
     document.addEventListener("DOMContentLoaded", function() {
-      console.log("Interfaccia allineata con successo al backend Apps Script");
+      console.log("Interfaccia Evolversi 3D pienamente operativa");
     });
   </script>
 </body>
