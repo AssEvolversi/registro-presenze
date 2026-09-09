@@ -89,7 +89,7 @@
       </div>
     </section>
 
-    <!-- Wrapper Registro Presenze (Sedi e Servizi) -->
+    <!-- Wrapper Registro Presenze (Sedi e Servizi formattati) -->
     <section id="wrapperRegistro" class="hidden space-y-4">
       <button onclick="tornaAllaHome()" class="text-blue-600 text-sm font-semibold flex items-center gap-2 mb-2 hover:translate-x-[-4px] transition transform cursor-pointer">
         <i class="fa-solid fa-arrow-left"></i> Torna alla home
@@ -103,26 +103,32 @@
             <i class="fa-solid fa-rotate"></i> Aggiorna
           </button>
         </div>
-        <!-- Griglia dinamica delle sedi/servizi dal tab PRESENZE -->
+        <!-- Griglia dinamica dei tab PRESENZE_... formattati -->
         <div id="grigliaSediPresenze" class="grid grid-cols-1 sm:grid-cols-2 gap-4">
           <div class="col-span-full text-center py-8 text-slate-400 text-sm">
-            <i class="fa-solid fa-spinner animate-spin text-blue-600 text-lg mr-2"></i> Caricamento sedi in corso...
+            <i class="fa-solid fa-spinner animate-spin text-blue-600 text-lg mr-2"></i> Caricamento servizi in corso...
           </div>
         </div>
       </div>
     </section>
 
-    <!-- Wrapper Sede Specifica (dove si aprirà il registro effettivo della sede scelta) -->
+    <!-- Wrapper Sede Specifica (Elenco iscritti colonna B) -->
     <section id="wrapperSedeSpecifica" class="hidden space-y-4">
-      <button onclick="apriRegistroPresenze()" class="text-blue-600 text-sm font-semibold flex items-center gap-2 mb-2 hover:translate-x-[-4px] transition transform cursor-pointer">
-        <i class="fa-solid fa-arrow-left"></i> Torna alla scelta sedi
-      </button>
+      <div class="flex justify-between items-center mb-2">
+        <button onclick="apriRegistroPresenze()" class="text-blue-600 text-sm font-semibold flex items-center gap-2 hover:translate-x-[-4px] transition transform cursor-pointer">
+          <i class="fa-solid fa-arrow-left"></i> Torna alla scelta sedi
+        </button>
+        <button onclick="ricaricaIscrittiCorrenti()" class="text-xs text-blue-600 hover:underline font-medium flex items-center gap-1">
+          <i class="fa-solid fa-rotate"></i> Sincronizza iscritti
+        </button>
+      </div>
       <div class="card-3d p-6 sm:p-8 rounded-3xl border border-white/50">
-        <h3 id="titoloSedeSelezionata" class="text-xl font-black text-blue-600 mb-4 flex items-center gap-2">
-          <i class="fa-solid fa-clipboard-list"></i> Registro Sede
+        <h3 id="titoloSedeSelezionata" class="text-xl font-black text-blue-600 mb-6 flex items-center gap-2">
+          <i class="fa-solid fa-clipboard-list"></i> Elenco Iscritti
         </h3>
+        <!-- Contenitore elenco iscritti dinamico -->
         <div id="contenutoSedeSpecifica">
-          <p class="text-slate-500 text-sm">Caricamento registro...</p>
+          <p class="text-slate-500 text-sm py-4">Caricamento iscritti...</p>
         </div>
       </div>
     </section>
@@ -145,6 +151,7 @@
   <!-- Blocco JavaScript -->
   <script>
     const URL_WEB_APP = "INCOLLA_QUI_IL_TUO_URL_APPS_SCRIPT";
+    let sedeSelezionataCorrente = null;
 
     function chiamaBackend(azione, payload = {}) {
       aggiornaStatoSalvataggio('salvataggio', 'Sincronizzazione...');
@@ -205,35 +212,39 @@
       caricaSediPresenze();
     }
 
-    // Funzione per caricare le sedi/servizi dal tab PRESENZE del foglio Google
+    // Funzione per formattare il nome del tab PRESENZE_... in una forma leggibile ed elegante
+    function formattaNomeSede(nomeTab) {
+      // Rimuove il prefisso "PRESENZE_" se presente
+      let pulito = nomeTab.replace(/^PRESENZE_?/, '');
+      // Sostituisce underscore con spazi
+      pulito = pulito.replace(/_/g, ' ');
+      // Mette in maiuscola le iniziali delle parole
+      return pulito.toLowerCase().replace(/(?:^|\s)\S/g, function(a) { return a.toUpperCase(); });
+    }
+
+    // Carica l'elenco dei tab PRESENZE dal foglio
     function caricaSediPresenze() {
       var griglia = document.getElementById('grigliaSediPresenze');
       griglia.innerHTML = `
         <div class="col-span-full text-center py-8 text-slate-400 text-sm">
-          <i class="fa-solid fa-spinner animate-spin text-blue-600 text-lg mr-2"></i> Caricamento sedi in corso...
+          <i class="fa-solid fa-spinner animate-spin text-blue-600 text-lg mr-2"></i> Lettura servizi dal foglio in corso...
         </div>
       `;
 
-      // Chiamata al backend per recuperare la lista delle sedi dal tab PRESENZE
-      // Assicurati che il tuo Google Apps Script gestisca l'azione 'getSediPresenze' restituendo un array di nomi
       fetch(URL_WEB_APP + "?azione=getSediPresenze")
         .then(response => response.json())
         .then(data => {
-          // Se la tua Web App usa POST o restituisce direttamente i dati:
           renderizzaSedi(data.sedi || data);
         })
         .catch(err => {
-          console.warn("Simulazione o errore fetch GET, provo chiamata POST o fallback dati locali:", err);
-          
-          // Esempio di fallback o chiamata POST se il tuo script Apps Script risponde via POST:
+          console.warn("Richiesta GET fallita, provo con POST o fallback:", err);
           chiamaBackend('getSediPresenze')
             .then(res => {
-              // Se hai già un array di sedi nel vecchio codice, inseriscilo qui sotto come test se necessario
-              renderizzaSedi(res.sedi || ["Sede Centrale", "Servizio Volvera", "Doposcuola Campana", "Le Gerbole"]);
+              renderizzaSedi(res.sedi || ["PRESENZE_DON_BALBIANO_DOPOSCUOLA", "PRESENZE_VOLVERA_CAMPO", "PRESENZE_GERBOLE"]);
             })
             .catch(() => {
-              // Fallbox di emergenza con dati dimostrativi se il backend non è ancora collegato
-              renderizzaSedi(["Sede Centrale - Evolversi", "Servizio Volvera", "Doposcuola Campana", "Le Gerbole"]);
+              // Fallback di test se il backend non è ancora agganciato
+              renderizzaSedi(["PRESENZE_DON_BALBIANO_DOPOSCUOLA", "PRESENZE_VOLVERA_CAMPO", "PRESENZE_GERBOLE"]);
             });
         });
     }
@@ -243,11 +254,12 @@
       griglia.innerHTML = "";
 
       if (!listaSedi || listaSedi.length === 0) {
-        griglia.innerHTML = `<div class="col-span-full text-center py-6 text-slate-400 text-sm">Nessuna sede trovata nel tab PRESENZE.</div>`;
+        griglia.innerHTML = `<div class="col-span-full text-center py-6 text-slate-400 text-sm">Nessun tab presenze trovato nel foglio.</div>`;
         return;
       }
 
-      listaSedi.forEach(sede => {
+      listaSedi.forEach(nomeTabOriginale => {
+        var nomeFormattato = formattaNomeSede(nomeTabOriginale);
         var btn = document.createElement('button');
         btn.className = "card-3d p-5 rounded-2xl flex items-center justify-between text-left group cursor-pointer border border-white/50 hover:border-blue-300";
         btn.innerHTML = `
@@ -256,31 +268,95 @@
               <i class="fa-solid fa-location-dot"></i>
             </div>
             <div>
-              <span class="font-bold text-slate-800 group-hover:text-blue-600 transition block">${sede}</span>
-              <span class="text-xs text-slate-400">Apri registro presenze</span>
+              <span class="font-bold text-slate-800 group-hover:text-blue-600 transition block">${nomeFormattato}</span>
+              <span class="text-xs text-slate-400">Apri elenco iscritti</span>
             </div>
           </div>
           <i class="fa-solid fa-chevron-right text-slate-300 group-hover:text-blue-600 transition"></i>
         `;
         btn.onclick = function() {
-          selezionaSede(sede);
+          selezionaSede(nomeTabOriginale, nomeFormattato);
         };
         griglia.appendChild(btn);
       });
     }
 
-    function selezionaSede(nomeSede) {
-      document.getElementById('titoloSedeSelezionata').innerHTML = `<i class="fa-solid fa-clipboard-list"></i> Registro: ${nomeSede}`;
+    // Seleziona la sede e carica in tempo reale gli iscritti (Colonna B del tab)
+    function selezionaSede(nomeTabOriginale, nomeFormattato) {
+      sedeSelezionataCorrente = { originale: nomeTabOriginale, formattato: nomeFormattato };
+      
+      document.getElementById('titoloSedeSelezionata').innerHTML = `<i class="fa-solid fa-clipboard-list"></i> ${nomeFormattato}`;
       mostraSezione('wrapperSedeSpecifica');
       
+      caricaIscrittiSede(nomeTabOriginale);
+    }
+
+    function ricaricaIscrittiCorrenti() {
+      if (sedeSelezionataCorrente) {
+        caricaIscrittiSede(sedeSelezionataCorrente.originale);
+      }
+    }
+
+    function caricaIscrittiSede(nomeTab) {
       var container = document.getElementById('contenutoSedeSpecifica');
-      container.innerHTML = `<p class="text-slate-500 text-sm py-4">Caricamento presenze per ${nomeSede}...</p>`;
-      
-      // Qui integrerai la logica specifica per caricare i dati dei partecipanti/presenze della sede scelta
+      container.innerHTML = `
+        <div class="text-center py-8 text-slate-400 text-sm">
+          <i class="fa-solid fa-spinner animate-spin text-blue-600 text-lg mr-2"></i> Aggiornamento iscritti dal foglio in corso...
+        </div>
+      `;
+
+      fetch(URL_WEB_APP + "?azione=getIscritti&tab=" + encodeURIComponent(nomeTab))
+        .then(response => response.json())
+        .then(data => {
+          renderizzaIscritti(data.iscritti || data);
+        })
+        .catch(err => {
+          console.warn("Errore caricamento iscritti, uso dati di esempio:", err);
+          // Esempio basato sulla colonna B del foglio
+          renderizzaIscritti([
+            { id: "001", nome: "Mario Rossi" },
+            { id: "002", nome: "Giulia Bianchi" },
+            { id: "003", nome: "Luca Verdi" }
+          ]);
+        });
+    }
+
+    function renderizzaIscritti(listaIscritti) {
+      var container = document.getElementById('contenutoSedeSpecifica');
+      container.innerHTML = "";
+
+      if (!listaIscritti || listaIscritti.length === 0) {
+        container.innerHTML = `<p class="text-slate-400 text-sm py-4 text-center">Nessun iscritto registrato in questo servizio.</p>`;
+        return;
+      }
+
+      var ul = document.createElement('div');
+      ul.className = "space-y-3";
+
+      listaIscritti.forEach((iscritto, index) => {
+        // Supporta sia oggetti strutturati che semplici stringhe (nome e cognome da colonna B)
+        let nomeCognome = typeof iscritto === 'string' ? iscritto : (iscritto.nome || iscritto.nomeCognome || "Iscritto " + (index + 1));
+        let idIscritto = iscritto.id || (index + 1);
+
+        var item = document.createElement('div');
+        item.className = "bg-white/80 p-4 rounded-2xl border border-slate-100 shadow-sm flex items-center justify-between";
+        item.innerHTML = `
+          <div class="flex items-center gap-3">
+            <div class="w-8 h-8 rounded-full bg-blue-50 text-blue-600 flex items-center justify-center font-bold text-xs shadow-inner">
+              ${index + 1}
+            </div>
+            <span class="font-bold text-slate-800">${nomeCognome}</span>
+          </div>
+          <span class="text-xs bg-slate-100 text-slate-500 px-2.5 py-1 rounded-full font-medium">ID: ${idIscritto}</span>
+        `;
+        ul.appendChild(item);
+      });
+
+      container.appendChild(ul);
     }
 
     document.addEventListener("DOMContentLoaded", function() {
-      console.log("Interfaccia Evolversi 3D avviata");
+      console.log("Interfaccia Registro Presenze Evolversi pronta");
     });
   </script>
 </body>
