@@ -553,6 +553,12 @@
     }
 
     function aggiornaServizioExtra(riga) {
+      if (!sedeSelezionataCorrente || !sedeSelezionataCorrente.originale) {
+        console.error("Errore: Sede non selezionata o sessione scaduta.");
+        aggiornaStatoSalvataggio('errore', 'Sede non selezionata');
+        return;
+      }
+
       var alunno = listaAlunniGlobale.find(a => a.riga === riga);
       if (!alunno) return;
 
@@ -569,6 +575,12 @@
     }
 
     function aggiornaOreExtra(riga) {
+      if (!sedeSelezionataCorrente || !sedeSelezionataCorrente.originale) {
+        console.error("Errore: Sede non selezionata o sessione scaduta.");
+        aggiornaStatoSalvataggio('errore', 'Sede non selezionata');
+        return;
+      }
+
       var alunno = listaAlunniGlobale.find(a => a.riga === riga);
       if (!alunno) return;
 
