@@ -710,6 +710,62 @@
     document.addEventListener("DOMContentLoaded", function() {
       console.log("Interfaccia aggiornata: tipologie nascoste, visibili solo gli ingressi residui ove previsto.");
     });
+    function apriRegistroPresenze(nomeTabOriginale, nomeSedeVisualizzato) {
+      // Salva la sede corrente selezionata
+      sedeSelezionataCorrente = {
+        originale: nomeTabOriginale,
+        visualizzata: nomeSedeVisualizzato
+      };
+
+      // Mostra la sezione del registro e nasconde la schermata di selezione sedi
+      var vistaSedi = document.getElementById('sezioneSedi');
+      var vistaRegistro = document.getElementById('sezioneRegistro');
+      
+      if (vistaSedi) vistaSedi.classList.add('hidden');
+      if (vistaRegistro) vistaRegistro.classList.remove('hidden');
+
+      // Imposta il titolo della sede nel header del registro
+      var titoloSedeEl = document.getElementById('titoloSedeCorrente');
+      if (titoloSedeEl) {
+        titoloSedeEl.innerText = nomeSedeVisualizzato;
+      }
+
+      // Avvia il caricamento degli iscritti per questa sede specifica
+      caricaDatiRegistroPerSede(nomeTabOriginale);
+    }
+
+    function caricaDatiRegistroPerSede(nomeTab) {
+      var grigliaAlunni = document.getElementById('grigliaAlunni');
+      if (grigliaAlunni) {
+        grigliaAlunni.innerHTML = `
+          <div class="col-span-full text-center py-12 text-slate-400 text-sm">
+            <i class="fa-solid fa-spinner animate-spin text-blue-600 text-xl mr-2"></i> Caricamento iscritti in corso...
+          </div>
+        `;
+      }
+
+      chiamaBackend('ottieniDatiRegistro', { tab: nomeTab })
+        .then(data => {
+          if (data && data.errore) {
+            console.error("Errore dal server:", data.errore);
+            if (grigliaAlunni) grigliaAlunni.innerHTML = `<div class="col-span-full text-center py-6 text-rose-500 text-sm">${data.errore}</div>`;
+            return;
+          }
+
+          listaAlunniGlobale = data.alunni || [];
+          colonnaGiornoGlobale = data.colonnaGiorno || 5;
+          isDonMilaniIntegrazioneGlobale = !!data.isDonMilaniIntegrazione;
+
+          renderizzaAlunni(listaAlunniGlobale);
+          aggiornaRiepilogoStatistiche();
+        })
+        .catch(err => {
+          console.error("Errore di connessione o backend:", err);
+          if (grigliaAlunni) {
+            grigliaAlunni.innerHTML = `<div class="col-span-full text-center py-6 text-rose-500 text-sm">Impossibile caricare gli iscritti. Controlla la connessione.</div>`;
+          }
+        });
+    }
   </script>
 </body>
 </html>
