@@ -621,15 +621,18 @@
       var tipoLower = (alunno.tipo || "").toLowerCase();
       var gestisceIngressi = !isDonMilaniIntegrazioneGlobale && (tipoLower.includes("ingresso") || tipoLower.includes("pacchetto") || tipoLower.includes("carnet"));
 
-      // Controllo sicuro per verificare se gli ingressi sono numerici ed evitare di scalare il "-"
-      var ingressiNum = Number(alunno.ingressi);
-      var haIngressiValidi = (alunno.ingressi !== "" && alunno.ingressi !== "-" && !isNaN(ingressiNum));
-
-      if (gestisceIngressi && haIngressiValidi) {
-        if (!eraPresente && oraPresente) {
-          alunno.ingressi = Math.max(0, ingressiNum - 1);
-        } else if (eraPresente && !oraPresente) {
-          alunno.ingressi = ingressiNum + 1;
+      // Gestione sicura degli ingressi (evita di toccare il "-" o valori non numerici)
+      if (gestisceIngressi) {
+        var valIngressiStr = String(alunno.ingressi).trim();
+        if (valIngressiStr !== "" && valIngressiStr !== "-") {
+          var ingressiNum = Number(valIngressiStr);
+          if (!isNaN(ingressiNum)) {
+            if (!eraPresente && oraPresente) {
+              alunno.ingressi = Math.max(0, ingressiNum - 1);
+            } else if (eraPresente && !oraPresente) {
+              alunno.ingressi = ingressiNum + 1;
+            }
+          }
         }
       }
 
