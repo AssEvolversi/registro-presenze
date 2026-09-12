@@ -604,7 +604,7 @@
       }).catch(err => console.error("Errore salvataggio Ore Extra:", err));
     }
 
-   function impostaStatoPresenza(riga, nuovoStato) {
+ function impostaStatoPresenza(riga, nuovoStato) {
       var alunno = listaAlunniGlobale.find(a => a.riga === riga);
       if (!alunno) return;
 
@@ -621,9 +621,9 @@
       var tipoLower = (alunno.tipo || "").toLowerCase();
       var gestisceIngressi = !isDonMilaniIntegrazioneGlobale && (tipoLower.includes("ingresso") || tipoLower.includes("pacchetto") || tipoLower.includes("carnet"));
 
-      // Controlla se gli ingressi attuali sono un numero valido (escludendo "-" o stringhe non numeriche)
+      // Controllo sicuro per verificare se gli ingressi sono numerici ed evitare di scalare il "-"
       var ingressiNum = Number(alunno.ingressi);
-      var haIngressi Validi = !isNaN(alunno.ingressi) && alunno.ingressi !== "" && alunno.ingressi !== "-" && !isNaN(ingressiNum);
+      var haIngressiValidi = (alunno.ingressi !== "" && alunno.ingressi !== "-" && !isNaN(ingressiNum));
 
       if (gestisceIngressi && haIngressiValidi) {
         if (!eraPresente && oraPresente) {
@@ -632,7 +632,6 @@
           alunno.ingressi = ingressiNum + 1;
         }
       }
-      // Se NON ha ingressi validi (es. c'è "-"), il valore di alunno.ingressi rimane intatto (es. "-")
 
       aggiornaUIElementoSingolo(riga, alunno.stato, alunno.ingressi);
       aggiornaRiepilogoStatistiche();
