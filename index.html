@@ -383,6 +383,22 @@
       chiamaBackend('ottieniDatiRegistro', { tab: nomeTab })
         .then(data => {
           listaAlunniGlobale = data.alunni || [];
+          
+          // BLOCCO DI PROTEZIONE: 
+          // Controlliamo ogni alunno caricato. Se NON è un carnet/pacchetto ingressi,
+          // forziamo il campo ingressi a "-" per evitare qualsiasi conteggio o numero errato.
+          listaAlunniGlobale.forEach(alunno => {
+            var tipoLower = (alunno.tipo || "").toLowerCase();
+            var eUnCarnet = tipoLower.includes("carnet") || 
+                            tipoLower.includes("ing") || 
+                            tipoLower.includes("pacchetto") || 
+                            tipoLower.includes("ingresso");
+            
+            if (!eUnCarnet) {
+              alunno.ingressi = "-";
+            }
+          });
+
           colonnaGiornoGlobale = data.colonnaGiorno || -1;
           isDonMilaniIntegrazioneGlobale = !!data.isDonMilaniIntegrazione;
           
@@ -402,8 +418,7 @@
         .catch(err => {
           container.innerHTML = `<p class="text-rose-400 text-sm py-4 text-center">Impossibile caricare gli iscritti per questo servizio.</p>`;
         });
-    }
-
+    }   
     function estraiCognome(nomeCompleto) {
       if (!nomeCompleto) return "";
       let parti = nomeCompleto.trim().split(" ");
