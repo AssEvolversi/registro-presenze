@@ -614,7 +614,7 @@
       }).catch(err => console.error("Errore salvataggio Ore Extra:", err));
     }
 
-    function impostaStatoPresenza(riga, nuovoStato) {
+   function impostaStatoPresenza(riga, nuovoStato) {
       var alunno = listaAlunniGlobale.find(a => a.riga === riga);
       if (!alunno) return;
 
@@ -628,9 +628,18 @@
 
       var oraPresente = (alunno.stato === "P" || alunno.stato === "PRESENTE");
 
+      // CONTROLLO RIGOROSO SUL TIPO DI ABBONAMENTO
       var tipoLower = (alunno.tipo || "").toLowerCase();
-      var gestisceIngressi = !isDonMilaniIntegrazioneGlobale && (tipoLower.includes("ingresso") || tipoLower.includes("pacchetto") || tipoLower.includes("carnet"));
+      
+      // Riconosce i carnet o qualsiasi dicitura che contenga "carnet" o "ing" (es. Carnet 15 Ing.)
+      var eUnPacchettoIngressi = tipoLower.includes("carnet") || 
+                                 tipoLower.includes("ing") || 
+                                 tipoLower.includes("pacchetto") || 
+                                 tipoLower.includes("ingresso");
 
+      var gestisceIngressi = !isDonMilaniIntegrazioneGlobale && eUnPacchettoIngressi;
+
+      // Se NON è un carnet/pacchetto ingressi (es. Annuale), NON SCALARE MAI NULLA
       if (gestisceIngressi) {
         var valIngressiStr = String(alunno.ingressi).trim();
         if (valIngressiStr !== "" && valIngressiStr !== "-") {
@@ -654,7 +663,7 @@
         colonna: colonnaGiornoGlobale,
         stato: alunno.stato
       }).then(res => {
-        if (res && res.nuoviIngressi !== undefined && res.nuoviIngressi !== "-") {
+        if (gestisceIngressi && res && res.nuoviIngressi !== undefined && res.nuoviIngressi !== "-") {
           alunno.ingressi = res.nuoviIngressi;
           var spanIngressi = document.getElementById(`ingressi-val-${riga}`);
           if (spanIngressi) spanIngressi.innerText = res.nuoviIngressi;
