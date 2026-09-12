@@ -279,22 +279,30 @@
     }
 
     function caricaSediPresenze() {
-      var griglia = document.getElementById('grigliaSediPresenze');
-      griglia.innerHTML = `
-        <div class="col-span-full text-center py-8 text-slate-400 text-sm">
-          <i class="fa-solid fa-spinner animate-spin text-blue-600 text-lg mr-2"></i> Lettura servizi dal foglio in corso...
-        </div>
-      `;
+  var griglia = document.getElementById('grigliaSediPresenze');
+  griglia.innerHTML = `
+    <div class="col-span-full text-center py-8 text-slate-400 text-sm">
+      <i class="fa-solid fa-spinner animate-spin text-blue-600 text-lg mr-2"></i> Lettura servizi dal foglio in corso...
+    </div>
+  `;
 
-      chiamaBackend('ottieniElencoSedi')
-        .then(data => {
-          var listaSedi = Array.isArray(data) ? data : (data.sedi || data.risultato || []);
-          renderizzaSedi(listaSedi);
-        })
-        .catch(err => {
-          griglia.innerHTML = `<div class="col-span-full text-center py-6 text-rose-400 text-sm">Errore di caricamento sedi. Controlla la connessione.</div>`;
-        });
-    }
+  chiamaBackend('ottieniElencoSedi')
+    .then(data => {
+      // Gestisce tutte le possibili strutture di risposta restituite da Apps Script
+      var listaSedi = [];
+      if (Array.isArray(data)) {
+        listaSedi = data;
+      } else if (data && Array.isArray(data.sedi)) {
+        listaSedi = data.sedi;
+      } else if (data && Array.isArray(data.risultato)) {
+        listaSedi = data.risultato;
+      }
+      renderizzaSedi(listaSedi);
+    })
+    .catch(err => {
+      griglia.innerHTML = `<div class="col-span-full text-center py-6 text-rose-400 text-sm">Errore di caricamento sedi. Controlla la connessione.</div>`;
+    });
+}
 
     function renderizzaSedi(listaSedi) {
       var griglia = document.getElementById('grigliaSediPresenze');
