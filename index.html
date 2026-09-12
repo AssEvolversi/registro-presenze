@@ -319,6 +319,11 @@
         var nomeFormattato = formattaNomeSede(nomeTabOriginale);
         var btn = document.createElement('button');
         btn.className = "card-3d p-5 rounded-2xl flex items-center justify-between text-left group cursor-pointer border border-white/50 hover:border-blue-300";
+        
+        // Salviamo i dati direttamente negli attributi data-* del bottone
+        btn.dataset.tabOriginale = nomeTabOriginale;
+        btn.dataset.nomeFormattato = nomeFormattato;
+
         btn.innerHTML = `
           <div class="flex items-center gap-4">
             <div class="w-12 h-12 rounded-xl bg-blue-100 text-blue-600 flex items-center justify-center text-lg group-hover:bg-blue-600 group-hover:text-white transition shadow-inner">
@@ -331,9 +336,15 @@
           </div>
           <i class="fa-solid fa-chevron-right text-slate-300 group-hover:text-blue-600 transition"></i>
         `;
+        
+        // Leggiamo il valore in modo sicuro direttamente dall'elemento cliccato
         btn.onclick = function() {
-          selezionaSede(nomeTabOriginale, nomeFormattato);
+          var tabOri = this.dataset.tabOriginale;
+          var tabForm = this.dataset.nomeFormattato;
+          console.log("Click su sede - Tab originale:", tabOri);
+          selezionaSede(tabOri, tabForm);
         };
+        
         griglia.appendChild(btn);
       });
     }
