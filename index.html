@@ -629,7 +629,7 @@
       }).catch(err => console.error("Errore salvataggio Ore Extra:", err));
     }
 
-   function impostaStatoPresenza(riga, nuovoStato) {
+  function impostaStatoPresenza(riga, nuovoStato) {
       var alunno = listaAlunniGlobale.find(a => a.riga === riga);
       if (!alunno) return;
 
@@ -646,7 +646,6 @@
       // CONTROLLO RIGOROSO SUL TIPO DI ABBONAMENTO
       var tipoLower = (alunno.tipo || "").toLowerCase();
       
-      // Riconosce i carnet o qualsiasi dicitura che contenga "carnet" o "ing" (es. Carnet 15 Ing.)
       var eUnPacchettoIngressi = tipoLower.includes("carnet") || 
                                  tipoLower.includes("ing") || 
                                  tipoLower.includes("pacchetto") || 
@@ -654,7 +653,7 @@
 
       var gestisceIngressi = !isDonMilaniIntegrazioneGlobale && eUnPacchettoIngressi;
 
-      // Se NON è un carnet/pacchetto ingressi (es. Annuale), NON SCALARE MAI NULLA
+      // Se è un carnet/pacchetto ingressi, eseguiamo il calcolo locale
       if (gestisceIngressi) {
         var valIngressiStr = String(alunno.ingressi).trim();
         if (valIngressiStr !== "" && valIngressiStr !== "-") {
@@ -667,6 +666,9 @@
             }
           }
         }
+      } else {
+        // PER QUALSIASI ALTRA ISCRIZIONE (es. Annuale): Forziamo sempre e comunque il trattino
+        alunno.ingressi = "-";
       }
 
       aggiornaUIElementoSingolo(riga, alunno.stato, alunno.ingressi);
@@ -678,16 +680,21 @@
         colonna: colonnaGiornoGlobale,
         stato: alunno.stato
       }).then(res => {
+        // AGGIORNIAMO DAL SERVER SOLO SE è un carnet ed è tornato un valore numerico valido
         if (gestisceIngressi && res && res.nuoviIngressi !== undefined && res.nuoviIngressi !== "-") {
           alunno.ingressi = res.nuoviIngressi;
           var spanIngressi = document.getElementById(`ingressi-val-${riga}`);
           if (spanIngressi) spanIngressi.innerText = res.nuoviIngressi;
+        } else if (!gestisceIngressi) {
+          // Per gli annuali blindiamo l'UI affinché mostri sempre e solo il trattino
+          alunno.ingressi = "-";
+          var spanIngressi = document.getElementById(`ingressi-val-${riga}`);
+          if (spanIngressi) spanIngressi.innerText = "-";
         }
       }).catch(err => {
         console.error("Errore salvataggio presenza:", err);
       });
     }
-
     function aggiornaUIElementoSingolo(riga, stato, ingressiAggiornati) {
       var btnP = document.querySelector(`.btn-presente-${riga}`);
       var btnA = document.querySelector(`.btn-assente-${riga}`);
