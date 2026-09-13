@@ -651,17 +651,17 @@ function verificaSeCarnet(tipo) {
 
       var oraPresente = (alunno.stato === "P" || alunno.stato === "PRESENTE");
 
-      // CONTROLLO RIGOROSO SUL TIPO DI ABBONAMENTO
+      // CONTROLLO RIGOROSO SUL TIPO DI ABBONAMENTO (esclude annuali/mensili per evitare falsi positivi)
       var tipoLower = (alunno.tipo || "").toLowerCase();
-      
-      var eUnPacchettoIngressi = tipoLower.includes("carnet") || 
-                                 tipoLower.includes("ing") || 
+      var eUnPacchettoIngressi = (tipoLower.includes("carnet") || 
                                  tipoLower.includes("pacchetto") || 
-                                 tipoLower.includes("ingresso");
+                                 tipoLower.includes("ingresso")) && 
+                                 !tipoLower.includes("annuale") && 
+                                 !tipoLower.includes("mensile");
 
       var gestisceIngressi = !isDonMilaniIntegrazioneGlobale && eUnPacchettoIngressi;
 
-      // BLOCCO ABSOLUTO PER GLI ANNUALI O NON-CARNET
+      // BLOCCO ASSOLUTO PER GLI ANNUALI O NON-CARNET
       if (!gestisceIngressi) {
         alunno.ingressi = "-";
       } else {
@@ -681,30 +681,29 @@ function verificaSeCarnet(tipo) {
         }
       }
 
-      aggiornaUIElementoSingolo(riga, alunno.stato, alunno.ingressi);
-    aggiornaRiepilogoStatistiche();
+      aggiornaUIElementoSingolo(riga, alunno.stato, alunno.ingressi, alunno.tipo);
+      aggiornaRiepilogoStatistiche();
 
-    chiamaBackend('salvaPresenza', {
-      tab: sedeSelezionataCorrente.originale,
-      riga: riga,
-      colonna: colonnaGiornoGlobale,
-      stato: alunno.stato
-    }).then(res => {
-      var spanIngressi = document.getElementById(`ingressi-val-${riga}`);
-      
-      // Controlliamo che gestisca i carnet E che la risposta del backend sia valida
-      if (gestisceIngressi && res && res.nuoviIngressi !== undefined && res.nuoviIngressi !== "" && res.nuoviIngressi !== "-") {
-        alunno.ingressi = res.nuoviIngressi;
-        if (spanIngressi) spanIngressi.innerText = res.nuoviIngressi;
-      } else {
-        alunno.ingressi = "-";
-        if (spanIngressi) spanIngressi.innerText = "-";
-      }
-    }).catch(err => {
-      console.error("Errore salvataggio presenza:", err);
-    });
-  }
-
+      chiamaBackend('salvaPresenza', {
+        tab: sedeSelezionataCorrente.originale,
+        riga: riga,
+        colonna: colonnaGiornoGlobale,
+        stato: alunno.stato
+      }).then(res => {
+        var spanIngressi = document.getElementById(`ingressi-val-${riga}`);
+        
+        // Controlliamo che gestisca i carnet E che la risposta del backend sia valida
+        if (gestisceIngressi && res && res.nuoviIngressi !== undefined && res.nuoviIngressi !== "" && res.nuoviIngressi !== "-") {
+          alunno.ingressi = res.nuoviIngressi;
+          if (spanIngressi) spanIngressi.innerText = res.nuoviIngressi;
+        } else {
+          alunno.ingressi = "-";
+          if (spanIngressi) spanIngressi.innerText = "-";
+        }
+      }).catch(err => {
+        console.error("Errore salvataggio presenza:", err);
+      });
+    }
   function aggiornaUIElementoSingolo(riga, stato, ingressiAggiornati, tipoAlunno) {
   var btnP = document.querySelector(`.btn-presente-${riga}`);
   var btnA = document.querySelector(`.btn-assente-${riga}`);
