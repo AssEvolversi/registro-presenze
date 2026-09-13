@@ -535,12 +535,14 @@
               <i class="fa-solid fa-child"></i>
             </div>
             <div>
-              <span class="font-bold text-slate-800 text-base block">${alunno.nome}</span>
-              ${mostraIngressiResidui ? `
-                <span class="text-xs text-slate-400 block mt-0.5">
-                  Ingressi residui: <span id="ingressi-val-${alunno.riga}" class="font-bold text-blue-600">${alunno.ingressi}</span>
-                </span>
-              ` : ''}
+             <div>
+            <span class="font-bold text-slate-800 text-base block">${alunno.nome}</span>
+            ${mostraIngressiResidui ? `
+              <span class="text-xs text-slate-400 block mt-0.5">
+                Ingressi residui: <span id="ingressi-val-${alunno.riga}" class="font-bold text-blue-600">${alunno.ingressi !== undefined && alunno.ingressi !== "" ? alunno.ingressi : '-'}</span>
+              </span>
+            ` : ''}
+          </div>
             </div>
           </div>
 
@@ -674,44 +676,51 @@
       }
 
       aggiornaUIElementoSingolo(riga, alunno.stato, alunno.ingressi);
-      aggiornaRiepilogoStatistiche();
+    aggiornaRiepilogoStatistiche();
 
-      chiamaBackend('salvaPresenza', {
-        tab: sedeSelezionataCorrente.originale,
-        riga: riga,
-        colonna: colonnaGiornoGlobale,
-        stato: alunno.stato
-      }).then(res => {
-        if (gestisceIngressi && res && res.nuoviIngressi !== undefined && res.nuoviIngressi !== "-") {
-          alunno.ingressi = res.nuoviIngressi;
-          var spanIngressi = document.getElementById(`ingressi-val-${riga}`);
-          if (spanIngressi) spanIngressi.innerText = res.nuoviIngressi;
-        } else {
-          alunno.ingressi = "-";
-          var spanIngressi = document.getElementById(`ingressi-val-${riga}`);
-          if (spanIngressi) spanIngressi.innerText = "-";
-        }
-      }).catch(err => {
-        console.error("Errore salvataggio presenza:", err);
-      });
-    }
-    function aggiornaUIElementoSingolo(riga, stato, ingressiAggiornati) {
-      var btnP = document.querySelector(`.btn-presente-${riga}`);
-      var btnA = document.querySelector(`.btn-assente-${riga}`);
+    chiamaBackend('salvaPresenza', {
+      tab: sedeSelezionataCorrente.originale,
+      riga: riga,
+      colonna: colonnaGiornoGlobale,
+      stato: alunno.stato
+    }).then(res => {
       var spanIngressi = document.getElementById(`ingressi-val-${riga}`);
       
-      if (!btnP || !btnA) return;
+      // Controlliamo che gestisca i carnet E che la risposta del backend sia valida
+      if (gestisceIngressi && res && res.nuoviIngressi !== undefined && res.nuoviIngressi !== "" && res.nuoviIngressi !== "-") {
+        alunno.ingressi = res.nuoviIngressi;
+        if (spanIngressi) spanIngressi.innerText = res.nuoviIngressi;
+      } else {
+        alunno.ingressi = "-";
+        if (spanIngressi) spanIngressi.innerText = "-";
+      }
+    }).catch(err => {
+      console.error("Errore salvataggio presenza:", err);
+    });
+  }
 
-      var isPresente = (stato === "P" || stato === "PRESENTE");
-      var isAssente = (stato === "A" || stato === "ASSENTE");
-
-      btnP.className = `btn-presente-${riga} px-4 py-2 rounded-xl text-xs font-bold transition shadow-sm cursor-pointer ${isPresente ? 'bg-emerald-600 text-white shadow-emerald-200 scale-105' : 'bg-slate-100 text-slate-600 hover:bg-emerald-100 hover:text-emerald-700'}`;
-      btnA.className = `btn-assente-${riga} px-4 py-2 rounded-xl text-xs font-bold transition shadow-sm cursor-pointer ${isAssente ? 'bg-rose-600 text-white shadow-rose-200 scale-105' : 'bg-slate-100 text-slate-600 hover:bg-rose-100 hover:text-rose-700'}`;
+  function aggiornaUIElementoSingolo(riga, stato, ingressiAggiornati) {
+    var btnP = document.querySelector(`.btn-presente-${riga}`);
+    var btnA = document.querySelector(`.btn-assente-${riga}`);
+    var spanIngressi = document.getElementById(`ingressi-val-${riga}`);
       
-      if (spanIngressi && ingressiAggiornati !== undefined && !isDonMilaniIntegrazioneGlobale) {
+    if (!btnP || !btnA) return;
+
+    var isPresente = (stato === "P" || stato === "PRESENTE");
+    var isAssente = (stato === "A" || stato === "ASSENTE");
+
+    btnP.className = `btn-presente-${riga} px-4 py-2 rounded-xl text-xs font-bold transition shadow-sm cursor-pointer ${isPresente ? 'bg-emerald-600 text-white shadow-emerald-200 scale-105' : 'bg-slate-100 text-slate-600 hover:bg-emerald-100 hover:text-emerald-700'}`;
+    btnA.className = `btn-assente-${riga} px-4 py-2 rounded-xl text-xs font-bold transition shadow-sm cursor-pointer ${isAssente ? 'bg-rose-600 text-white shadow-rose-200 scale-105' : 'bg-slate-100 text-slate-600 hover:bg-rose-100 hover:text-rose-700'}`;
+      
+    // Aggiorniamo il testo solo se l'elemento esiste, se NON siamo in Don Milani, e se gli ingressi sono validi e diversi da stringa vuota
+    if (spanIngressi && !isDonMilaniIntegrazioneGlobale) {
+      if (ingressiAggiornati !== undefined && ingressiAggiornati !== "" && ingressiAggiornati !== null && ingressiAggiornati !== "-") {
         spanIngressi.innerText = ingressiAggiornati;
+      } else {
+        spanIngressi.innerText = "-";
       }
     }
+  }
 
     function aggiornaRiepilogoStatistiche() {
       var presenti = 0;
