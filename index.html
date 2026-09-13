@@ -515,7 +515,7 @@
       var isPresente = (statoNorm === "P" || statoNorm === "PRESENTE");
       var isAssente = (statoNorm === "A" || statoNorm === "ASSENTE");
 
-    var tipoLower = (alunno.tipo || "").toLowerCase();
+      var tipoLower = (alunno.tipo || "").toLowerCase();
       // Verifichiamo se è un vero carnet/pacchetto (escludendo esplicitamente annuali, mensili, ecc.)
       var eUnCarnet = (tipoLower.includes("ingresso") || tipoLower.includes("pacchetto") || tipoLower.includes("carnet")) && 
                       !tipoLower.includes("annuale") && 
@@ -540,11 +540,11 @@
               <i class="fa-solid fa-child"></i>
             </div>
             <div>
-            <div>
-            <span class="font-bold text-slate-800 text-base block">${alunno.nome}</span>
-            <span class="text-xs text-slate-400 block mt-0.5">
-              Ingressi residui: <span id="ingressi-val-${alunno.riga}" class="font-bold text-blue-600">${testoIngressi}</span>
-            </span>
+              <span class="font-bold text-slate-800 text-base block">${alunno.nome}</span>
+              <span class="text-xs text-slate-400 block mt-0.5">
+                Ingressi residui: <span id="ingressi-val-${alunno.riga}" class="font-bold text-blue-600">${testoIngressi}</span>
+              </span>
+            </div>
           </div>
 
           ${isIqbalMasih ? `
@@ -590,7 +590,12 @@
       `;
       return item;
     }
-
+function verificaSeCarnet(tipo) {
+  var t = (tipo || "").toLowerCase();
+  // È un carnet solo se contiene parole chiave di pacchetto e NON è un annuale o mensile
+  return (t.includes("ingresso") || t.includes("pacchetto") || t.includes("carnet")) &&
+         !t.includes("annuale") && !t.includes("mensile") && !t.includes("stagionale");
+}
     function toggleInfo(riga) {
       var box = document.getElementById(`info-box-${riga}`);
       if (box) {
@@ -700,29 +705,28 @@
     });
   }
 
-  function aggiornaUIElementoSingolo(riga, stato, ingressiAggiornati) {
-    var btnP = document.querySelector(`.btn-presente-${riga}`);
-    var btnA = document.querySelector(`.btn-assente-${riga}`);
-    var spanIngressi = document.getElementById(`ingressi-val-${riga}`);
-      
-    if (!btnP || !btnA) return;
+  function aggiornaUIElementoSingolo(riga, stato, ingressiAggiornati, tipoAlunno) {
+  var btnP = document.querySelector(`.btn-presente-${riga}`);
+  var btnA = document.querySelector(`.btn-assente-${riga}`);
+  var spanIngressi = document.getElementById(`ingressi-val-${riga}`);
+    
+  if (!btnP || !btnA) return;
 
-    var isPresente = (stato === "P" || stato === "PRESENTE");
-    var isAssente = (stato === "A" || stato === "ASSENTE");
+  var isPresente = (stato === "P" || stato === "PRESENTE");
+  var isAssente = (stato === "A" || stato === "ASSENTE");
 
-    btnP.className = `btn-presente-${riga} px-4 py-2 rounded-xl text-xs font-bold transition shadow-sm cursor-pointer ${isPresente ? 'bg-emerald-600 text-white shadow-emerald-200 scale-105' : 'bg-slate-100 text-slate-600 hover:bg-emerald-100 hover:text-emerald-700'}`;
-    btnA.className = `btn-assente-${riga} px-4 py-2 rounded-xl text-xs font-bold transition shadow-sm cursor-pointer ${isAssente ? 'bg-rose-600 text-white shadow-rose-200 scale-105' : 'bg-slate-100 text-slate-600 hover:bg-rose-100 hover:text-rose-700'}`;
-      
-    // Aggiorniamo il testo solo se l'elemento esiste, se NON siamo in Don Milani, e se gli ingressi sono validi e diversi da stringa vuota
-    if (spanIngressi && !isDonMilaniIntegrazioneGlobale) {
-      if (ingressiAggiornati !== undefined && ingressiAggiornati !== "" && ingressiAggiornati !== null && ingressiAggiornati !== "-") {
-        spanIngressi.innerText = ingressiAggiornati;
-      } else {
-        spanIngressi.innerText = "-";
-      }
+  btnP.className = `btn-presente-${riga} px-4 py-2 rounded-xl text-xs font-bold transition shadow-sm cursor-pointer ${isPresente ? 'bg-emerald-600 text-white shadow-emerald-200 scale-105' : 'bg-slate-100 text-slate-600 hover:bg-emerald-100 hover:text-emerald-700'}`;
+  btnA.className = `btn-assente-${riga} px-4 py-2 rounded-xl text-xs font-bold transition shadow-sm cursor-pointer ${isAssente ? 'bg-rose-600 text-white shadow-rose-200 scale-105' : 'bg-slate-100 text-slate-600 hover:bg-rose-100 hover:text-rose-700'}`;
+    
+  if (spanIngressi && !isDonMilaniIntegrazioneGlobale) {
+    // Se non è un carnet, forza SEMPRE il trattino "-" indipendentemente dai dati ricevuti
+    if (verificaSeCarnet(tipoAlunno) && ingressiAggiornati !== undefined && ingressiAggiornati !== "" && ingressiAggiornati !== null && ingressiAggiornati !== "-") {
+      spanIngressi.innerText = ingressiAggiornati;
+    } else {
+      spanIngressi.innerText = "-";
     }
   }
-
+}
     function aggiornaRiepilogoStatistiche() {
       var presenti = 0;
       var assenti = 0;
