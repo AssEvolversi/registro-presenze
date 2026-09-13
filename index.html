@@ -641,43 +641,46 @@ function ottieniTestoIngressiSicuro(tipo, ingressi) {
   return item;
 }
     function inviaNota(nomeTab, numeroRiga, testoNota) {
-  // Fallback se nomeTab non viene passato direttamente
-  var tabTarget = nomeTab || (typeof nomeTabAttivo !== "undefined" ? nomeTabAttivo : "");
+  // 1. Risoluzione sicura del nome del Tab (evita stringhe "undefined")
+  var tabTarget = (nomeTab && nomeTab !== "undefined") ? nomeTab : (typeof nomeTabAttivo !== "undefined" ? nomeTabAttivo : "");
   
   if (!tabTarget) {
     console.error("Nome tab non specificato per il salvataggio della nota.");
+    alert("Attenzione: Impossibile identificare il registro attivo per salvare la nota.");
     return;
   }
 
   var elInput = document.getElementById("nota-input-" + numeroRiga);
   
   if (elInput) {
-    // Feedback: salvataggio in corso (sfondo giallo chiaro)
-    elInput.classList.remove("border-slate-200", "border-emerald-500", "border-rose-500");
-    elInput.classList.add("bg-amber-50", "border-amber-300");
+    // Feedback: Salvataggio in corso (sfondo giallo chiaro)
+    elInput.classList.remove("border-slate-200", "border-emerald-500", "border-rose-500", "bg-slate-50/80");
+    elInput.classList.add("bg-amber-50", "border-amber-400");
   }
 
+  // 2. Chiamata al backend Apps Script
   google.script.run
     .withSuccessHandler(function(risposta) {
       if (elInput) {
-        // Feedback: salvato con successo (sfondo verde chiaro)
-        elInput.classList.remove("bg-amber-50", "border-amber-300");
-        elInput.classList.add("bg-emerald-50", "border-emerald-400");
+        // Feedback: Salvato con successo (sfondo verde chiaro)
+        elInput.classList.remove("bg-amber-50", "border-amber-400");
+        elInput.classList.add("bg-emerald-50", "border-emerald-500");
         
         // Ripristina l'aspetto normale dopo 1.5 secondi
         setTimeout(function() {
-          elInput.classList.remove("bg-emerald-50", "border-emerald-400");
+          elInput.classList.remove("bg-emerald-50", "border-emerald-500");
           elInput.classList.add("bg-slate-50/80", "border-slate-200");
         }, 1500);
       }
     })
     .withFailureHandler(function(err) {
       if (elInput) {
-        // Feedback: errore (sfondo rosso chiaro)
-        elInput.classList.remove("bg-amber-50", "border-amber-300");
-        elInput.classList.add("bg-rose-50", "border-rose-400");
+        // Feedback: Errore (sfondo rosso chiaro)
+        elInput.classList.remove("bg-amber-50", "border-amber-400");
+        elInput.classList.add("bg-rose-50", "border-rose-500");
       }
-      alert("Errore nel salvataggio della nota alla riga " + numeroRiga + ": " + err.message);
+      var msg = (err && err.message) ? err.message : err;
+      alert("Errore nel salvataggio della nota alla riga " + numeroRiga + ": " + msg);
     })
     .salvaNota(tabTarget, numeroRiga, testoNota);
 }
