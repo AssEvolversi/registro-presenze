@@ -515,8 +515,13 @@
       var isPresente = (statoNorm === "P" || statoNorm === "PRESENTE");
       var isAssente = (statoNorm === "A" || statoNorm === "ASSENTE");
 
-      var tipoLower = (alunno.tipo || "").toLowerCase();
-      var mostraIngressiResidui = !isDonMilani && (tipoLower.includes("ingresso") || tipoLower.includes("pacchetto") || tipoLower.includes("carnet") || tipoLower.includes("pacchetto ingressi"));
+    var tipoLower = (alunno.tipo || "").toLowerCase();
+      // Verifichiamo se è un vero carnet/pacchetto (escludendo esplicitamente annuali, mensili, ecc.)
+      var eUnCarnet = (tipoLower.includes("ingresso") || tipoLower.includes("pacchetto") || tipoLower.includes("carnet")) && 
+                      !tipoLower.includes("annuale") && 
+                      !tipoLower.includes("mensile");
+
+      var testoIngressi = (eUnCarnet && alunno.ingressi !== undefined && alunno.ingressi !== "") ? alunno.ingressi : "-";
 
       var servizioExtraChecked = false;
       if (alunno.servizioExtra) {
@@ -535,15 +540,11 @@
               <i class="fa-solid fa-child"></i>
             </div>
             <div>
-             <div>
+            <div>
             <span class="font-bold text-slate-800 text-base block">${alunno.nome}</span>
-            ${mostraIngressiResidui ? `
-              <span class="text-xs text-slate-400 block mt-0.5">
-                Ingressi residui: <span id="ingressi-val-${alunno.riga}" class="font-bold text-blue-600">${alunno.ingressi !== undefined && alunno.ingressi !== "" ? alunno.ingressi : '-'}</span>
-              </span>
-            ` : ''}
-          </div>
-            </div>
+            <span class="text-xs text-slate-400 block mt-0.5">
+              Ingressi residui: <span id="ingressi-val-${alunno.riga}" class="font-bold text-blue-600">${testoIngressi}</span>
+            </span>
           </div>
 
           ${isIqbalMasih ? `
