@@ -653,8 +653,11 @@
 
       var gestisceIngressi = !isDonMilaniIntegrazioneGlobale && eUnPacchettoIngressi;
 
-      // Se è un carnet/pacchetto ingressi, eseguiamo il calcolo locale
-      if (gestisceIngressi) {
+      // BLOCCO ABSOLUTO PER GLI ANNUALI O NON-CARNET
+      if (!gestisceIngressi) {
+        alunno.ingressi = "-";
+      } else {
+        // Se è un carnet, calcoliamo in sicurezza
         var valIngressiStr = String(alunno.ingressi).trim();
         if (valIngressiStr !== "" && valIngressiStr !== "-") {
           var ingressiNum = Number(valIngressiStr);
@@ -665,10 +668,9 @@
               alunno.ingressi = ingressiNum + 1;
             }
           }
+        } else {
+          alunno.ingressi = "-";
         }
-      } else {
-        // PER QUALSIASI ALTRA ISCRIZIONE (es. Annuale): Forziamo sempre e comunque il trattino
-        alunno.ingressi = "-";
       }
 
       aggiornaUIElementoSingolo(riga, alunno.stato, alunno.ingressi);
@@ -680,13 +682,11 @@
         colonna: colonnaGiornoGlobale,
         stato: alunno.stato
       }).then(res => {
-        // AGGIORNIAMO DAL SERVER SOLO SE è un carnet ed è tornato un valore numerico valido
         if (gestisceIngressi && res && res.nuoviIngressi !== undefined && res.nuoviIngressi !== "-") {
           alunno.ingressi = res.nuoviIngressi;
           var spanIngressi = document.getElementById(`ingressi-val-${riga}`);
           if (spanIngressi) spanIngressi.innerText = res.nuoviIngressi;
-        } else if (!gestisceIngressi) {
-          // Per gli annuali blindiamo l'UI affinché mostri sempre e solo il trattino
+        } else {
           alunno.ingressi = "-";
           var spanIngressi = document.getElementById(`ingressi-val-${riga}`);
           if (spanIngressi) spanIngressi.innerText = "-";
