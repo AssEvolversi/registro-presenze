@@ -384,15 +384,15 @@
         .then(data => {
           listaAlunniGlobale = data.alunni || [];
           
-          // BLOCCO DI PROTEZIONE: 
-          // Controlliamo ogni alunno caricato. Se NON è un carnet/pacchetto ingressi,
-          // forziamo il campo ingressi a "-" per evitare qualsiasi conteggio o numero errato.
-          listaAlunniGlobale.forEach(alunno => {
+         listaAlunniGlobale.forEach(alunno => {
             var tipoLower = (alunno.tipo || "").toLowerCase();
-            var eUnCarnet = tipoLower.includes("carnet") || 
-                            tipoLower.includes("ing") || 
-                            tipoLower.includes("pacchetto") || 
-                            tipoLower.includes("ingresso");
+            
+            // Controllo rigoroso: deve contenere termini da carnet E NON essere annuale/mensile
+            var eUnCarnet = (tipoLower.includes("carnet") || 
+                             tipoLower.includes("pacchetto") || 
+                             tipoLower.includes("ingresso")) && 
+                            !tipoLower.includes("annuale") && 
+                            !tipoLower.includes("mensile");
             
             if (!eUnCarnet) {
               alunno.ingressi = "-";
@@ -509,7 +509,21 @@
         container.appendChild(ul);
       }
     }
+    
+function ottieniTestoIngressiSicuro(tipo, ingressi) {
+  var t = (tipo || "").toLowerCase();
+  var eUnCarnet = (t.includes("ingresso") || t.includes("pacchetto") || t.includes("carnet")) && 
+                  !t.includes("annuale") && 
+                  !t.includes("mensile");
 
+  if (!eUnCarnet) {
+    return "-";
+  }
+  if (ingressi === undefined || ingressi === null || String(ingressi).trim() === "" || String(ingressi).trim() === "-") {
+    return "-";
+  }
+  return ingressi;
+}
     function creaElementoAlunnoHTML(alunno, isIqbalMasih, isDonMilani) {
       var statoNorm = (alunno.stato || "").trim().toUpperCase();
       var isPresente = (statoNorm === "P" || statoNorm === "PRESENTE");
@@ -521,7 +535,7 @@
                       !tipoLower.includes("annuale") && 
                       !tipoLower.includes("mensile");
 
-      var testoIngressi = (eUnCarnet && alunno.ingressi !== undefined && alunno.ingressi !== "") ? alunno.ingressi : "-";
+     var testoIngressi = ottieniTestoIngressiSicuro(alunno.tipo, alunno.ingressi);
 
       var servizioExtraChecked = false;
       if (alunno.servizioExtra) {
@@ -704,7 +718,7 @@ function verificaSeCarnet(tipo) {
         console.error("Errore salvataggio presenza:", err);
       });
     }
-  function aggiornaUIElementoSingolo(riga, stato, ingressiAggiornati, tipoAlunno) {
+ function aggiornaUIElementoSingolo(riga, stato, ingressiAggiornati, tipoAlunno) {
   var btnP = document.querySelector(`.btn-presente-${riga}`);
   var btnA = document.querySelector(`.btn-assente-${riga}`);
   var spanIngressi = document.getElementById(`ingressi-val-${riga}`);
@@ -718,12 +732,7 @@ function verificaSeCarnet(tipo) {
   btnA.className = `btn-assente-${riga} px-4 py-2 rounded-xl text-xs font-bold transition shadow-sm cursor-pointer ${isAssente ? 'bg-rose-600 text-white shadow-rose-200 scale-105' : 'bg-slate-100 text-slate-600 hover:bg-rose-100 hover:text-rose-700'}`;
     
   if (spanIngressi && !isDonMilaniIntegrazioneGlobale) {
-    // Se non è un carnet, forza SEMPRE il trattino "-" indipendentemente dai dati ricevuti
-    if (verificaSeCarnet(tipoAlunno) && ingressiAggiornati !== undefined && ingressiAggiornati !== "" && ingressiAggiornati !== null && ingressiAggiornati !== "-") {
-      spanIngressi.innerText = ingressiAggiornati;
-    } else {
-      spanIngressi.innerText = "-";
-    }
+    spanIngressi.innerText = ottieniTestoIngressiSicuro(tipoAlunno, ingressiAggiornati);
   }
 }
     function aggiornaRiepilogoStatistiche() {
