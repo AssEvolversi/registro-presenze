@@ -530,18 +530,39 @@ function ottieniTestoIngressiSicuro(tipo, ingressi) {
       var isAssente = (statoNorm === "A" || statoNorm === "ASSENTE");
 
       var tipoLower = (alunno.tipo || "").toLowerCase();
-      // Verifichiamo se è un vero carnet/pacchetto (escludendo esplicitamente annuali, mensili, ecc.)
+      // Utilizziamo la tua funzione verificaSeCarnet se disponibile, altrimenti la logica inline
       var eUnCarnet = (tipoLower.includes("ingresso") || tipoLower.includes("pacchetto") || tipoLower.includes("carnet")) && 
                       !tipoLower.includes("annuale") && 
                       !tipoLower.includes("mensile");
 
-     var testoIngressi = ottieniTestoIngressiSicuro(alunno.tipo, alunno.ingressi);
+      var testoIngressi = ottieniTestoIngressiSicuro(alunno.tipo, alunno.ingressi);
 
       var servizioExtraChecked = false;
       if (alunno.servizioExtra) {
         var valSe = String(alunno.servizioExtra).trim().toUpperCase();
         servizioExtraChecked = (valSe === "SÌ" || valSe === "SI" || valSe === "TRUE" || valSe === "X" || valSe === "1" || valSe === "VERO");
       }
+
+      // --- NUOVA LOGICA CONDIZIONALE PER GLI INGRESSI E IL TIPO ---
+      
+      // 1. Prepariamo la stringa per il Tipo di Abbonamento (Colonna C)
+      // Mostriamo il tipo solo se è presente un valore, per evitare diciture vuote
+      var htmlTipoAbbonamento = "";
+      if (alunno.tipo && alunno.tipo.trim() !== "") {
+        htmlTipoAbbonamento = `<span class="text-xs text-slate-500 font-medium block mt-0.5"><i class="fa-solid fa-ticket mr-1"></i>${alunno.tipo}</span>`;
+      }
+
+      // 2. Prepariamo la stringa per gli Ingressi Residui (Colonna D)
+      // La mostriamo SOLO se il valore non è il trattino "-"
+      var htmlIngressiResidui = "";
+      if (testoIngressi !== "-") {
+        htmlIngressiResidui = `
+          <span class="text-xs text-slate-400 block mt-1">
+            Ingressi residui: <span id="ingressi-val-${alunno.riga}" class="font-bold text-blue-600">${testoIngressi}</span>
+          </span>`;
+      }
+      
+      // -----------------------------------------------------------
 
       var item = document.createElement('div');
       item.className = "bg-white/90 p-4 rounded-2xl border border-slate-200/60 shadow-sm flex flex-col gap-3 transition";
@@ -555,9 +576,8 @@ function ottieniTestoIngressiSicuro(tipo, ingressi) {
             </div>
             <div>
               <span class="font-bold text-slate-800 text-base block">${alunno.nome}</span>
-              <span class="text-xs text-slate-400 block mt-0.5">
-                Ingressi residui: <span id="ingressi-val-${alunno.riga}" class="font-bold text-blue-600">${testoIngressi}</span>
-              </span>
+              ${htmlTipoAbbonamento}
+              ${htmlIngressiResidui}
             </div>
           </div>
 
