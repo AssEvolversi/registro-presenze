@@ -234,6 +234,8 @@
     }
 
     function mostraSezione(idSezione) {
+      console.log("-> Sto tentando di aprire la sezione:", idSezione); // <-- CONTROLLO
+      
       var sezioni = ['schermataHome', 'wrapperRegistro', 'wrapperSedeSpecifica', 'wrapperTimbratura'];
       sezioni.forEach(id => {
         var el = document.getElementById(id);
@@ -244,14 +246,16 @@
       if (target) {
         target.classList.remove('hidden');
         
-        // Se l'utente apre la sezione timbrature, avvia il caricamento dei dati
         if (idSezione === 'wrapperTimbratura') {
+          console.log("-> Sezione timbrature aperta, avvio caricaDatiTimbratura()"); // <-- CONTROLLO
           if (typeof caricaDatiTimbratura === 'function') {
             caricaDatiTimbratura();
           } else {
-            console.error("La funzione caricaDatiTimbratura non è definita.");
+            console.error("ERRORE: caricaDatiTimbratura non è definita!");
           }
         }
+      } else {
+        console.warn("ATTENZIONE: Nessun elemento trovato con ID:", idSezione);
       }
     }
     function tornaAllaHome() {
