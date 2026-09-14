@@ -609,24 +609,18 @@ function ottieniTestoIngressiSicuro(tipo, ingressi) {
   `;
   return item;
 }
-   function inviaNota(numeroRiga, testoNota, nomeTab) {
-  // 1. Tenta di recuperare il tab dal parametro, da tabAttuale, o da altre variabili globali comuni
-  var tabTarget = (nomeTab && nomeTab !== "undefined" && nomeTab !== "null") ? nomeTab : "";
-  
-  if (!tabTarget && typeof tabAttuale !== "undefined") tabTarget = tabAttuale;
-  if (!tabTarget && typeof tabAttivo !== "undefined") tabTarget = tabAttivo;
-  if (!tabTarget && typeof currentTab !== "undefined") tabTarget = currentTab;
-  
-  // 2. Ultimo tentativo: prova a leggerlo da un attributo salvato nel DOM (se presente)
-  if (!tabTarget) {
-    var appContainer = document.querySelector("[data-tab-attivo]") || document.getElementById("app");
-    if (appContainer && appContainer.dataset.tabAttivo) {
-      tabTarget = appContainer.dataset.tabAttivo;
-    }
-  }
+  // Assicurati di dichiarare questa variabile a livello globale nel tuo script (fuori dalle funzioni):
+var tabAttuale = ""; 
 
-  if (!tabTarget) {
-    console.error("Impossibile identificare il tab attivo. Variabili controllate: tabAttuale, tabAttivo, currentTab.");
+// Nel punto in cui l'utente seleziona o cambia plesso, aggiornala sempre, ad esempio:
+// tabAttuale = "PRESENZE_Don_Milani";
+
+function inviaNota(numeroRiga, testoNota) {
+  // Recupera il tab dalla variabile globale
+  var nomeTab = (typeof tabAttuale !== "undefined" && tabAttuale) ? tabAttuale : (window.tabAttuale || "");
+  
+  if (!nomeTab) {
+    console.error("Variabile tabAttuale non definita.");
     alert("Attenzione: Impossibile identificare il registro attivo per salvare la nota. Prova a riselezionare il plesso.");
     return;
   }
@@ -634,16 +628,13 @@ function ottieniTestoIngressiSicuro(tipo, ingressi) {
   var elInput = document.getElementById("nota-input-" + numeroRiga);
   
   if (elInput) {
-    // Feedback visivo: Salvataggio in corso (sfondo giallo chiaro)
     elInput.classList.remove("border-slate-200", "border-emerald-500", "border-rose-500", "bg-slate-50/80");
     elInput.classList.add("bg-amber-50", "border-amber-400");
   }
 
-  // 3. Chiamata al backend Apps Script
   google.script.run
     .withSuccessHandler(function(risposta) {
       if (elInput) {
-        // Feedback visivo: Salvato con successo (sfondo verde chiaro)
         elInput.classList.remove("bg-amber-50", "border-amber-400");
         elInput.classList.add("bg-emerald-50", "border-emerald-500");
         
@@ -661,7 +652,7 @@ function ottieniTestoIngressiSicuro(tipo, ingressi) {
       var msg = (err && err.message) ? err.message : err;
       alert("Errore nel salvataggio della nota alla riga " + numeroRiga + ": " + msg);
     })
-    .salvaNota(tabTarget, numeroRiga, testoNota);
+    .salvaNota(nomeTab, numeroRiga, testoNota);
 }
 function verificaSeCarnet(tipo) {
   var t = (tipo || "").toLowerCase();
