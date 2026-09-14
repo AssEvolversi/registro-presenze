@@ -823,6 +823,15 @@ function verificaSeCarnet(tipo) {
 
     document.addEventListener("DOMContentLoaded", function() {
       console.log("Interfaccia caricata correttamente.");
+
+      // Collega in modo sicuro il pulsante del registro
+      var btnRegistro = document.getElementById('btnApriRegistro');
+      if (btnRegistro) {
+        btnRegistro.onclick = function() {
+          mostraSezione('wrapperRegistro');
+          caricaSediPresenze();
+        };
+      }
     });
   </script>
 </body>
