@@ -605,7 +605,6 @@ var tabAttuale = "";
 // tabAttuale = "PRESENZE_Don_Milani";
 
 function inviaNota(nomeTab, numeroRiga, testoNota) {
-  // Se il tab passato è vuoto o non valido, lo recupera da sedeSelezionataCorrente
   var tabTarget = (nomeTab && nomeTab !== "undefined") ? nomeTab : "";
   if (!tabTarget && typeof sedeSelezionataCorrente !== "undefined" && sedeSelezionataCorrente.originale) {
     tabTarget = sedeSelezionataCorrente.originale;
@@ -613,41 +612,40 @@ function inviaNota(nomeTab, numeroRiga, testoNota) {
 
   if (!tabTarget) {
     console.error("Nome tab non specificato per il salvataggio della nota.");
-    alert("Attenzione: Impossibile identificare il registro attivo per salvare la nota. Prova a riselezionare il plesso.");
     return;
   }
 
   var elInput = document.getElementById("nota-input-" + numeroRiga);
-  
   if (elInput) {
-    // Feedback: Salvataggio in corso (sfondo giallo chiaro)
+    // Feedback visivo: in corso
     elInput.classList.remove("border-slate-200", "border-emerald-500", "border-rose-500", "bg-slate-50/80");
     elInput.classList.add("bg-amber-50", "border-amber-400");
   }
 
-  // Chiamata al backend Apps Script
-  google.script.run
-    .withSuccessHandler(function(risposta) {
-      if (elInput) {
-        // Feedback: Salvato con successo (sfondo verde chiaro)
-        elInput.classList.remove("bg-amber-50", "border-amber-400");
-        elInput.classList.add("bg-emerald-50", "border-emerald-500");
-        
-        setTimeout(function() {
-          elInput.classList.remove("bg-emerald-50", "border-emerald-500");
-          elInput.classList.add("bg-slate-50/80", "border-slate-200");
-        }, 1500);
-      }
-    })
-    .withFailureHandler(function(err) {
-      if (elInput) {
-        elInput.classList.remove("bg-amber-50", "border-amber-400");
-        elInput.classList.add("bg-rose-50", "border-rose-500");
-      }
-      var msg = (err && err.message) ? err.message : err;
-      alert("Errore nel salvataggio della nota alla riga " + numeroRiga + ": " + msg);
-    })
-    .salvaNota(tabTarget, numeroRiga, testoNota);
+  chiamaBackend('salvaNota', {
+    tab: tabTarget,
+    riga: numeroRiga,
+    valore: testoNota
+  })
+  .then(res => {
+    if (elInput) {
+      // Feedback visivo: successo
+      elInput.classList.remove("bg-amber-50", "border-amber-400");
+      elInput.classList.add("bg-emerald-50", "border-emerald-500");
+      setTimeout(function() {
+        elInput.classList.remove("bg-emerald-50", "border-emerald-500");
+        elInput.classList.add("bg-slate-50/80", "border-slate-200");
+      }, 1500);
+    }
+  })
+  .catch(err => {
+    if (elInput) {
+      // Feedback visivo: errore
+      elInput.classList.remove("bg-amber-50", "border-amber-400");
+      elInput.classList.add("bg-rose-50", "border-rose-500");
+    }
+    console.error("Errore nel salvataggio della nota:", err);
+  });
 }
 function verificaSeCarnet(tipo) {
   var t = (tipo || "").toLowerCase();
