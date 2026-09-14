@@ -840,30 +840,35 @@ function verificaSeCarnet(tipo) {
     });
     // Carica i dati iniziali e popola la schermata Timbrature
 function caricaDatiTimbratura() {
-  console.log("1. Funzione caricaDatiTimbratura AVVIATA");
-  
-  var container = document.getElementById('contenutoTimbratura'); 
-  if (container) {
-    container.innerHTML = `
-      <div class="text-center py-8 text-slate-400 text-sm">
-        <i class="fa-solid fa-spinner animate-spin text-blue-600 text-lg mr-2"></i> Caricamento in corso...
-      </div>
-    `;
-    console.log("2. Spinner di caricamento mostrato a schermo");
-  } else {
-    console.warn("ATTENZIONE: container 'contenutoTimbratura' non trovato nell'HTML!");
-  }
+  console.log("Avvio caricamento timbrature...");
 
-  console.log("3. Sto per chiamare il backend...");
-  
   chiamaBackend('ottieniDatiInizialiTimbratura')
     .then(data => {
-      console.log("4. Dati ricevuti con successo:", data);
-      popolaSelectOperatori(data.operatori || []);
-      popolaSelectServizi(data.servizi || []);
+      console.log("Dati ricevuti dal backend:", data);
+      
+      if (!data) {
+        throw new Error("Nessun dato restituito dal server.");
+      }
+
+      // Popola in sicurezza verificando che gli elementi esistano nell'HTML
+      if (typeof popolaSelectOperatori === 'function') {
+        popolaSelectOperatori(data.operatori || []);
+      } else {
+        console.warn("Funzione popolaSelectOperatori non definita.");
+      }
+
+      if (typeof popolaSelectServizi === 'function') {
+        popolaSelectServizi(data.servizi || []);
+      } else {
+        console.warn("Funzione popolaSelectServizi non definita.");
+      }
     })
     .catch(err => {
-      console.error("ERRORE BLOCCANTE:", err);
+      console.error("Errore critico in caricaDatiTimbratura:", err);
+      var container = document.getElementById('contenutoTimbratura') || document.getElementById('sezioneTimbrature');
+      if (container) {
+        container.innerHTML = '<div class="p-4 text-center text-red-600 text-sm">Errore di caricamento: ' + err.message + '</div>';
+      }
     });
 }
 function popolaSelectOperatori(operatori) {
