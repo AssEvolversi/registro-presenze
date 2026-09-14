@@ -906,22 +906,37 @@ function caricaDatiTimbratura() {
     });
 }
 function popolaSelectOperatori(operatori) {
-  var select = document.getElementById('selectOperatoreTimbratura'); // Sostituisci con il tuo ID HTML
+  var select = document.getElementById('selectOperatoreTimbratura');
   if (!select) return;
+  
+  // Ordina gli operatori in base al cognome (l'ultima parola della stringa)
+  var operatoriOrdinati = [...operatori].sort((a, b) => {
+    var partiA = (a.nome || '').trim().split(/\s+/);
+    var partiB = (b.nome || '').trim().split(/\s+/);
+    var cognomeA = partiA[partiA.length - 1] || '';
+    var cognomeB = partiB[partiB.length - 1] || '';
+    
+    // Confronto alfabetico per cognome (gestendo anche accenti e maiuscole/minuscole)
+    var cmpCognome = cognomeA.localeCompare(cognomeB, 'it', { sensitivity: 'base' });
+    if (cmpCognome !== 0) return cmpCognome;
+    
+    // Se il cognome è uguale, ordina per nome intero
+    return (a.nome || '').localeCompare((b.nome || ''), 'it', { sensitivity: 'base' });
+  });
+
   select.innerHTML = '<option value="">-- Seleziona il tuo nome --</option>';
-  operatori.forEach(op => {
+  
+  operatoriOrdinati.forEach(op => {
     var opt = document.createElement('option');
     opt.value = op.nome;
     opt.textContent = op.nome;
     select.appendChild(opt);
   });
   
-  // Quando cambia l'operatore, carica eventuale storico odierno
   select.onchange = function() {
     if (this.value) caricaStoricoOdierno(this.value);
   };
 }
-
 function popolaSelectServizi(servizi) {
   var select = document.getElementById('selectServizioTimbratura'); // Sostituisci con il tuo ID HTML
   if (!select) return;
