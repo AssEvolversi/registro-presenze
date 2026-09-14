@@ -1007,14 +1007,36 @@ function inviaTimbratura(tipoTimbratura) {
 
 function caricaStoricoOdierno(nomeOperatore) {
   var container = document.getElementById('listaStoricoOdierno');
+  var btnEntrata = document.querySelector('button[onclick*="ENTRATA"]');
+  var btnUscita = document.querySelector('button[onclick*="USCITA"]');
+  
   if (!container) return;
 
   container.innerHTML = '<div class="text-slate-400 py-3 flex items-center justify-center gap-2"><i class="fa-solid fa-spinner animate-spin"></i> Caricamento storico...</div>';
 
   chiamaBackend('ottieniStoricoOdierno', { nomeOperatore: nomeOperatore })
     .then(storico => {
+      // Gestione stato pulsanti (Prevenzione doppia timbratura)
+      var ultimoStato = "";
+      if (storico && storico.length > 0) {
+        // Prende l'ultimo elemento registrato oggi
+        ultimoStato = (storico[storico.length - 1].tipo || "").toUpperCase();
+      }
+
+      // Se l'ultima timbratura è ENTRATA, non può rientrare (blocca Entrata, abilita Uscita)
+      // Se l'ultima è USCITA o non c'è nulla, non può uscire (abilita Entrata, blocca Uscita)
+      if (btnEntrata && btnUscita) {
+        if (ultimoStato === 'ENTRATA') {
+          impostaStatoPulsante(btnEntrata, false, "Già in Entrata");
+          impostaStatoPulsante(btnUscita, true, "Registra Uscita");
+        } else {
+          impostaStatoPulsante(btnEntrata, true, "Registra Entrata");
+          impostaStatoPulsante(btnUscita, false, "Devi prima Entrare");
+        }
+      }
+
       if (!storico || storico.length === 0) {
-        container.innerHTML = '<div class="text-slate-400 py-3">Nessuna timbratura registrata oggi per questo operatore.</div>';
+        container.innerHTML = '<div class="text-slate-400 py-3 text-center">Nessuna timbratura registrata oggi. (Stato attuale: Disponibile per Entrata)</div>';
         return;
       }
 
@@ -1043,8 +1065,29 @@ function caricaStoricoOdierno(nomeOperatore) {
     })
     .catch(err => {
       console.error("Errore caricamento storico:", err);
-      container.innerHTML = '<div class="text-rose-600 py-3">Impossibile caricare lo storico odierno.</div>';
+      container.innerHTML = '<div class="text-rose-600 py-3 text-center">Impossibile caricare lo storico odierno.</div>';
     });
+}
+
+// Funzione di supporto per abilitare/disabilitare i pulsanti graficamente
+function impostaStatoPulsante(btn, attivo, testo) {
+  if (!btn) return;
+  // Trova il testo interno o aggiorna l'attributo
+  var span = btn.querySelector('span') || btn;
+  if (span && span !== btn) span.textContent = testo;
+  
+  if (attivo) {
+    btn.disabled = false;
+    btn.classList.remove('opacity-40', 'cursor-not-allowed', 'bg-slate-300');
+    if (btn.textContent.includes('Entrata')) {
+      btn.className = "group relative overflow-hidden bg-emerald-600 hover:bg-emerald-700 text-white font-semibold py-4 px-6 rounded-2xl text-sm transition-all shadow-lg shadow-emerald-600/20 active:scale-[0.98] cursor-pointer flex items-center justify-center gap-2";
+    } else {
+      btn.className = "group relative overflow-hidden bg-slate-800 hover:bg-slate-900 text-white font-semibold py-4 px-6 rounded-2xl text-sm transition-all shadow-lg shadow-slate-900/10 active:scale-[0.98] cursor-pointer flex items-center justify-center gap-2";
+    }
+  } else {
+    btn.disabled = true;
+    btn.className = "opacity-40 cursor-not-allowed bg-slate-300 text-slate-600 font-semibold py-4 px-6 rounded-2xl text-sm flex items-center justify-center gap-2 w-full";
+  }
 }
   </script>
 </body>
