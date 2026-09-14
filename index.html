@@ -1005,33 +1005,46 @@ function inviaTimbratura(tipoTimbratura) {
   });
 }
 
-function caricaStoricoOdierno(operatore) {
-  chiamaBackend('ottieniStoricoOdierno', { nomeOperatore: operatore })
+function caricaStoricoOdierno(nomeOperatore) {
+  var container = document.getElementById('listaStoricoOdierno');
+  if (!container) return;
+
+  container.innerHTML = '<div class="text-slate-400 py-3 flex items-center justify-center gap-2"><i class="fa-solid fa-spinner animate-spin"></i> Caricamento storico...</div>';
+
+  chiamaBackend('ottieniStoricoOdierno', { nomeOperatore: nomeOperatore })
     .then(storico => {
-      var container = document.getElementById('tabellaStoricoTimbrature');
-      if (!container) return;
-      
-      if (storico.length === 0) {
-        container.innerHTML = '<p class="text-slate-400 text-sm py-2">Nessuna timbratura registrata oggi.</p>';
+      if (!storico || storico.length === 0) {
+        container.innerHTML = '<div class="text-slate-400 py-3">Nessuna timbratura registrata oggi per questo operatore.</div>';
         return;
       }
-      
-      var html = '<ul class="divide-y divide-slate-100 text-sm">';
+
+      var html = '<div class="space-y-2 text-left max-h-48 overflow-y-auto pr-1">';
       storico.forEach(item => {
-        var badgeColor = item.tipo === 'ENTRATA' ? 'bg-emerald-100 text-emerald-800' : 'bg-rose-100 text-rose-800';
-        html += `<li class="py-2 flex justify-between items-center">
-                   <div>
-                     <span class="font-bold mr-2">${item.orario}</span>
-                     <span class="text-slate-600">${item.servizio}</span>
-                     ${item.note ? '<span class="text-xs text-slate-400 block">Note: ' + item.note + '</span>' : ''}
-                   </div>
-                   <span class="px-2 py-1 rounded text-xs font-semibold ${badgeColor}">${item.tipo}</span>
-                 </li>`;
+        var isEntrata = (item.tipo || '').toUpperCase() === 'ENTRATA';
+        var badgeClass = isEntrata 
+          ? 'bg-emerald-50 text-emerald-700 border-emerald-200' 
+          : 'bg-slate-100 text-slate-700 border-slate-200';
+        var icona = isEntrata ? 'fa-right-to-bracket' : 'fa-right-from-bracket';
+
+        html += `
+          <div class="flex items-center justify-between p-3 rounded-xl bg-white border border-slate-100 shadow-xs text-xs">
+            <div class="flex items-center gap-2.5">
+              <span class="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-lg font-semibold border ${badgeClass}">
+                <i class="fa-solid ${icona} text-[10px]"></i> ${item.tipo}
+              </span>
+              <span class="font-medium text-slate-700">${item.servizio || ''}</span>
+            </div>
+            <div class="text-slate-500 font-mono font-medium">${item.orario || ''}</div>
+          </div>
+        `;
       });
-      html += '</ul>';
+      html += '</div>';
       container.innerHTML = html;
     })
-    .catch(err => console.error("Errore caricamento storico:", err));
+    .catch(err => {
+      console.error("Errore caricamento storico:", err);
+      container.innerHTML = '<div class="text-rose-600 py-3">Impossibile caricare lo storico odierno.</div>';
+    });
 }
   </script>
 </body>
