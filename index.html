@@ -747,41 +747,7 @@ function verificaSeCarnet(tipo) {
         box.classList.toggle('hidden');
       }
     }
-
-    function aggiornaServizioExtra(riga) {
-      if (!sedeSelezionataCorrente || !sedeSelezionataCorrente.originale) return;
-      var alunno = listaAlunniGlobale.find(a => a.riga === riga);
-      if (!alunno) return;
-
-      var checkbox = document.getElementById(`servizio-extra-${riga}`);
-      var nuovoValore = checkbox.checked ? "Sì" : "";
-      alunno.servizioExtra = nuovoValore;
-
-      chiamaBackend('salvaCampoExtra', {
-        tab: sedeSelezionataCorrente.originale,
-        riga: riga,
-        colonna: 38,
-        valore: nuovoValore
-      }).catch(err => console.error("Errore salvataggio Servizio Extra:", err));
-    }
-
-    function aggiornaOreExtra(riga) {
-      if (!sedeSelezionataCorrente || !sedeSelezionataCorrente.originale) return;
-      var alunno = listaAlunniGlobale.find(a => a.riga === riga);
-      if (!alunno) return;
-
-      var inputNum = document.getElementById(`ore-extra-${riga}`);
-      var nuovoValore = inputNum.value;
-      alunno.oreExtra = nuovoValore;
-
-      chiamaBackend('salvaCampoExtra', {
-        tab: sedeSelezionataCorrente.originale,
-        riga: riga,
-        colonna: 39,
-        valore: nuovoValore
-      }).catch(err => console.error("Errore salvataggio Ore Extra:", err));
-    }
-
+    
   function impostaStatoPresenza(riga, nuovoStato) {
       var alunno = listaAlunniGlobale.find(a => a.riga === riga);
       if (!alunno) return;
