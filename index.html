@@ -599,14 +599,12 @@ function ottieniTestoIngressiSicuro(tipo, ingressi) {
         <i class="fa-solid fa-pen-to-square text-amber-500"></i>
         <span>Note:</span>
       </div>
- <input type="text" 
+<input type="text" 
   id="nota-input-${alunno.riga}" 
   value="${alunno.nota || ''}" 
   placeholder="Scrivi una nota per l'operatore..." 
-  onchange="inviaNota(${alunno.riga}, this.value)" 
+  onchange="inviaNota('${sedeSelezionataCorrente.originale}', ${alunno.riga}, this.value)" 
   class="w-full px-3 py-1.5 text-xs bg-slate-50/80 border border-slate-200 rounded-xl focus:bg-white focus:outline-none focus:ring-2 focus:ring-amber-400/50 focus:border-amber-400 transition text-slate-700 placeholder-slate-400">
-    </div>
-  `;
   return item;
 }
   // Assicurati di dichiarare questa variabile a livello globale nel tuo script (fuori dalle funzioni):
