@@ -854,35 +854,43 @@ function verificaSeCarnet(tipo) {
     });
     // Carica i dati iniziali e popola la schermata Timbrature
 function caricaDatiTimbratura() {
-  console.log("Avvio caricamento timbrature...");
-
   chiamaBackend('ottieniDatiInizialiTimbratura')
     .then(data => {
-      console.log("Dati ricevuti dal backend:", data);
-      
       if (!data) {
-        throw new Error("Nessun dato restituito dal server.");
+        throw new Error("Nessun dato ricevuto dal server.");
       }
 
-      // Popola in sicurezza verificando che gli elementi esistano nell'HTML
-      if (typeof popolaSelectOperatori === 'function') {
-        popolaSelectOperatori(data.operatori || []);
-      } else {
-        console.warn("Funzione popolaSelectOperatori non definita.");
+      // 1. Popola la select degli operatori
+      var selectOp = document.getElementById('selectOperatore'); // Sostituisci con l'ID effettivo del tuo <select> operatori
+      if (selectOp) {
+        selectOp.innerHTML = '<option value="">-- Seleziona operatore --</option>';
+        (data.operatori || []).forEach(op => {
+          var opt = document.createElement('option');
+          opt.value = op.id || op.nome;
+          opt.textContent = op.nome;
+          selectOp.appendChild(opt);
+        });
       }
 
-      if (typeof popolaSelectServizi === 'function') {
-        popolaSelectServizi(data.servizi || []);
-      } else {
-        console.warn("Funzione popolaSelectServizi non definita.");
+      // 2. Popola la select dei servizi/sedi
+      var selectServizio = document.getElementById('selectServizio'); // Sostituisci con l'ID effettivo del tuo <select> servizi
+      if (selectServizio) {
+        selectServizio.innerHTML = '<option value="">-- Seleziona servizio --</option>';
+        (data.servizi || []).forEach(srv => {
+          var opt = document.createElement('option');
+          opt.value = srv.idTab;
+          opt.textContent = srv.etichetta;
+          selectServizio.appendChild(opt);
+        });
       }
+
+      // Rimuove l'eventuale indicatore di caricamento se presente nel wrapper
+      var spinner = document.querySelector('#wrapperTimbratura .loading-spinner');
+      if (spinner) spinner.style.display = 'none';
+
     })
     .catch(err => {
-      console.error("Errore critico in caricaDatiTimbratura:", err);
-      var container = document.getElementById('contenutoTimbratura') || document.getElementById('sezioneTimbrature');
-      if (container) {
-        container.innerHTML = '<div class="p-4 text-center text-red-600 text-sm">Errore di caricamento: ' + err.message + '</div>';
-      }
+      console.error("Errore critico caricamento timbrature:", err);
     });
 }
 function popolaSelectOperatori(operatori) {
