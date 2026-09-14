@@ -611,7 +611,7 @@ function ottieniTestoIngressiSicuro(tipo, ingressi) {
   }
   return ingressi;
 }
-   function creaElementoAlunnoHTML(alunno, isIqbalMasih, isDonMilani, nomeTab) {
+     function creaElementoAlunnoHTML(alunno, isIqbalMasih, isDonMilani, nomeTab) {
       var statoNorm = (alunno.stato || "").trim().toUpperCase();
       var isPresente = (statoNorm === "P" || statoNorm === "PRESENTE");
       var isAssente = (statoNorm === "A" || statoNorm === "ASSENTE");
@@ -681,6 +681,18 @@ function ottieniTestoIngressiSicuro(tipo, ingressi) {
             placeholder="Scrivi una nota per l'operatore..." 
             onchange="inviaNota('${sedeSelezionataCorrente.originale}', ${alunno.riga}, this.value)" 
             class="w-full px-3 py-1.5 text-xs bg-slate-50/80 border border-slate-200 rounded-xl focus:bg-white focus:outline-none focus:ring-2 focus:ring-amber-400/50 focus:border-amber-400 transition text-slate-700 placeholder-slate-400">
+        </div>
+
+        <!-- SEZIONE INFO UTENTE (Apre al click) -->
+        <div id="info-box-${alunno.riga}" class="hidden mt-2 p-3 bg-slate-50/90 rounded-xl text-xs text-slate-600 border border-slate-200/80 flex flex-col gap-1.5 shadow-inner">
+          <div class="grid grid-cols-1 md:grid-cols-2 gap-2">
+            <div><i class="fa-solid fa-envelope text-blue-500 mr-1.5"></i><strong>Email:</strong> ${alunno.email || '-'}</div>
+            <div><i class="fa-solid fa-phone text-emerald-500 mr-1.5"></i><strong>Cellulare:</strong> ${alunno.cellulare || '-'}</div>
+          </div>
+          <div class="border-t border-slate-200/60 pt-1.5 mt-0.5">
+            <div><i class="fa-solid fa-users text-purple-500 mr-1.5"></i><strong>Deleghe:</strong> ${alunno.deleghe || '-'}</div>
+            <div class="mt-1"><i class="fa-solid fa-person-walking text-amber-600 mr-1.5"></i><strong>Uscita Autonoma:</strong> ${alunno.uscitaAutonoma || '-'}</div>
+          </div>
         </div>
       `;
 
