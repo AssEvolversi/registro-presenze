@@ -831,6 +831,102 @@ function verificaSeCarnet(tipo) {
         };
       }
     });
+    // Carica i dati iniziali e popola la schermata Timbrature
+function caricaDatiTimbratura() {
+  chiamaBackend('ottieniDatiInizialiTimbratura')
+    .then(data => {
+      popolaSelectOperatori(data.operatori);
+      popolaSelectServizi(data.servizi);
+    })
+    .catch(err => {
+      console.error("Errore caricamento dati timbratura:", err);
+    });
+}
+
+function popolaSelectOperatori(operatori) {
+  var select = document.getElementById('selectOperatoreTimbratura'); // Sostituisci con il tuo ID HTML
+  if (!select) return;
+  select.innerHTML = '<option value="">-- Seleziona il tuo nome --</option>';
+  operatori.forEach(op => {
+    var opt = document.createElement('option');
+    opt.value = op.nome;
+    opt.textContent = op.nome;
+    select.appendChild(opt);
+  });
+  
+  // Quando cambia l'operatore, carica eventuale storico odierno
+  select.onchange = function() {
+    if (this.value) caricaStoricoOdierno(this.value);
+  };
+}
+
+function popolaSelectServizi(servizi) {
+  var select = document.getElementById('selectServizioTimbratura'); // Sostituisci con il tuo ID HTML
+  if (!select) return;
+  select.innerHTML = '<option value="">-- Seleziona plesso / servizio --</option>';
+  servizi.forEach(serv => {
+    var opt = document.createElement('option');
+    opt.value = serv.etichetta;
+    opt.textContent = serv.etichetta;
+    select.appendChild(opt);
+  });
+}
+
+// Funzione richiamata dai pulsanti "Registra Entrata" o "Registra Uscita"
+function inviaTimbratura(tipoTimbratura) {
+  var operatore = document.getElementById('selectOperatoreTimbratura').value;
+  var servizio = document.getElementById('selectServizioTimbratura').value;
+  var note = document.getElementById('inputNoteTimbratura') ? document.getElementById('inputNoteTimbratura').value : "";
+  
+  if (!operatore || !servizio) {
+    alert("Seleziona operatore e servizio prima di timbrare.");
+    return;
+  }
+
+  chiamaBackend('salvaTimbratura', {
+    operatore: operatore,
+    servizio: servizio,
+    tipo: tipoTimbratura,
+    note: note
+  })
+  .then(res => {
+    alert(res.messaggio);
+    caricaStoricoOdierno(operatore); // Aggiorna la tabella dello storico di oggi
+    if(document.getElementById('inputNoteTimbratura')) document.getElementById('inputNoteTimbratura').value = "";
+  })
+  .catch(err => {
+    alert("Errore timbratura: " + err.message);
+  });
+}
+
+function caricaStoricoOdierno(operatore) {
+  chiamaBackend('ottieniStoricoOdierno', { nomeOperatore: operatore })
+    .then(storico => {
+      var container = document.getElementById('tabellaStoricoTimbrature');
+      if (!container) return;
+      
+      if (storico.length === 0) {
+        container.innerHTML = '<p class="text-slate-400 text-sm py-2">Nessuna timbratura registrata oggi.</p>';
+        return;
+      }
+      
+      var html = '<ul class="divide-y divide-slate-100 text-sm">';
+      storico.forEach(item => {
+        var badgeColor = item.tipo === 'ENTRATA' ? 'bg-emerald-100 text-emerald-800' : 'bg-rose-100 text-rose-800';
+        html += `<li class="py-2 flex justify-between items-center">
+                   <div>
+                     <span class="font-bold mr-2">${item.orario}</span>
+                     <span class="text-slate-600">${item.servizio}</span>
+                     ${item.note ? '<span class="text-xs text-slate-400 block">Note: ' + item.note + '</span>' : ''}
+                   </div>
+                   <span class="px-2 py-1 rounded text-xs font-semibold ${badgeColor}">${item.tipo}</span>
+                 </li>`;
+      });
+      html += '</ul>';
+      container.innerHTML = html;
+    })
+    .catch(err => console.error("Errore caricamento storico:", err));
+}
   </script>
 </body>
 </html>
