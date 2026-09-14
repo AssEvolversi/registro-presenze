@@ -193,27 +193,34 @@
     let isDonMilaniIntegrazioneGlobale = false;
 
     function chiamaBackend(azione, payload = {}) {
-      aggiornaStatoSalvataggio('salvataggio', 'Sincronizzazione...');
-      
-      const parametri = new URLSearchParams({
-        azione: azione,
-        ...payload
-      });
+     aggiornaStatoSalvataggio('salvataggio', 'Sincronizzazione...');
+     
+     const parametri = new URLSearchParams({
+       azione: azione,
+       ...(payload || {})
+     });
 
-      return fetch(`${URL_WEB_APP}?${parametri.toString()}`)
-        .then(response => response.json())
-        .then(data => {
-          aggiornaStatoSalvataggio('pronto', 'Aggiornato');
-          if (data.errore) throw new Error(data.errore);
-          return data;
-        })
-        .catch(error => {
-          aggiornaStatoSalvataggio('errore', 'Errore di connessione');
-          console.error("Errore backend:", error);
-          throw error;
-        });
-    }
+     const urlFinale = `${URL_WEB_APP}?${parametri.toString()}`;
+     console.log("Chiamata backend a:", urlFinale); // <-- Controlla cosa stampa qui in F12
 
+     return fetch(urlFinale)
+       .then(response => {
+         if (!response.ok) {
+           throw new Error("HTTP error! status: " + response.status);
+         }
+         return response.json();
+       })
+       .then(data => {
+         aggiornaStatoSalvataggio('pronto', 'Aggiornato');
+         if (data.errore) throw new Error(data.errore);
+         return data;
+       })
+       .catch(error => {
+         aggiornaStatoSalvataggio('errore', 'Errore di connessione');
+         console.error("Errore backend:", error);
+         throw error;
+       });
+}
     function aggiornaStatoSalvataggio(stato, messaggio) {
       var punto = document.getElementById('puntoStato');
       var testo = document.getElementById('testoStato');
