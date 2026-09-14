@@ -537,12 +537,6 @@ function ottieniTestoIngressiSicuro(tipo, ingressi) {
 
   var testoIngressi = ottieniTestoIngressiSicuro(alunno.tipo, alunno.ingressi);
 
-  var servizioExtraChecked = false;
-  if (alunno.servizioExtra) {
-    var valSe = String(alunno.servizioExtra).trim().toUpperCase();
-    servizioExtraChecked = (valSe === "SÌ" || valSe === "SI" || valSe === "TRUE" || valSe === "X" || valSe === "1" || valSe === "VERO");
-  }
-
   // --- LOGICA CONDIZIONALE PER GLI INGRESSI E IL TIPO ---
   
   // 1. Stringa per il Tipo di Abbonamento (Colonna C)
@@ -582,24 +576,6 @@ function ottieniTestoIngressiSicuro(tipo, ingressi) {
           ${htmlIngressiResidui}
         </div>
       </div>
-
-      ${isIqbalMasih ? `
-        <div class="flex items-center gap-3 bg-blue-50/50 px-3 py-1.5 rounded-xl border border-blue-100 self-start md:self-center">
-          <label class="flex items-center gap-1.5 cursor-pointer text-xs font-semibold text-slate-700">
-            <input type="checkbox" id="servizio-extra-${alunno.riga}" ${servizioExtraChecked ? 'checked' : ''} 
-              onchange="aggiornaServizioExtra(${alunno.riga})" 
-              class="w-4 h-4 text-blue-600 rounded border-slate-300 focus:ring-blue-500 cursor-pointer">
-            Servizio Extra
-          </label>
-          <div class="h-4 w-px bg-blue-200"></div>
-          <div class="flex items-center gap-1.5">
-            <label for="ore-extra-${alunno.riga}" class="text-xs font-semibold text-slate-700">Ore Extra:</label>
-            <input type="number" id="ore-extra-${alunno.riga}" value="${alunno.oreExtra !== undefined && alunno.oreExtra !== "" ? alunno.oreExtra : 0}" min="0" step="1" 
-              onchange="aggiornaOreExtra(${alunno.riga})" 
-              class="w-16 px-2 py-1 text-xs font-bold text-center bg-white border border-slate-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500">
-          </div>
-        </div>
-      ` : ''}
 
       <div class="flex items-center gap-2 self-end md:self-center">
         <button onclick="impostaStatoPresenza(${alunno.riga}, 'P')" 
