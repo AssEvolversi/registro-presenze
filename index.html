@@ -840,31 +840,30 @@ function verificaSeCarnet(tipo) {
     });
     // Carica i dati iniziali e popola la schermata Timbrature
 function caricaDatiTimbratura() {
-  var container = document.getElementById('contenutoTimbratura'); // Assicurati sia l'ID del contenitore della sezione
+  console.log("1. Funzione caricaDatiTimbratura AVVIATA");
+  
+  var container = document.getElementById('contenutoTimbratura'); 
+  if (container) {
+    container.innerHTML = `
+      <div class="text-center py-8 text-slate-400 text-sm">
+        <i class="fa-solid fa-spinner animate-spin text-blue-600 text-lg mr-2"></i> Caricamento in corso...
+      </div>
+    `;
+    console.log("2. Spinner di caricamento mostrato a schermo");
+  } else {
+    console.warn("ATTENZIONE: container 'contenutoTimbratura' non trovato nell'HTML!");
+  }
 
+  console.log("3. Sto per chiamare il backend...");
+  
   chiamaBackend('ottieniDatiInizialiTimbratura')
     .then(data => {
-      // Se il backend restituisce un errore sotto forma di oggetto
-      if (!data || data.errore) {
-        throw new Error(data ? data.errore : "Nessun dato ricevuto dal server.");
-      }
-
-      // Popola in sicurezza
+      console.log("4. Dati ricevuti con successo:", data);
       popolaSelectOperatori(data.operatori || []);
       popolaSelectServizi(data.servizi || []);
     })
     .catch(err => {
-      console.error("Errore dettagliato caricamento timbrature:", err);
-      // Rimuove lo spinner e mostra l'errore visivamente all'utente
-      if (container) {
-        container.innerHTML = `
-          <div class="text-center py-8 text-rose-600 text-sm bg-rose-50 rounded-2xl border border-rose-200 p-4 my-4">
-            <i class="fa-solid fa-triangle-exclamation text-lg mb-2"></i><br>
-            <strong>Impossibile caricare le timbrature.</strong><br>
-            <span class="text-xs text-slate-600">${err.message}</span>
-          </div>
-        `;
-      }
+      console.error("ERRORE BLOCCANTE:", err);
     });
 }
 function popolaSelectOperatori(operatori) {
