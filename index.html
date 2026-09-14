@@ -616,33 +616,44 @@ function ottieniTestoIngressiSicuro(tipo, ingressi) {
   `;
   return item;
 }
-    function inviaNota(nomeTab, numeroRiga, testoNota) {
-  // 1. Risoluzione sicura del nome del Tab (evita stringhe "undefined")
-  var tabTarget = (nomeTab && nomeTab !== "undefined") ? nomeTab : (typeof nomeTabAttivo !== "undefined" ? nomeTabAttivo : "");
+   function inviaNota(numeroRiga, testoNota, nomeTab) {
+  // 1. Tenta di recuperare il tab dal parametro, da tabAttuale, o da altre variabili globali comuni
+  var tabTarget = (nomeTab && nomeTab !== "undefined" && nomeTab !== "null") ? nomeTab : "";
   
+  if (!tabTarget && typeof tabAttuale !== "undefined") tabTarget = tabAttuale;
+  if (!tabTarget && typeof tabAttivo !== "undefined") tabTarget = tabAttivo;
+  if (!tabTarget && typeof currentTab !== "undefined") tabTarget = currentTab;
+  
+  // 2. Ultimo tentativo: prova a leggerlo da un attributo salvato nel DOM (se presente)
   if (!tabTarget) {
-    console.error("Nome tab non specificato per il salvataggio della nota.");
-    alert("Attenzione: Impossibile identificare il registro attivo per salvare la nota.");
+    var appContainer = document.querySelector("[data-tab-attivo]") || document.getElementById("app");
+    if (appContainer && appContainer.dataset.tabAttivo) {
+      tabTarget = appContainer.dataset.tabAttivo;
+    }
+  }
+
+  if (!tabTarget) {
+    console.error("Impossibile identificare il tab attivo. Variabili controllate: tabAttuale, tabAttivo, currentTab.");
+    alert("Attenzione: Impossibile identificare il registro attivo per salvare la nota. Prova a riselezionare il plesso.");
     return;
   }
 
   var elInput = document.getElementById("nota-input-" + numeroRiga);
   
   if (elInput) {
-    // Feedback: Salvataggio in corso (sfondo giallo chiaro)
+    // Feedback visivo: Salvataggio in corso (sfondo giallo chiaro)
     elInput.classList.remove("border-slate-200", "border-emerald-500", "border-rose-500", "bg-slate-50/80");
     elInput.classList.add("bg-amber-50", "border-amber-400");
   }
 
-  // 2. Chiamata al backend Apps Script
+  // 3. Chiamata al backend Apps Script
   google.script.run
     .withSuccessHandler(function(risposta) {
       if (elInput) {
-        // Feedback: Salvato con successo (sfondo verde chiaro)
+        // Feedback visivo: Salvato con successo (sfondo verde chiaro)
         elInput.classList.remove("bg-amber-50", "border-amber-400");
         elInput.classList.add("bg-emerald-50", "border-emerald-500");
         
-        // Ripristina l'aspetto normale dopo 1.5 secondi
         setTimeout(function() {
           elInput.classList.remove("bg-emerald-50", "border-emerald-500");
           elInput.classList.add("bg-slate-50/80", "border-slate-200");
@@ -651,7 +662,6 @@ function ottieniTestoIngressiSicuro(tipo, ingressi) {
     })
     .withFailureHandler(function(err) {
       if (elInput) {
-        // Feedback: Errore (sfondo rosso chiaro)
         elInput.classList.remove("bg-amber-50", "border-amber-400");
         elInput.classList.add("bg-rose-50", "border-rose-500");
       }
