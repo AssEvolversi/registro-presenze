@@ -458,54 +458,56 @@
     }
 
     function caricaIscrittiSede(nomeTab) {
-      var container = document.getElementById('contenutoSedeSpecifica');
-      if (!container) return;
+  var container = document.getElementById('contenutoSedeSpecifica');
+  if (!container) return;
+  
+  container.innerHTML = `
+    <div class="text-center py-8 text-slate-400 text-sm">
+      <i class="fa-solid fa-spinner animate-spin text-blue-600 text-lg mr-2"></i> Caricamento iscritti in corso...
+    </div>
+  `;
+
+  chiamaBackend('ottieniDatiRegistro', { tab: nomeTab })
+    .then(data => {
+      listaAlunniGlobale = data.alunni || [];
       
-      container.innerHTML = `
-        <div class="text-center py-8 text-slate-400 text-sm">
-          <i class="fa-solid fa-spinner animate-spin text-blue-600 text-lg mr-2"></i> Caricamento iscritti in corso...
-        </div>
-      `;
+      // 1. Valorizziamo subito i flag globali PRIMA di ciclare sugli alunni
+      colonnaGiornoGlobale = data.colonnaGiorno || -1;
+      isDonMilaniIntegrazioneGlobale = !!data.isDonMilaniIntegrazione;
+      
+      listaAlunniGlobale.forEach(alunno => {
+        var tipoLower = (alunno.tipo || "").toLowerCase();
+        
+        // Controllo rigoroso: deve contenere termini da carnet E NON essere annuale/mensile
+        var eUnCarnet = (tipoLower.includes("carnet") || 
+                         tipoLower.includes("pacchetto") || 
+                         tipoLower.includes("ingresso")) && 
+                        !tipoLower.includes("annuale") && 
+                        !tipoLower.includes("mensile");
+        
+        // 2. Se NON siamo in Don Milani E non è un carnet, allora applichiamo il trattino "-"
+        if (!isDonMilaniIntegrazioneGlobale && !eUnCarnet) {
+          alunno.ingressi = "-";
+        }
+      });
 
-      chiamaBackend('ottieniDatiRegistro', { tab: nomeTab })
-        .then(data => {
-          listaAlunniGlobale = data.alunni || [];
-          
-         listaAlunniGlobale.forEach(alunno => {
-            var tipoLower = (alunno.tipo || "").toLowerCase();
-            
-            // Controllo rigoroso: deve contenere termini da carnet E NON essere annuale/mensile
-            var eUnCarnet = (tipoLower.includes("carnet") || 
-                             tipoLower.includes("pacchetto") || 
-                             tipoLower.includes("ingresso")) && 
-                            !tipoLower.includes("annuale") && 
-                            !tipoLower.includes("mensile");
-            
-            if (!eUnCarnet) {
-              alunno.ingressi = "-";
-            }
-          });
+      if (data.dataOdierna) {
+        var badge = document.getElementById('dataOdiernaBadge');
+        if (badge) badge.innerText = `Data odierna: ${data.dataOdierna}`;
+      }
 
-          colonnaGiornoGlobale = data.colonnaGiorno || -1;
-          isDonMilaniIntegrazioneGlobale = !!data.isDonMilaniIntegrazione;
-          
-          if (data.dataOdierna) {
-            var badge = document.getElementById('dataOdiernaBadge');
-            if (badge) badge.innerText = `Data odierna: ${data.dataOdierna}`;
-          }
+      listaAlunniGlobale.sort((a, b) => {
+        let cognomeA = estraiCognome(a.nome);
+        let cognomeB = estraiCognome(b.nome);
+        return cognomeA.localeCompare(cognomeB);
+      });
 
-          listaAlunniGlobale.sort((a, b) => {
-            let cognomeA = estraiCognome(a.nome);
-            let cognomeB = estraiCognome(b.nome);
-            return cognomeA.localeCompare(cognomeB);
-          });
-
-          renderizzaListaHTML(listaAlunniGlobale);
-        })
-        .catch(err => {
-          container.innerHTML = `<p class="text-rose-400 text-sm py-4 text-center">Impossibile caricare gli iscritti per questo servizio.</p>`;
-        });
-    }   
+      renderizzaListaHTML(listaAlunniGlobale);
+    })
+    .catch(err => {
+      container.innerHTML = `<p class="text-rose-400 text-sm py-4 text-center">Impossibile caricare gli iscritti per questo servizio.</p>`;
+    });
+}
     function estraiCognome(nomeCompleto) {
       if (!nomeCompleto) return "";
       let parti = nomeCompleto.trim().split(" ");
