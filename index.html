@@ -6,6 +6,7 @@
   <title>Associazione Evolversi</title>
   <!-- Tailwind CSS CDN -->
   <script src="https://cdn.tailwindcss.com"></script>
+  <script src="https://accounts.google.com/gsi/client" async defer></script>
   <!-- FontAwesome CDN -->
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
   <style>
@@ -48,6 +49,7 @@
     <img src="https://lh3.googleusercontent.com/d/1U3wZDb34MJyIGitW-ZEmgd5cRBDorTG3=s220" alt="Logo Evolversi" class="w-10 h-10 object-contain rounded-full bg-white/10 p-1 shadow-inner">
     <span class="font-black text-lg tracking-wider drop-shadow-sm">ASSOCIAZIONE EVOLVERSI</span>
   </div>
+  <button id="btnEsci" onclick="esci()" class="hidden text-xs font-bold bg-white/15 hover:bg-white/25 px-3 py-2 rounded-xl transition cursor-pointer"><i class="fa-solid fa-right-from-bracket mr-1"></i> Esci</button>
   </header>
 
   <!-- Indicatore di stato -->
@@ -61,8 +63,21 @@
   <!-- Contenitore Principale -->
   <main class="flex-1 max-w-4xl w-full mx-auto p-4 flex flex-col justify-center">
 
+    <!-- Schermata Login -->
+    <section id="schermataLogin" class="space-y-6 py-10 max-w-md mx-auto w-full">
+      <div class="card-3d p-8 rounded-3xl border border-white/50 text-center space-y-6">
+        <div class="w-20 h-20 btn-icon-3d text-blue-600 rounded-2xl flex items-center justify-center text-3xl mx-auto"><i class="fa-solid fa-lock"></i></div>
+        <div>
+          <h2 class="text-2xl font-black text-slate-900 tracking-tight">Accesso riservato</h2>
+          <p class="text-slate-500 text-sm mt-1">Accedi con l'account Google abilitato dall'associazione.</p>
+        </div>
+        <div id="bottoneGoogle" class="flex justify-center"></div>
+        <p id="messaggioLogin" class="text-sm text-rose-600 font-medium min-h-[1.25rem]"></p>
+      </div>
+    </section>
+
     <!-- Schermata Home -->
-    <section id="schermataHome" class="space-y-6 py-6">
+    <section id="schermataHome" class="hidden space-y-6 py-6">
       <div class="text-center mb-10">
         <h2 class="text-3xl font-black text-slate-900 tracking-tight drop-shadow-sm">Gestione Attività</h2>
         <p class="text-slate-500 text-sm mt-1">Seleziona una sezione per accedere ai servizi</p>
@@ -253,41 +268,95 @@
 
  <!-- Blocco JavaScript Aggiornato: Rimossa tipologia, mantenuti solo ingressi residui -->
   <script>
-    const URL_WEB_APP = "https://script.google.com/macros/s/AKfycbyDZZpH62lWNMr5wDWkmJuKeMFofuVNOg07Q7cNZiFthZPpr3SW8__8u-MalJSboGqo/exec";
+    const URL_WEB_APP = "https://script.google.com/macros/s/AKfycbymFKmNG0ZVnPjT2BMtsIBIu6zxL_YgTqPfyZaqpBqoXiOBNL0C7hm6ZtGg7E8u7zUE/exec";
+    const GOOGLE_CLIENT_ID = "902356712716-2bjm1von4frqa0jhle4kd9fe4rg2tja2.apps.googleusercontent.com";
+    let tokenGoogle = null, attesaToken = null;
+
+    // Escape di tutti i dati provenienti dal foglio prima di inserirli nell'HTML
+    function esc(v) {
+      return String(v == null ? '' : v).replace(/[&<>"']/g, function (c) {
+        return { '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c];
+      });
+    }
+    function scadenzaToken(t) {
+      try { return JSON.parse(atob(t.split('.')[1].replace(/-/g, '+').replace(/_/g, '/'))).exp * 1000; } catch (e) { return 0; }
+    }
+    function tokenValido() { return !!tokenGoogle && scadenzaToken(tokenGoogle) - Date.now() > 120000; }
+
+    function mostraLogin(msg) {
+      tokenGoogle = null;
+      try { sessionStorage.removeItem('gt'); } catch (e) {}
+      mostraSezione('schermataLogin');
+      document.getElementById('btnEsci').classList.add('hidden');
+      document.getElementById('messaggioLogin').textContent = msg || '';
+    }
+    function onCredenziale(r) {
+      tokenGoogle = r.credential;
+      try { sessionStorage.setItem('gt', tokenGoogle); } catch (e) {}
+      if (attesaToken) { attesaToken(tokenGoogle); attesaToken = null; return; }  // rinnovo silenzioso
+      avviaSessione();
+    }
+    function avviaSessione() {
+      chiamaBackend('ottieniElencoSedi').then(function () {
+        document.getElementById('messaggioLogin').textContent = '';
+        document.getElementById('btnEsci').classList.remove('hidden');
+        mostraSezione('schermataHome');
+      }).catch(function (e) {
+        if (e.message !== 'NON_AUTORIZZATO' && e.message !== 'TOKEN_NON_VALIDO') mostraLogin('Connessione non riuscita. Riprova.');
+      });
+    }
+    function ottieniToken() {
+      if (tokenValido()) return Promise.resolve(tokenGoogle);
+      return new Promise(function (ok, ko) {
+        attesaToken = ok;
+        google.accounts.id.prompt();
+        setTimeout(function () {
+          if (attesaToken) { attesaToken = null; mostraLogin('Sessione scaduta. Accedi di nuovo.'); ko(new Error('SESSIONE_SCADUTA')); }
+        }, 8000);
+      });
+    }
+    function esci() {
+      try { google.accounts.id.disableAutoSelect(); } catch (e) {}
+      mostraLogin('');
+    }
+    function initGoogle() {
+      if (!(window.google && google.accounts && google.accounts.id)) { return setTimeout(initGoogle, 200); }
+      google.accounts.id.initialize({ client_id: GOOGLE_CLIENT_ID, callback: onCredenziale, auto_select: true });
+      google.accounts.id.renderButton(document.getElementById('bottoneGoogle'),
+        { theme: 'outline', size: 'large', text: 'signin_with', locale: 'it' });
+      try {
+        var t = sessionStorage.getItem('gt');
+        if (t && scadenzaToken(t) - Date.now() > 120000) { tokenGoogle = t; avviaSessione(); }
+      } catch (e) {}
+    }
+    window.addEventListener('load', initGoogle);
     let sedeSelezionataCorrente = null;
     let listaAlunniGlobale = [];
     let colonnaGiornoGlobale = -1;
     let isDonMilaniIntegrazioneGlobale = false;
 
     function chiamaBackend(azione, payload = {}) {
-     aggiornaStatoSalvataggio('salvataggio', 'Sincronizzazione...');
-     
-     const parametri = new URLSearchParams({
-       azione: azione,
-       ...(payload || {})
-     });
-
-     const urlFinale = `${URL_WEB_APP}?${parametri.toString()}`;
-     console.log("Chiamata backend a:", urlFinale); // <-- Controlla cosa stampa qui in F12
-
-     return fetch(urlFinale)
-       .then(response => {
-         if (!response.ok) {
-           throw new Error("HTTP error! status: " + response.status);
-         }
-         return response.json();
-       })
-       .then(data => {
-         aggiornaStatoSalvataggio('pronto', 'Aggiornato');
-         if (data.errore) throw new Error(data.errore);
-         return data;
-       })
-       .catch(error => {
-         aggiornaStatoSalvataggio('errore', 'Errore di connessione');
-         console.error("Errore backend:", error);
-         throw error;
-       });
-}
+      aggiornaStatoSalvataggio('salvataggio', 'Sincronizzazione...');
+      return ottieniToken()
+        .then(function (token) {
+          return fetch(URL_WEB_APP, {
+            method: 'POST',
+            headers: { 'Content-Type': 'text/plain;charset=utf-8' },
+            body: JSON.stringify(Object.assign({}, payload, { azione: azione, token: token }))
+          });
+        })
+        .then(function (r) { if (!r.ok) throw new Error('HTTP ' + r.status); return r.json(); })
+        .then(function (data) {
+          if (data && data.errore) {
+            if (data.errore === 'NON_AUTORIZZATO') mostraLogin("Questo account Google non è abilitato. Contatta il referente dell'associazione.");
+            else if (data.errore === 'TOKEN_NON_VALIDO') mostraLogin('Sessione scaduta. Accedi di nuovo.');
+            throw new Error(data.errore);
+          }
+          aggiornaStatoSalvataggio('pronto', 'Aggiornato');
+          return data;
+        })
+        .catch(function (e) { aggiornaStatoSalvataggio('errore', 'Errore di connessione'); throw e; });
+    }
     function aggiornaStatoSalvataggio(stato, messaggio) {
       var punto = document.getElementById('puntoStato');
       var testo = document.getElementById('testoStato');
@@ -301,9 +370,8 @@
     }
 
     function mostraSezione(idSezione) {
-      console.log("-> Sto tentando di aprire la sezione:", idSezione); // <-- CONTROLLO
       
-      var sezioni = ['schermataHome', 'wrapperRegistro', 'wrapperSedeSpecifica', 'wrapperTimbratura'];
+      var sezioni = ['schermataLogin', 'schermataHome', 'wrapperRegistro', 'wrapperSedeSpecifica', 'wrapperTimbratura'];
       sezioni.forEach(id => {
         var el = document.getElementById(id);
         if (el) el.classList.add('hidden');
@@ -314,7 +382,6 @@
         target.classList.remove('hidden');
         
         if (idSezione === 'wrapperTimbratura') {
-          console.log("-> Sezione timbrature aperta, avvio caricaDatiTimbratura()"); // <-- CONTROLLO
           if (typeof caricaDatiTimbratura === 'function') {
             caricaDatiTimbratura();
           } else {
@@ -417,7 +484,7 @@
               <i class="fa-solid fa-location-dot"></i>
             </div>
             <div>
-              <span class="font-bold text-slate-800 group-hover:text-blue-600 transition block">${nomeFormattato}</span>
+              <span class="font-bold text-slate-800 group-hover:text-blue-600 transition block">${esc(nomeFormattato)}</span>
               <span class="text-xs text-slate-400">Apri registro presenze</span>
             </div>
           </div>
@@ -428,7 +495,6 @@
         btn.onclick = function() {
           var tabOri = this.dataset.tabOriginale;
           var tabForm = this.dataset.nomeFormattato;
-          console.log("Click su sede - Tab originale:", tabOri);
           selezionaSede(tabOri, tabForm);
         };
         
@@ -441,7 +507,7 @@
       
       var titoloEl = document.getElementById('titoloSedeSelezionata');
       if (titoloEl) {
-        titoloEl.innerHTML = `<i class="fa-solid fa-clipboard-list"></i> ${nomeFormattato}`;
+        titoloEl.innerHTML = `<i class="fa-solid fa-clipboard-list"></i> ${esc(nomeFormattato)}`;
       }
       
       var inputRicerca = document.getElementById('inputRicercaIscritto');
@@ -559,7 +625,7 @@
           headerGruppo.className = "w-full flex justify-between items-center text-left font-bold text-slate-800 py-1 px-2 cursor-pointer focus:outline-none";
           headerGruppo.innerHTML = `
             <span class="flex items-center gap-2 text-blue-700 text-base">
-              <i class="fa-solid fa-users-rectangle"></i> Classe: ${classe} <span class="text-xs bg-blue-100 text-blue-700 px-2.5 py-0.5 rounded-full ml-2">${alunniClasse.length} iscritti</span>
+              <i class="fa-solid fa-users-rectangle"></i> Classe: ${esc(classe)} <span class="text-xs bg-blue-100 text-blue-700 px-2.5 py-0.5 rounded-full ml-2">${alunniClasse.length} iscritti</span>
             </span>
             <i class="fa-solid fa-chevron-down text-slate-400 transition transform" id="icon-${idAccordion}"></i>
           `;
@@ -627,14 +693,14 @@ function ottieniTestoIngressiSicuro(tipo, ingressi) {
 
       var htmlTipoAbbonamento = "";
       if (alunno.tipo && alunno.tipo.trim() !== "") {
-        htmlTipoAbbonamento = `<span class="text-xs text-slate-500 font-medium block mt-0.5"><i class="fa-solid fa-ticket mr-1"></i>${alunno.tipo}</span>`;
+        htmlTipoAbbonamento = `<span class="text-xs text-slate-500 font-medium block mt-0.5"><i class="fa-solid fa-ticket mr-1"></i>${esc(alunno.tipo)}</span>`;
       }
 
       var htmlIngressiResidui = "";
       if (testoIngressi !== "-") {
         htmlIngressiResidui = `
           <span class="text-xs text-slate-400 block mt-1">
-            Ingressi residui: <span id="ingressi-val-${alunno.riga}" class="font-bold text-blue-600">${testoIngressi}</span>
+            Ingressi residui: <span id="ingressi-val-${alunno.riga}" class="font-bold text-blue-600">${esc(testoIngressi)}</span>
           </span>`;
       }
 
@@ -649,7 +715,7 @@ function ottieniTestoIngressiSicuro(tipo, ingressi) {
               <i class="fa-solid fa-child"></i>
             </div>
             <div>
-              <span class="font-bold text-slate-800 text-base block">${alunno.nome}</span>
+              <span class="font-bold text-slate-800 text-base block">${esc(alunno.nome)}</span>
               ${htmlTipoAbbonamento}
               ${htmlIngressiResidui}
             </div>
@@ -679,21 +745,21 @@ function ottieniTestoIngressiSicuro(tipo, ingressi) {
           </div>
           <input type="text" 
             id="nota-input-${alunno.riga}" 
-            value="${alunno.nota || ''}" 
+            value="${esc(alunno.nota)}" 
             placeholder="Scrivi una nota per l'operatore..." 
-            onchange="inviaNota('${sedeSelezionataCorrente.originale}', ${alunno.riga}, this.value)" 
+            onchange="inviaNota(null, ${Number(alunno.riga)}, this.value)" 
             class="w-full px-3 py-1.5 text-xs bg-slate-50/80 border border-slate-200 rounded-xl focus:bg-white focus:outline-none focus:ring-2 focus:ring-amber-400/50 focus:border-amber-400 transition text-slate-700 placeholder-slate-400">
         </div>
 
         <!-- SEZIONE INFO UTENTE (Apre al click) -->
         <div id="info-box-${alunno.riga}" class="hidden mt-2 p-3 bg-slate-50/90 rounded-xl text-xs text-slate-600 border border-slate-200/80 flex flex-col gap-1.5 shadow-inner">
           <div class="grid grid-cols-1 md:grid-cols-2 gap-2">
-            <div><i class="fa-solid fa-envelope text-blue-500 mr-1.5"></i><strong>Email:</strong> ${alunno.email || '-'}</div>
-            <div><i class="fa-solid fa-phone text-emerald-500 mr-1.5"></i><strong>Cellulare:</strong> ${alunno.cellulare || '-'}</div>
+            <div><i class="fa-solid fa-envelope text-blue-500 mr-1.5"></i><strong>Email:</strong> ${esc(alunno.email || '-')}</div>
+            <div><i class="fa-solid fa-phone text-emerald-500 mr-1.5"></i><strong>Cellulare:</strong> ${esc(alunno.cellulare || '-')}</div>
           </div>
           <div class="border-t border-slate-200/60 pt-1.5 mt-0.5">
-            <div><i class="fa-solid fa-users text-purple-500 mr-1.5"></i><strong>Deleghe:</strong> ${alunno.deleghe || '-'}</div>
-            <div class="mt-1"><i class="fa-solid fa-person-walking text-amber-600 mr-1.5"></i><strong>Uscita Autonoma:</strong> ${alunno.uscitaAutonoma || '-'}</div>
+            <div><i class="fa-solid fa-users text-purple-500 mr-1.5"></i><strong>Deleghe:</strong> ${esc(alunno.deleghe || '-')}</div>
+            <div class="mt-1"><i class="fa-solid fa-person-walking text-amber-600 mr-1.5"></i><strong>Uscita Autonoma:</strong> ${esc(alunno.uscitaAutonoma || '-')}</div>
           </div>
         </div>
       `;
@@ -872,23 +938,26 @@ function verificaSeCarnet(tipo) {
     function segnaTutti(statoForzato) {
       if (!listaAlunniGlobale || listaAlunniGlobale.length === 0) return;
 
-      listaAlunniGlobale.forEach(a => {
-        a.stato = statoForzato;
-        aggiornaUIElementoSingolo(a.riga, statoForzato, a.ingressi);
-        
-        chiamaBackend('salvaPresenza', {
-          tab: sedeSelezionataCorrente.originale,
-          riga: a.riga,
-          colonna: colonnaGiornoGlobale,
-          stato: statoForzato
-        }).catch(err => console.error("Errore salvataggio di massa:", err));
-      });
+      listaAlunniGlobale.forEach(a => { a.stato = statoForzato; aggiornaUIElementoSingolo(a.riga, statoForzato, a.ingressi); });
+      chiamaBackend('salvaPresenzaMultipla', {
+        tab: sedeSelezionataCorrente.originale,
+        righe: listaAlunniGlobale.map(a => a.riga),
+        stato: statoForzato
+      }).then(res => {
+        (res.risultati || []).forEach(x => {
+          var a = listaAlunniGlobale.find(z => z.riga === x.riga);
+          if (a && x.nuoviIngressi !== undefined && x.nuoviIngressi !== "-") {
+            a.ingressi = x.nuoviIngressi;
+            var sp = document.getElementById('ingressi-val-' + x.riga);
+            if (sp) sp.innerText = x.nuoviIngressi;
+          }
+        });
+      }).catch(err => { console.error("Errore salvataggio di massa:", err); alert("Errore nel salvataggio: ricarica la pagina e riprova."); });
 
       aggiornaRiepilogoStatistiche();
     }
 
     document.addEventListener("DOMContentLoaded", function() {
-      console.log("Interfaccia caricata correttamente.");
 
       // Collega in modo sicuro il pulsante del registro
       var btnRegistro = document.getElementById('btnApriRegistro');
@@ -946,6 +1015,11 @@ function popolaSelectOperatori(operatori) {
   select.onchange = function() {
     if (this.value) caricaStoricoOdierno(this.value);
   };
+  if (operatoriOrdinati.length === 1) {
+    select.value = operatoriOrdinati[0].nome;
+    select.disabled = true;
+    caricaStoricoOdierno(select.value);
+  }
 }
 function popolaSelectServizi(servizi) {
   var select = document.getElementById('selectServizioTimbratura'); // Sostituisci con il tuo ID HTML
@@ -1033,11 +1107,11 @@ function caricaStoricoOdierno(nomeOperatore) {
           <div class="flex items-center justify-between p-3 rounded-xl bg-white border border-slate-100 shadow-xs text-xs">
             <div class="flex items-center gap-2.5">
               <span class="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-lg font-semibold border ${badgeClass}">
-                <i class="fa-solid ${icona} text-[10px]"></i> ${item.tipo}
+                <i class="fa-solid ${icona} text-[10px]"></i> ${esc(item.tipo)}
               </span>
-              <span class="font-medium text-slate-700">${item.servizio || ''}</span>
+              <span class="font-medium text-slate-700">${esc(item.servizio)}</span>
             </div>
-            <div class="text-slate-500 font-mono font-medium">${item.orario || ''}</div>
+            <div class="text-slate-500 font-mono font-medium">${esc(item.orario)}</div>
           </div>
         `;
       });
