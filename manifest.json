@@ -1,17 +1,15 @@
 {
+  "id": "./index.html",
   "name": "Evolversi APS - Gestionale",
   "short_name": "Evolversi",
   "description": "Gestionale per la gestione delle presenze e delle attività educative",
+  "lang": "it",
   "start_url": "./index.html",
+  "scope": "./",
   "display": "standalone",
   "background_color": "#ff00ff",
   "theme_color": "#ff00ff",
   "icons": [
-    {
-      "src": "IconaApp.png",
-      "sizes": "512x512",
-      "type": "image/png",
-      "purpose": "any"
-    }
+    { "src": "IconaApp.png", "sizes": "512x512", "type": "image/png", "purpose": "any" }
   ]
 }
