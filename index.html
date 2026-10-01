@@ -200,29 +200,35 @@
 <section id="wrapperTimbratura" class="hidden space-y-6 max-w-2xl mx-auto">
       <div class="flex items-center justify-between">
         <button onclick="tornaAllaHome()" class="group text-slate-600 hover:text-emerald-600 text-sm font-medium flex items-center gap-2 transition-colors cursor-pointer">
-          <div class="w-8 h-8 rounded-xl bg-white shadow-sm border border-slate-200 flex items-center justify-center group-hover:border-emerald-500 transition-colors"><i class="fa-solid fa-arrow-left text-xs"></i></div>
-          <span>Torna alla home</span>
+          <div class="w-8 h-8 rounded-xl bg-white shadow-sm border border-slate-200 flex items-center justify-center group-hover:border-emerald-500 transition-colors"><i class="fa-solid fa-arrow-left text-xs"></i></div><span>Torna alla home</span>
         </button>
       </div>
       <div class="card-3d p-6 sm:p-8 rounded-3xl bg-white/90 backdrop-blur-xl shadow-xl border border-white/60 space-y-6">
         <div class="border-b border-slate-100 pb-4">
-          <h3 class="text-xl font-bold text-slate-800 flex items-center gap-3">
-            <div class="w-10 h-10 rounded-2xl bg-emerald-50 text-emerald-600 flex items-center justify-center shadow-inner"><i class="fa-solid fa-clock-rotate-left"></i></div>
-            Le mie timbrature
-          </h3>
+          <h3 class="text-xl font-bold text-slate-800 flex items-center gap-3"><div class="w-10 h-10 rounded-2xl bg-emerald-50 text-emerald-600 flex items-center justify-center shadow-inner"><i class="fa-solid fa-clock-rotate-left"></i></div>Le mie timbrature</h3>
           <p class="text-slate-500 text-sm mt-1">Operatore: <strong id="nomeOperatoreTimb" class="text-slate-700">...</strong></p>
         </div>
         <div>
-          <label class="block text-xs font-bold text-slate-600 uppercase tracking-wider mb-1.5">Giorno</label>
-          <input type="date" id="dataTimbratura" onchange="caricaGiorno()" class="w-full p-3.5 px-4 rounded-2xl border border-slate-200 text-sm bg-slate-50/50 focus:bg-white focus:border-emerald-500 focus:ring-4 focus:ring-emerald-500/10 transition-all outline-none text-slate-700 font-medium">
-          <p id="statoGiorno" class="text-xs font-semibold text-slate-500 mt-2"></p>
+          <div class="flex items-center justify-between mb-2">
+            <button onclick="cambiaMeseCal(-1)" class="w-9 h-9 rounded-xl border border-slate-200 text-slate-600 hover:bg-slate-50 cursor-pointer"><i class="fa-solid fa-chevron-left text-xs"></i></button>
+            <span id="titoloCal" class="font-black text-slate-800 capitalize"></span>
+            <button onclick="cambiaMeseCal(1)" class="w-9 h-9 rounded-xl border border-slate-200 text-slate-600 hover:bg-slate-50 cursor-pointer"><i class="fa-solid fa-chevron-right text-xs"></i></button>
+          </div>
+          <div class="grid grid-cols-7 text-center text-[11px] font-bold text-slate-400 uppercase mb-1"><span>Lu</span><span>Ma</span><span>Me</span><span>Gi</span><span>Ve</span><span>Sa</span><span>Do</span></div>
+          <div id="griglieCal" class="grid grid-cols-7 gap-1"></div>
+          <input type="hidden" id="dataTimbratura">
+          <p id="statoGiorno" class="text-xs font-semibold text-slate-500 mt-3 min-h-[1rem]"></p>
         </div>
-        <div id="listaTurni" class="space-y-4"></div>
-        <button onclick="aggiungiTurno()" class="text-emerald-700 text-sm font-bold hover:underline cursor-pointer"><i class="fa-solid fa-plus mr-1"></i> Aggiungi turno</button>
-        <button onclick="preSalva()" class="w-full bg-emerald-600 hover:bg-emerald-700 text-white font-semibold py-4 px-6 rounded-2xl text-sm transition-all shadow-lg shadow-emerald-600/20 active:scale-[0.98] cursor-pointer flex items-center justify-center gap-2"><i class="fa-solid fa-floppy-disk"></i><span>Salva timbrature</span></button>
+        <div id="riepilogoGiorno" class="hidden space-y-3"></div>
+        <div id="formTurni" class="hidden space-y-4">
+          <div id="listaTurni" class="space-y-4"></div>
+          <button onclick="aggiungiTurno()" class="text-emerald-700 text-sm font-bold hover:underline cursor-pointer"><i class="fa-solid fa-plus mr-1"></i> Aggiungi turno</button>
+          <button onclick="preSalva()" class="w-full bg-emerald-600 hover:bg-emerald-700 text-white font-semibold py-4 px-6 rounded-2xl text-sm transition-all shadow-lg shadow-emerald-600/20 active:scale-[0.98] cursor-pointer flex items-center justify-center gap-2"><i class="fa-solid fa-floppy-disk"></i><span>Salva timbrature</span></button>
+          <button id="btnAnnullaMod" onclick="mostraRiepilogo(turniSalvati)" class="hidden w-full py-3 rounded-2xl border border-slate-200 text-slate-600 text-sm font-semibold hover:bg-slate-50 cursor-pointer">Annulla modifica</button>
+        </div>
         <p id="esitoTimbratura" class="text-sm font-semibold text-emerald-700 min-h-[1.25rem]"></p>
       </div>
-    <div data-guida class="rounded-2xl border border-slate-200 bg-white/70 p-4 text-sm text-slate-600"><p class="font-bold text-slate-700 flex items-center gap-2 mb-2"><i class="fa-solid fa-circle-info text-blue-500"></i> Come si compila</p><ol class="list-decimal pl-5 space-y-1"><li>Scegli il <strong>giorno</strong> (dal 14/09/2026 a oggi).</li><li>Per ogni turno scegli il servizio e inserisci entrata e uscita. Se hai lavorato più volte nello stesso giorno, premi <strong>Aggiungi turno</strong>.</li><li>Premi <strong>Salva timbrature</strong>, controlla il riepilogo e scegli <strong>Conferma</strong> (oppure <strong>Torna indietro</strong> per correggere).</li><li>Per correggere un giorno già salvato, selezionalo, modifica e salva di nuovo. Se compare &ldquo;Giornata chiusa&rdquo;, contatta il coordinatore.</li></ol></div>
+      <div data-guida class="rounded-2xl border border-slate-200 bg-white/70 p-4 text-sm text-slate-600"><p class="font-bold text-slate-700 flex items-center gap-2 mb-2"><i class="fa-solid fa-circle-info text-blue-500"></i> Come si compila</p><ol class="list-decimal pl-5 space-y-1"><li>Tocca un giorno sul calendario (dal 14/09/2026 a oggi). Il <strong>pallino verde</strong> indica che hai già inserito le timbrature.</li><li>Se il giorno è già compilato vedi il riepilogo: premi <strong>Modifica</strong> per correggerlo.</li><li>Se il giorno è vuoto, per ogni turno scegli servizio, entrata e uscita; <strong>Aggiungi turno</strong> se hai lavorato più volte.</li><li>Premi <strong>Salva timbrature</strong>, controlla il riepilogo e scegli <strong>Conferma</strong> (o <strong>Torna indietro</strong>). Se compare &ldquo;Giornata chiusa&rdquo;, contatta il coordinatore.</li></ol></div>
     </section>
     <section id="wrapperGestioneOre" class="hidden space-y-6 max-w-3xl mx-auto">
       <button onclick="tornaAllaHome()" class="group text-slate-600 hover:text-amber-600 text-sm font-medium flex items-center gap-2 transition-colors cursor-pointer">
@@ -306,6 +312,7 @@
         profilo = p;
         document.getElementById('badgeRuolo').classList.toggle('hidden', p.ruolo !== 'super');
         document.getElementById('tileGestioneOre').classList.toggle('hidden', p.ruolo !== 'super');
+        caricaServizi().catch(function () {});   // precarica in background
         document.getElementById('messaggioLogin').textContent = '';
         document.getElementById('btnEsci').classList.remove('hidden');
         mostraSezione('schermataHome');
@@ -348,7 +355,14 @@
     let colonnaGiornoGlobale = -1;
     let isDonMilaniIntegrazioneGlobale = false;
 
-    function chiamaBackend(azione, payload = {}) {
+    var codaScritture = Promise.resolve();
+    function chiamaBackend(azione, payload) {
+      if (!/^(salva|adminImposta|adminModifica)/.test(azione)) return chiamaBackendDiretta(azione, payload);
+      var p = codaScritture.then(function () { return chiamaBackendDiretta(azione, payload); });   // una scrittura alla volta, in ordine
+      codaScritture = p.catch(function () {});
+      return p;
+    }
+    function chiamaBackendDiretta(azione, payload = {}) {
       aggiornaStatoSalvataggio('salvataggio', 'Sincronizzazione...');
       return ottieniToken()
         .then(function (token) {
@@ -990,7 +1004,7 @@ var oreMese = [], nomiOre = [], rigaInModifica = -1, giornoChiuso = false;
 
     function caricaGestioneOre() {
       var m = document.getElementById('meseOre'); if (!m.value) m.value = oggiLocale().slice(0, 7);
-      chiamaBackend('ottieniDatiInizialiTimbratura').then(function (d) { servizioOpzioni = d.servizi.map(function (x) { return x.etichetta; }); }).catch(function () {});
+      caricaServizi().catch(function () {});
       chiamaBackend('adminOttieniOre', { mese: m.value }).then(function (r) { oreMese = r.righe; disegnaOre(); }).catch(function (e) { alert(e.message); });
     }
     function disegnaOre() {
@@ -1056,28 +1070,71 @@ var oreMese = [], nomiOre = [], rigaInModifica = -1, giornoChiuso = false;
     function oggiLocale() { var d = new Date(); return d.getFullYear() + '-' + String(d.getMonth() + 1).padStart(2, '0') + '-' + String(d.getDate()).padStart(2, '0'); }
     var servizioOpzioni = [], turniCorrenti = [];
 
+    var giorniTimbrati = {}, meseCal = null, giornoSel = '', turniSalvati = [], serviziPronti = false;
+    function caricaServizi() {
+      if (serviziPronti) return Promise.resolve();
+      return chiamaBackend('ottieniDatiInizialiTimbratura').then(function (d) { servizioOpzioni = d.servizi.map(function (x) { return x.etichetta; }); serviziPronti = true; });
+    }
     function caricaDatiTimbratura() {
-      var inp = document.getElementById('dataTimbratura');
-      inp.min = '2026-09-14'; inp.max = oggiLocale();
-      if (!inp.value || inp.value > inp.max) inp.value = inp.max;
-      chiamaBackend('ottieniDatiInizialiTimbratura').then(function (d) {
-        servizioOpzioni = d.servizi.map(function (x) { return x.etichetta; });
-        document.getElementById('nomeOperatoreTimb').textContent = d.operatoreCorrente;
-        caricaGiorno();
+      var inp = document.getElementById('dataTimbratura'), oggi = oggiLocale();
+      if (!inp.value || inp.value > oggi) inp.value = oggi;
+      if (!meseCal) meseCal = inp.value.slice(0, 7);
+      document.getElementById('nomeOperatoreTimb').textContent = profilo ? profilo.nome : '';
+      disegnaCalendario();
+      chiamaBackend('ottieniGiorniTimbrati').then(function (r) {
+        giorniTimbrati = {}; r.giorni.forEach(function (g) { giorniTimbrati[g] = 1; }); disegnaCalendario();
       }).catch(function () {});
+      caricaServizi().then(function () { selezionaGiorno(inp.value); }).catch(function () {});
     }
-    function caricaGiorno() {
-      var data = document.getElementById('dataTimbratura').value;
+    function disegnaCalendario() {
+      var p = meseCal.split('-'), y = +p[0], m = +p[1] - 1, primo = new Date(y, m, 1);
+      var n = new Date(y, m + 1, 0).getDate(), off = (primo.getDay() + 6) % 7, min = '2026-09-14', max = oggiLocale(), h = '';
+      document.getElementById('titoloCal').textContent = primo.toLocaleDateString('it-IT', { month: 'long', year: 'numeric' });
+      for (var i = 0; i < off; i++) h += '<span></span>';
+      for (var d = 1; d <= n; d++) {
+        var iso = meseCal + '-' + String(d).padStart(2, '0'), ok = iso >= min && iso <= max, sel = iso === giornoSel;
+        h += '<button ' + (ok ? 'onclick="selezionaGiorno(\'' + iso + '\')"' : 'disabled') + ' class="relative h-10 rounded-xl text-sm font-semibold ' +
+          (sel ? 'bg-emerald-600 text-white' : ok ? 'text-slate-700 hover:bg-emerald-50 cursor-pointer' : 'text-slate-300') + '">' + d +
+          (giorniTimbrati[iso] ? '<span class="absolute bottom-1 left-1/2 -translate-x-1/2 w-1.5 h-1.5 rounded-full ' + (sel ? 'bg-white' : 'bg-emerald-500') + '"></span>' : '') + '</button>';
+      }
+      document.getElementById('griglieCal').innerHTML = h;
+    }
+    function cambiaMeseCal(n) {
+      var p = meseCal.split('-'), d = new Date(+p[0], +p[1] - 1 + n, 1), nuovo = d.getFullYear() + '-' + String(d.getMonth() + 1).padStart(2, '0');
+      if (nuovo < '2026-09' || nuovo > oggiLocale().slice(0, 7)) return;
+      meseCal = nuovo; disegnaCalendario();
+    }
+    function selezionaGiorno(iso) {
+      giornoSel = iso; meseCal = iso.slice(0, 7); document.getElementById('dataTimbratura').value = iso; disegnaCalendario();
       document.getElementById('esitoTimbratura').textContent = '';
-      if (!data) return;
-      chiamaBackend('ottieniTimbratureGiorno', { data: data }).then(function (r) {
-        turniCorrenti = r.turni.length ? r.turni : [{ servizio: '', entrata: '', uscita: '', note: '' }];
-        giornoChiuso = (r.modificabile === false);
-        document.getElementById('statoGiorno').textContent = giornoChiuso ? 'Giornata chiusa: per modifiche contatta il coordinatore.' : (r.turni.length ? 'Giornata già compilata: puoi modificarla.' : 'Nessuna timbratura per questo giorno.');
-        disegnaTurni();
-      }).catch(function (e) { alert(e.message); });
+      document.getElementById('riepilogoGiorno').classList.add('hidden'); document.getElementById('formTurni').classList.add('hidden');
+      document.getElementById('statoGiorno').textContent = 'Caricamento...';
+      chiamaBackend('ottieniTimbratureGiorno', { data: iso }).then(function (r) {
+        if (iso !== giornoSel) return;                       // risposta di un giorno già abbandonato
+        giornoChiuso = (r.modificabile === false); turniSalvati = r.turni;
+        if (r.turni.length) giorniTimbrati[iso] = 1; else delete giorniTimbrati[iso];
+        disegnaCalendario();
+        if (r.turni.length) mostraRiepilogo(r.turni); else if (giornoChiuso) mostraRiepilogo([]); else apriForm([]);
+      }).catch(function (e) { document.getElementById('statoGiorno').textContent = ''; alert(e.message); });
     }
-    function disegnaTurni() {
+    function mostraRiepilogo(turni) {
+      var box = document.getElementById('riepilogoGiorno');
+      document.getElementById('formTurni').classList.add('hidden'); document.getElementById('statoGiorno').textContent = '';
+      box.innerHTML = '<p class="font-bold text-slate-800">Timbrature del ' + esc(giornoSel.split('-').reverse().join('/')) + '</p>' +
+        (turni.length ? turni.map(function (t) {
+          return '<div class="p-3 rounded-2xl border border-slate-100 bg-slate-50/50 text-sm text-slate-700">' + esc(t.servizio) + ': <strong>' + esc(t.entrata) + ' – ' + esc(t.uscita) + '</strong>' +
+            (t.note ? '<div class="text-xs text-slate-500">' + esc(t.note) + '</div>' : '') + '</div>'; }).join('') : '') +
+        (giornoChiuso ? '<p class="text-xs font-semibold text-slate-500">Giornata chiusa: per modifiche contatta il coordinatore.</p>'
+                      : '<button onclick="apriForm(turniSalvati)" class="px-4 py-2 rounded-xl bg-emerald-50 text-emerald-700 text-sm font-bold hover:bg-emerald-100 cursor-pointer"><i class="fa-solid fa-pen mr-1"></i> Modifica</button>');
+      box.classList.remove('hidden');
+    }
+    function apriForm(turni) {
+      turniCorrenti = turni.length ? JSON.parse(JSON.stringify(turni)) : [{ servizio: '', entrata: '', uscita: '', note: '' }];
+      document.getElementById('riepilogoGiorno').classList.add('hidden'); document.getElementById('statoGiorno').textContent = '';
+      document.getElementById('btnAnnullaMod').classList.toggle('hidden', !turni.length);
+      document.getElementById('formTurni').classList.remove('hidden'); disegnaTurni();
+    }
+        function disegnaTurni() {
       var campo = 'w-full p-3 rounded-2xl border border-slate-200 text-sm bg-slate-50/50 focus:bg-white focus:border-emerald-500 outline-none text-slate-700 font-medium';
       document.getElementById('listaTurni').innerHTML = turniCorrenti.map(function (t, i) {
         var opz = '<option value="">Servizio / Plesso...</option>' + servizioOpzioni.map(function (sv) {
@@ -1113,11 +1170,10 @@ var oreMese = [], nomiOre = [], rigaInModifica = -1, giornoChiuso = false;
     }
     function chiudiConferma() { document.getElementById('modalConferma').classList.add('hidden'); }
     function confermaSalvataggio() {
-      var btn = document.getElementById('btnConferma'); btn.disabled = true;
-      chiamaBackend('salvaTimbratureGiorno', { data: document.getElementById('dataTimbratura').value, turni: turniCorrenti })
+      var btn = document.getElementById('btnConferma'), data = document.getElementById('dataTimbratura').value; btn.disabled = true;
+      chiamaBackend('salvaTimbratureGiorno', { data: data, turni: turniCorrenti })
         .then(function (r) {
-          turniCorrenti = r.turni; disegnaTurni(); chiudiConferma();
-          document.getElementById('statoGiorno').textContent = 'Giornata già compilata: puoi modificarla.';
+          turniSalvati = r.turni; giorniTimbrati[data] = 1; chiudiConferma(); disegnaCalendario(); mostraRiepilogo(turniSalvati);
           document.getElementById('esitoTimbratura').textContent = 'Timbrature salvate.';
         }).catch(function (e) { chiudiConferma(); document.getElementById('esitoTimbratura').textContent = 'Non salvato: ' + e.message; })
         .then(function () { btn.disabled = false; });
