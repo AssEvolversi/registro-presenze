@@ -7,6 +7,8 @@
   <!-- Tailwind CSS CDN -->
   <script src="https://cdn.tailwindcss.com"></script>
   <script src="https://accounts.google.com/gsi/client" async defer></script>
+  <link rel="manifest" href="manifest.json">
+  <meta name="theme-color" content="#ff00ff">
   <!-- FontAwesome CDN -->
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
   <style>
@@ -49,7 +51,10 @@
     <img src="https://lh3.googleusercontent.com/d/1U3wZDb34MJyIGitW-ZEmgd5cRBDorTG3=s220" alt="Logo Evolversi" class="w-10 h-10 object-contain rounded-full bg-white/10 p-1 shadow-inner">
     <span class="font-black text-lg tracking-wider drop-shadow-sm">ASSOCIAZIONE EVOLVERSI</span>
   </div>
+  <div class="flex items-center gap-2">
+  <span id="badgeRuolo" class="hidden text-[10px] font-black uppercase tracking-wider bg-amber-400 text-amber-950 px-2 py-1 rounded-lg">SuperUser</span>
   <button id="btnEsci" onclick="esci()" class="hidden text-xs font-bold bg-white/15 hover:bg-white/25 px-3 py-2 rounded-xl transition cursor-pointer"><i class="fa-solid fa-right-from-bracket mr-1"></i> Esci</button>
+  </div>
   </header>
 
   <!-- Indicatore di stato -->
@@ -102,8 +107,12 @@
             <span class="text-xs text-slate-400 font-medium">Registrazione ingressi e uscite</span>
           </div>
         </button>
-      </div>
-    </section>
+      <button id="tileGestioneOre" onclick="mostraSezione('wrapperGestioneOre')" class="hidden card-3d p-8 rounded-3xl flex flex-col items-center justify-center gap-5 text-center group cursor-pointer border border-white/50">
+        <div class="w-20 h-20 btn-icon-3d text-amber-600 rounded-2xl flex items-center justify-center text-3xl group-hover:scale-110 transition duration-300"><i class="fa-solid fa-user-gear"></i></div>
+        <div><span class="text-xl font-bold text-slate-800 block group-hover:text-amber-600 transition">Gestione Operatori</span><span class="text-xs text-slate-400 font-medium">Verifica e conferma le ore</span></div>
+      </button>
+    </div>
+  </section>
 
     <!-- Wrapper Registro Presenze -->
     <section id="wrapperRegistro" class="hidden space-y-4">
@@ -125,6 +134,7 @@
           </div>
         </div>
       </div>
+    <div data-guida class="rounded-2xl border border-slate-200 bg-white/70 p-4 text-sm text-slate-600"><p class="font-bold text-slate-700 flex items-center gap-2 mb-2"><i class="fa-solid fa-circle-info text-blue-500"></i> Come si compila</p><ol class="list-decimal pl-5 space-y-1"><li>Tocca la sede o il servizio di oggi.</li><li>Se non vedi la sede che cerchi, premi <strong>Aggiorna</strong>.</li></ol></div>
     </section>
 
     <!-- Wrapper Sede Specifica -->
@@ -183,86 +193,81 @@
           <p class="text-slate-500 text-sm py-4 text-center">Caricamento iscritti...</p>
         </div>
       </div>
+    <div data-guida class="rounded-2xl border border-slate-200 bg-white/70 p-4 text-sm text-slate-600"><p class="font-bold text-slate-700 flex items-center gap-2 mb-2"><i class="fa-solid fa-circle-info text-blue-500"></i> Come si compila</p><ol class="list-decimal pl-5 space-y-1"><li>Per ogni iscritto tocca <strong>Presente</strong> o <strong>Assente</strong>. Se tocchi di nuovo lo stesso pulsante, torna &ldquo;Da segnare&rdquo;.</li><li><strong>Segna tutti P</strong> mette tutti presenti; <strong>Azzera</strong> cancella le scelte di oggi.</li><li>Puoi scrivere una nota accanto al nome: si salva quando esci dal campo.</li><li>Tutto si salva da solo. Se in alto compare un errore rosso, riprova.</li></ol></div>
     </section>
 
 <!-- Wrapper Timbratura -->
 <section id="wrapperTimbratura" class="hidden space-y-6 max-w-2xl mx-auto">
-  <div class="flex items-center justify-between">
-    <button onclick="tornaAllaHome()" class="group text-slate-600 hover:text-emerald-600 text-sm font-medium flex items-center gap-2 transition-colors cursor-pointer">
-      <div class="w-8 h-8 rounded-xl bg-white shadow-sm border border-slate-200 flex items-center justify-center group-hover:border-emerald-500 transition-colors">
-        <i class="fa-solid fa-arrow-left text-xs"></i>
-      </div>
-      <span>Torna alla home</span>
-    </button>
-    <span class="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-semibold bg-emerald-50 text-emerald-700 border border-emerald-100">
-      <span class="w-2 h-2 rounded-full bg-emerald-500 animate-pulse"></span> Sistema Attivo
-    </span>
-  </div>
-
-  <div class="card-3d p-6 sm:p-8 rounded-3xl bg-white/90 backdrop-blur-xl shadow-xl border border-white/60 space-y-6">
-    <div class="border-b border-slate-100 pb-4">
-      <h3 class="text-xl font-bold text-slate-800 flex items-center gap-3">
-        <div class="w-10 h-10 rounded-2xl bg-emerald-50 text-emerald-600 flex items-center justify-center shadow-inner">
-          <i class="fa-solid fa-clock-rotate-left"></i>
-        </div>
-        Registro Timbrature
-      </h3>
-      <p class="text-slate-500 text-sm mt-1">Registra la tua entrata o uscita selezionando operatore e sede.</p>
-    </div>
-
-    <div class="space-y-4">
-      <div>
-        <label class="block text-xs font-bold text-slate-600 uppercase tracking-wider mb-1.5">Operatore</label>
-        <div class="relative">
-          <select id="selectOperatoreTimbratura" class="w-full p-3.5 pl-4 pr-10 rounded-2xl border border-slate-200 text-sm bg-slate-50/50 focus:bg-white focus:border-emerald-500 focus:ring-4 focus:ring-emerald-500/10 transition-all outline-none appearance-none cursor-pointer text-slate-700 font-medium">
-            <option value="">Caricamento operatori...</option>
-          </select>
-          <div class="absolute right-3.5 top-1/2 -translate-y-1/2 pointer-events-none text-slate-400">
-            <i class="fa-solid fa-chevron-down text-xs"></i>
-          </div>
-        </div>
-      </div>
-
-      <div>
-        <label class="block text-xs font-bold text-slate-600 uppercase tracking-wider mb-1.5">Servizio / Plesso</label>
-        <div class="relative">
-          <select id="selectServizioTimbratura" class="w-full p-3.5 pl-4 pr-10 rounded-2xl border border-slate-200 text-sm bg-slate-50/50 focus:bg-white focus:border-emerald-500 focus:ring-4 focus:ring-emerald-500/10 transition-all outline-none appearance-none cursor-pointer text-slate-700 font-medium">
-            <option value="">Caricamento servizi...</option>
-          </select>
-          <div class="absolute right-3.5 top-1/2 -translate-y-1/2 pointer-events-none text-slate-400">
-            <i class="fa-solid fa-chevron-down text-xs"></i>
-          </div>
-        </div>
-      </div>
-
-      <div>
-        <label class="block text-xs font-bold text-slate-600 uppercase tracking-wider mb-1.5">Note (Opzionale)</label>
-        <input type="text" id="inputNoteTimbratura" placeholder="Es. Note..." class="w-full p-3.5 px-4 rounded-2xl border border-slate-200 text-sm bg-slate-50/50 focus:bg-white focus:border-emerald-500 focus:ring-4 focus:ring-emerald-500/10 transition-all outline-none text-slate-700">
-      </div>
-    </div>
-
-    <div class="grid grid-cols-1 sm:grid-cols-2 gap-3 pt-2">
-      <button onclick="inviaTimbratura('ENTRATA')" class="group relative overflow-hidden bg-emerald-600 hover:bg-emerald-700 text-white font-semibold py-4 px-6 rounded-2xl text-sm transition-all shadow-lg shadow-emerald-600/20 active:scale-[0.98] cursor-pointer flex items-center justify-center gap-2">
-        <i class="fa-solid fa-right-to-bracket text-base group-hover:translate-x-0.5 transition-transform"></i>
-        <span>Registra Entrata</span>
-      </button>
-      <button onclick="inviaTimbratura('USCITA')" class="group relative overflow-hidden bg-slate-800 hover:bg-slate-900 text-white font-semibold py-4 px-6 rounded-2xl text-sm transition-all shadow-lg shadow-slate-900/10 active:scale-[0.98] cursor-pointer flex items-center justify-center gap-2">
-        <i class="fa-solid fa-right-from-bracket text-base group-hover:-translate-x-0.5 transition-transform"></i>
-        <span>Registra Uscita</span>
-      </button>
-    </div>
-
-    <div id="storicoOdiernoContainer" class="mt-6 pt-6 border-t border-slate-100 space-y-3">
       <div class="flex items-center justify-between">
-        <h4 class="text-xs font-bold text-slate-600 uppercase tracking-wider">Storico Odierno</h4>
-        <span class="text-xs text-slate-400 font-medium">Oggi</span>
+        <button onclick="tornaAllaHome()" class="group text-slate-600 hover:text-emerald-600 text-sm font-medium flex items-center gap-2 transition-colors cursor-pointer">
+          <div class="w-8 h-8 rounded-xl bg-white shadow-sm border border-slate-200 flex items-center justify-center group-hover:border-emerald-500 transition-colors"><i class="fa-solid fa-arrow-left text-xs"></i></div>
+          <span>Torna alla home</span>
+        </button>
       </div>
-      <div id="listaStoricoOdierno" class="p-4 rounded-2xl bg-slate-50/80 border border-slate-100 text-xs text-slate-500 text-center">
-        Seleziona un operatore per visualizzare le timbrature di oggi.
+      <div class="card-3d p-6 sm:p-8 rounded-3xl bg-white/90 backdrop-blur-xl shadow-xl border border-white/60 space-y-6">
+        <div class="border-b border-slate-100 pb-4">
+          <h3 class="text-xl font-bold text-slate-800 flex items-center gap-3">
+            <div class="w-10 h-10 rounded-2xl bg-emerald-50 text-emerald-600 flex items-center justify-center shadow-inner"><i class="fa-solid fa-clock-rotate-left"></i></div>
+            Le mie timbrature
+          </h3>
+          <p class="text-slate-500 text-sm mt-1">Operatore: <strong id="nomeOperatoreTimb" class="text-slate-700">...</strong></p>
+        </div>
+        <div>
+          <label class="block text-xs font-bold text-slate-600 uppercase tracking-wider mb-1.5">Giorno</label>
+          <input type="date" id="dataTimbratura" onchange="caricaGiorno()" class="w-full p-3.5 px-4 rounded-2xl border border-slate-200 text-sm bg-slate-50/50 focus:bg-white focus:border-emerald-500 focus:ring-4 focus:ring-emerald-500/10 transition-all outline-none text-slate-700 font-medium">
+          <p id="statoGiorno" class="text-xs font-semibold text-slate-500 mt-2"></p>
+        </div>
+        <div id="listaTurni" class="space-y-4"></div>
+        <button onclick="aggiungiTurno()" class="text-emerald-700 text-sm font-bold hover:underline cursor-pointer"><i class="fa-solid fa-plus mr-1"></i> Aggiungi turno</button>
+        <button onclick="preSalva()" class="w-full bg-emerald-600 hover:bg-emerald-700 text-white font-semibold py-4 px-6 rounded-2xl text-sm transition-all shadow-lg shadow-emerald-600/20 active:scale-[0.98] cursor-pointer flex items-center justify-center gap-2"><i class="fa-solid fa-floppy-disk"></i><span>Salva timbrature</span></button>
+        <p id="esitoTimbratura" class="text-sm font-semibold text-emerald-700 min-h-[1.25rem]"></p>
+      </div>
+    <div data-guida class="rounded-2xl border border-slate-200 bg-white/70 p-4 text-sm text-slate-600"><p class="font-bold text-slate-700 flex items-center gap-2 mb-2"><i class="fa-solid fa-circle-info text-blue-500"></i> Come si compila</p><ol class="list-decimal pl-5 space-y-1"><li>Scegli il <strong>giorno</strong> (dal 14/09/2026 a oggi).</li><li>Per ogni turno scegli il servizio e inserisci entrata e uscita. Se hai lavorato più volte nello stesso giorno, premi <strong>Aggiungi turno</strong>.</li><li>Premi <strong>Salva timbrature</strong>, controlla il riepilogo e scegli <strong>Conferma</strong> (oppure <strong>Torna indietro</strong> per correggere).</li><li>Per correggere un giorno già salvato, selezionalo, modifica e salva di nuovo. Se compare &ldquo;Giornata chiusa&rdquo;, contatta il coordinatore.</li></ol></div>
+    </section>
+    <section id="wrapperGestioneOre" class="hidden space-y-6 max-w-3xl mx-auto">
+      <button onclick="tornaAllaHome()" class="group text-slate-600 hover:text-amber-600 text-sm font-medium flex items-center gap-2 transition-colors cursor-pointer">
+        <div class="w-8 h-8 rounded-xl bg-white shadow-sm border border-slate-200 flex items-center justify-center group-hover:border-amber-500 transition-colors"><i class="fa-solid fa-arrow-left text-xs"></i></div><span>Torna alla home</span>
+      </button>
+      <div class="card-3d p-6 sm:p-8 rounded-3xl bg-white/90 backdrop-blur-xl shadow-xl border border-white/60 space-y-5">
+        <div class="border-b border-slate-100 pb-4">
+          <h3 class="text-xl font-bold text-slate-800 flex items-center gap-3"><div class="w-10 h-10 rounded-2xl bg-amber-50 text-amber-600 flex items-center justify-center shadow-inner"><i class="fa-solid fa-user-gear"></i></div>Gestione Operatori</h3>
+          <p class="text-slate-500 text-sm mt-1">Conferma o correggi le ore inserite. Le tue modifiche non sono visibili agli operatori.</p>
+        </div>
+        <div class="flex flex-wrap items-center gap-4">
+          <input type="month" id="meseOre" onchange="caricaGestioneOre()" class="w-full p-3 rounded-2xl border border-slate-200 text-sm bg-slate-50/50 focus:bg-white focus:border-amber-500 outline-none text-slate-700 font-medium !w-auto">
+          <label class="flex items-center gap-2 text-sm font-medium text-slate-600 cursor-pointer"><input type="checkbox" id="soloDaConfermare" onchange="disegnaOre()"> Solo da confermare</label>
+        </div>
+      </div>
+      <div id="listaOre" class="space-y-4"></div>
+    <div data-guida class="rounded-2xl border border-slate-200 bg-white/70 p-4 text-sm text-slate-600"><p class="font-bold text-slate-700 flex items-center gap-2 mb-2"><i class="fa-solid fa-circle-info text-blue-500"></i> Come si compila</p><ol class="list-decimal pl-5 space-y-1"><li>Scegli il <strong>mese</strong>: vedi le ore inserite da ogni operatore.</li><li><strong>✓</strong> conferma il turno così com&rsquo;è; <strong>✎</strong> lo corregge; <strong>↺</strong> riapre la giornata perché l&rsquo;operatore possa modificarla.</li><li><strong>Conferma tutto</strong> conferma in una volta tutti i turni di un operatore.</li><li>Le tue correzioni e note non sono visibili agli operatori. Usa <strong>Solo da confermare</strong> per vedere cosa manca.</li></ol></div>
+    </section>
+    <div id="modalModificaOre" class="hidden fixed inset-0 z-50 bg-slate-900/50 backdrop-blur-sm flex items-center justify-center p-4">
+      <div class="card-3d bg-white rounded-3xl p-6 sm:p-8 max-w-md w-full space-y-4 shadow-2xl">
+        <h3 class="text-lg font-black text-slate-800">Modifica ore</h3>
+        <p id="modTitolo" class="text-sm text-slate-500 font-medium"></p>
+        <select id="modServizio" class="w-full p-3 rounded-2xl border border-slate-200 text-sm bg-slate-50/50 focus:bg-white focus:border-amber-500 outline-none text-slate-700 font-medium"></select>
+        <div class="grid grid-cols-2 gap-3">
+          <div><label class="text-[11px] font-bold text-slate-500 uppercase">Entrata</label><input type="time" id="modEntrata" class="w-full p-3 rounded-2xl border border-slate-200 text-sm bg-slate-50/50 focus:bg-white focus:border-amber-500 outline-none text-slate-700 font-medium"></div>
+          <div><label class="text-[11px] font-bold text-slate-500 uppercase">Uscita</label><input type="time" id="modUscita" class="w-full p-3 rounded-2xl border border-slate-200 text-sm bg-slate-50/50 focus:bg-white focus:border-amber-500 outline-none text-slate-700 font-medium"></div>
+        </div>
+        <input type="text" id="modNote" maxlength="300" placeholder="Nota del coordinatore (non visibile all'operatore)" class="w-full p-3 rounded-2xl border border-slate-200 text-sm bg-slate-50/50 focus:bg-white focus:border-amber-500 outline-none text-slate-700 font-medium">
+        <p id="modErrore" class="text-sm text-rose-600 font-semibold min-h-[1.25rem]"></p>
+        <div class="grid grid-cols-2 gap-3">
+          <button onclick="chiudiModificaOre()" class="py-3 rounded-2xl border border-slate-200 text-slate-700 font-semibold text-sm hover:bg-slate-50 cursor-pointer">Annulla</button>
+          <button onclick="salvaModificaOre()" class="py-3 rounded-2xl bg-amber-500 hover:bg-amber-600 text-white font-semibold text-sm cursor-pointer">Salva e conferma</button>
+        </div>
       </div>
     </div>
-  </div>
-</section>
+    <div id="modalConferma" class="hidden fixed inset-0 z-50 bg-slate-900/50 backdrop-blur-sm flex items-center justify-center p-4">
+      <div class="card-3d bg-white rounded-3xl p-6 sm:p-8 max-w-md w-full space-y-5 shadow-2xl">
+        <h3 class="text-lg font-black text-slate-800">Confermi questi dati?</h3>
+        <div id="riepilogoConferma" class="text-sm text-slate-700 space-y-2"></div>
+        <div class="grid grid-cols-2 gap-3">
+          <button onclick="chiudiConferma()" class="py-3 rounded-2xl border border-slate-200 text-slate-700 font-semibold text-sm hover:bg-slate-50 cursor-pointer">Torna indietro</button>
+          <button id="btnConferma" onclick="confermaSalvataggio()" class="py-3 rounded-2xl bg-emerald-600 hover:bg-emerald-700 text-white font-semibold text-sm cursor-pointer">Conferma</button>
+        </div>
+      </div>
+    </div>
 
   </main>
 
@@ -270,7 +275,7 @@
   <script>
     const URL_WEB_APP = "https://script.google.com/macros/s/AKfycbymFKmNG0ZVnPjT2BMtsIBIu6zxL_YgTqPfyZaqpBqoXiOBNL0C7hm6ZtGg7E8u7zUE/exec";
     const GOOGLE_CLIENT_ID = "902356712716-2bjm1von4frqa0jhle4kd9fe4rg2tja2.apps.googleusercontent.com";
-    let tokenGoogle = null, attesaToken = null;
+    let tokenGoogle = null, attesaToken = null, profilo = null;
 
     // Escape di tutti i dati provenienti dal foglio prima di inserirli nell'HTML
     function esc(v) {
@@ -297,7 +302,10 @@
       avviaSessione();
     }
     function avviaSessione() {
-      chiamaBackend('ottieniElencoSedi').then(function () {
+      chiamaBackend('ottieniProfilo').then(function (p) {
+        profilo = p;
+        document.getElementById('badgeRuolo').classList.toggle('hidden', p.ruolo !== 'super');
+        document.getElementById('tileGestioneOre').classList.toggle('hidden', p.ruolo !== 'super');
         document.getElementById('messaggioLogin').textContent = '';
         document.getElementById('btnEsci').classList.remove('hidden');
         mostraSezione('schermataHome');
@@ -330,6 +338,11 @@
       } catch (e) {}
     }
     window.addEventListener('load', initGoogle);
+    if ('serviceWorker' in navigator) {
+      window.addEventListener('load', function () {
+        navigator.serviceWorker.register('sw.js').catch(function (e) { console.error('Service worker:', e); });
+      });
+    }
     let sedeSelezionataCorrente = null;
     let listaAlunniGlobale = [];
     let colonnaGiornoGlobale = -1;
@@ -371,7 +384,7 @@
 
     function mostraSezione(idSezione) {
       
-      var sezioni = ['schermataLogin', 'schermataHome', 'wrapperRegistro', 'wrapperSedeSpecifica', 'wrapperTimbratura'];
+      var sezioni = ['schermataLogin', 'schermataHome', 'wrapperRegistro', 'wrapperSedeSpecifica', 'wrapperTimbratura', 'wrapperGestioneOre'];
       sezioni.forEach(id => {
         var el = document.getElementById(id);
         if (el) el.classList.add('hidden');
@@ -381,7 +394,8 @@
       if (target) {
         target.classList.remove('hidden');
         
-        if (idSezione === 'wrapperTimbratura') {
+        if (idSezione === 'wrapperGestioneOre') { caricaGestioneOre(); }
+      if (idSezione === 'wrapperTimbratura') {
           if (typeof caricaDatiTimbratura === 'function') {
             caricaDatiTimbratura();
           } else {
@@ -969,162 +983,146 @@ function verificaSeCarnet(tipo) {
       }
     });
     // Carica i dati iniziali e popola la schermata Timbrature
-function caricaDatiTimbratura() {
-  chiamaBackend('ottieniDatiInizialiTimbratura')
-    .then(data => {
-      if (!data) {
-        throw new Error("Nessun dato ricevuto dal server.");
-      }
+var oreMese = [], nomiOre = [], rigaInModifica = -1, giornoChiuso = false;
+    function itemOre(i) { var x = oreMese[i]; return { r: x.riga, o: x.operatore, d: x.data, e: x.entrata }; }
+    function formatData(d) { return d.split('-').reverse().join('/'); }
+    function fmtOre(n) { return (Math.round(n * 100) / 100).toString().replace('.', ','); }
 
-      // Utilizza direttamente le funzioni dedicate che hai già definito
-      popolaSelectOperatori(data.operatori || []);
-      popolaSelectServizi(data.servizi || []);
-    })
-    .catch(err => {
-      console.error("Errore critico caricamento timbrature:", err);
-    });
-}
-function popolaSelectOperatori(operatori) {
-  var select = document.getElementById('selectOperatoreTimbratura');
-  if (!select) return;
-  
-  // Ordina gli operatori in base al cognome (l'ultima parola della stringa)
-  var operatoriOrdinati = [...operatori].sort((a, b) => {
-    var partiA = (a.nome || '').trim().split(/\s+/);
-    var partiB = (b.nome || '').trim().split(/\s+/);
-    var cognomeA = partiA[partiA.length - 1] || '';
-    var cognomeB = partiB[partiB.length - 1] || '';
-    
-    // Confronto alfabetico per cognome (gestendo anche accenti e maiuscole/minuscole)
-    var cmpCognome = cognomeA.localeCompare(cognomeB, 'it', { sensitivity: 'base' });
-    if (cmpCognome !== 0) return cmpCognome;
-    
-    // Se il cognome è uguale, ordina per nome intero
-    return (a.nome || '').localeCompare((b.nome || ''), 'it', { sensitivity: 'base' });
-  });
+    function caricaGestioneOre() {
+      var m = document.getElementById('meseOre'); if (!m.value) m.value = oggiLocale().slice(0, 7);
+      chiamaBackend('ottieniDatiInizialiTimbratura').then(function (d) { servizioOpzioni = d.servizi.map(function (x) { return x.etichetta; }); }).catch(function () {});
+      chiamaBackend('adminOttieniOre', { mese: m.value }).then(function (r) { oreMese = r.righe; disegnaOre(); }).catch(function (e) { alert(e.message); });
+    }
+    function disegnaOre() {
+      var solo = document.getElementById('soloDaConfermare').checked, per = {};
+      oreMese.forEach(function (x, i) { if (!solo || !x.stato) (per[x.operatore] = per[x.operatore] || []).push(i); });
+      nomiOre = Object.keys(per).sort();
+      var badge = { '': ['DA CONFERMARE', 'bg-amber-100 text-amber-800'], CONFERMATO: ['CONFERMATO', 'bg-emerald-100 text-emerald-800'], MODIFICATO: ['MODIFICATO', 'bg-blue-100 text-blue-800'] };
+      var btn = 'w-8 h-8 rounded-xl border border-slate-200 text-slate-600 hover:bg-slate-50 cursor-pointer';
+      document.getElementById('listaOre').innerHTML = nomiOre.length ? nomiOre.map(function (n, k) {
+        var ins = 0, conf = 0, da = 0;
+        oreMese.forEach(function (x) { if (x.operatore === n) { ins += x.ore; if (x.stato) conf += x.oreC; else da++; } });
+        var righe = per[n].map(function (i) {
+          var x = oreMese[i], b = badge[x.stato] || badge[''], mod = x.stato === 'MODIFICATO', cf = !!x.stato;
+          var val = esc(cf ? x.servizioC : x.servizio) + ' · <strong>' + esc(cf ? x.entrataC : x.entrata) + '–' + esc(cf ? x.uscitaC : x.uscita) + '</strong> (' + fmtOre(cf ? x.oreC : x.ore) + ' h)';
+          var orig = mod ? '<div class="text-[11px] text-slate-400">Inserito: ' + esc(x.servizio) + ' ' + esc(x.entrata) + '–' + esc(x.uscita) + '</div>' : '';
+          var nt = mod ? x.noteC : x.note, nota = nt ? '<div class="text-[11px] text-slate-500">' + esc(nt) + '</div>' : '';
+          var az = (cf ? '' : '<button title="Conferma" onclick="confermaOre(' + i + ')" class="' + btn + '"><i class="fa-solid fa-check"></i></button>') +
+            '<button title="Modifica" onclick="apriModificaOre(' + i + ')" class="' + btn + '"><i class="fa-solid fa-pen"></i></button>' +
+            (cf ? '<button title="Riapri" onclick="riapriOre(' + i + ')" class="' + btn + '"><i class="fa-solid fa-rotate-left"></i></button>' : '');
+          return '<div class="flex items-center justify-between gap-3 py-3 border-t border-slate-100"><div class="min-w-0 text-sm text-slate-700"><span class="font-bold">' + formatData(x.data) + '</span> ' + val + orig + nota +
+            '</div><div class="flex items-center gap-2 shrink-0"><span class="px-2 py-1 rounded-lg text-[10px] font-black ' + b[1] + '">' + b[0] + '</span>' + az + '</div></div>';
+        }).join('');
+        return '<div class="card-3d p-5 rounded-3xl bg-white/90 border border-white/60"><div class="flex items-center justify-between gap-3 flex-wrap pb-3"><div><div class="font-black text-slate-800">' + esc(n) +
+          '</div><div class="text-xs text-slate-500 font-medium">Inserite ' + fmtOre(ins) + ' h · Confermate ' + fmtOre(conf) + ' h · Da confermare ' + da + '</div></div>' +
+          (da ? '<button onclick="confermaOperatore(' + k + ')" class="px-3 py-2 rounded-xl bg-emerald-600 hover:bg-emerald-700 text-white text-xs font-bold cursor-pointer">Conferma tutto</button>' : '') + '</div>' + righe + '</div>';
+      }).join('') : '<p class="text-center text-slate-500 text-sm py-8">Nessuna timbratura da mostrare.</p>';
+    }
+    function inviaImposta(items, modo) {
+      chiamaBackend('adminImposta', { righe: items, modo: modo }).then(caricaGestioneOre).catch(function (e) { alert(e.message); caricaGestioneOre(); });
+    }
+    function confermaOre(i) { inviaImposta([itemOre(i)], 'conferma'); }
+    function riapriOre(i) {
+      var x = oreMese[i], items = [];
+      oreMese.forEach(function (y, j) { if (y.operatore === x.operatore && y.data === x.data) items.push(itemOre(j)); });
+      if (confirm('Riaprire la giornata del ' + formatData(x.data) + '? Tornerà "da confermare" e l\'operatore potrà modificarla.')) inviaImposta(items, 'riapri');
+    }
+    function confermaOperatore(k) {
+      var n = nomiOre[k], items = [];
+      oreMese.forEach(function (x, i) { if (x.operatore === n && !x.stato) items.push(itemOre(i)); });
+      if (items.length && confirm('Confermare ' + items.length + ' turni di ' + n + ' così come inseriti?')) inviaImposta(items, 'conferma');
+    }
+    function apriModificaOre(i) {
+      rigaInModifica = i; var x = oreMese[i], cf = !!x.stato, sv = cf ? x.servizioC : x.servizio;
+      var lista = servizioOpzioni.indexOf(sv) === -1 ? servizioOpzioni.concat([sv]) : servizioOpzioni;
+      document.getElementById('modServizio').innerHTML = lista.map(function (o) { return '<option value="' + esc(o) + '"' + (o === sv ? ' selected' : '') + '>' + esc(o) + '</option>'; }).join('');
+      document.getElementById('modEntrata').value = cf ? x.entrataC : x.entrata;
+      document.getElementById('modUscita').value = cf ? x.uscitaC : x.uscita;
+      document.getElementById('modNote').value = x.stato === 'MODIFICATO' ? x.noteC : '';
+      document.getElementById('modTitolo').textContent = x.operatore + ' · ' + formatData(x.data);
+      document.getElementById('modErrore').textContent = '';
+      document.getElementById('modalModificaOre').classList.remove('hidden');
+    }
+    function chiudiModificaOre() { document.getElementById('modalModificaOre').classList.add('hidden'); }
+    function salvaModificaOre() {
+      var d = { servizio: document.getElementById('modServizio').value, entrata: document.getElementById('modEntrata').value,
+                uscita: document.getElementById('modUscita').value, note: document.getElementById('modNote').value };
+      if (!d.servizio || !d.entrata || !d.uscita || d.entrata >= d.uscita) { document.getElementById('modErrore').textContent = "Controlla servizio e orari: l'uscita deve essere dopo l'entrata."; return; }
+      chiamaBackend('adminModificaRiga', { riga: itemOre(rigaInModifica), dati: d })
+        .then(function () { chiudiModificaOre(); caricaGestioneOre(); })
+        .catch(function (e) { document.getElementById('modErrore').textContent = e.message; });
+    }
 
-  select.innerHTML = '<option value="">-- Seleziona il tuo nome --</option>';
-  
-  operatoriOrdinati.forEach(op => {
-    var opt = document.createElement('option');
-    opt.value = op.nome;
-    opt.textContent = op.nome;
-    select.appendChild(opt);
-  });
-  
-  select.onchange = function() {
-    if (this.value) caricaStoricoOdierno(this.value);
-  };
-  if (operatoriOrdinati.length === 1) {
-    select.value = operatoriOrdinati[0].nome;
-    select.disabled = true;
-    caricaStoricoOdierno(select.value);
-  }
-}
-function popolaSelectServizi(servizi) {
-  var select = document.getElementById('selectServizioTimbratura'); // Sostituisci con il tuo ID HTML
-  if (!select) return;
-  select.innerHTML = '<option value="">-- Seleziona plesso / servizio --</option>';
-  servizi.forEach(serv => {
-    var opt = document.createElement('option');
-    opt.value = serv.etichetta;
-    opt.textContent = serv.etichetta;
-    select.appendChild(opt);
-  });
-}
+    function oggiLocale() { var d = new Date(); return d.getFullYear() + '-' + String(d.getMonth() + 1).padStart(2, '0') + '-' + String(d.getDate()).padStart(2, '0'); }
+    var servizioOpzioni = [], turniCorrenti = [];
 
-// Funzione richiamata dai pulsanti "Registra Entrata" o "Registra Uscita"
-function inviaTimbratura(tipoTimbratura) {
-  var operatore = document.getElementById('selectOperatoreTimbratura').value;
-  var servizio = document.getElementById('selectServizioTimbratura').value;
-  var note = document.getElementById('inputNoteTimbratura') ? document.getElementById('inputNoteTimbratura').value : "";
-  
-  if (!operatore || !servizio) {
-    alert("Seleziona operatore e servizio prima di timbrare.");
-    return;
-  }
+    function caricaDatiTimbratura() {
+      var inp = document.getElementById('dataTimbratura');
+      inp.min = '2026-09-14'; inp.max = oggiLocale();
+      if (!inp.value || inp.value > inp.max) inp.value = inp.max;
+      chiamaBackend('ottieniDatiInizialiTimbratura').then(function (d) {
+        servizioOpzioni = d.servizi.map(function (x) { return x.etichetta; });
+        document.getElementById('nomeOperatoreTimb').textContent = d.operatoreCorrente;
+        caricaGiorno();
+      }).catch(function () {});
+    }
+    function caricaGiorno() {
+      var data = document.getElementById('dataTimbratura').value;
+      document.getElementById('esitoTimbratura').textContent = '';
+      if (!data) return;
+      chiamaBackend('ottieniTimbratureGiorno', { data: data }).then(function (r) {
+        turniCorrenti = r.turni.length ? r.turni : [{ servizio: '', entrata: '', uscita: '', note: '' }];
+        giornoChiuso = (r.modificabile === false);
+        document.getElementById('statoGiorno').textContent = giornoChiuso ? 'Giornata chiusa: per modifiche contatta il coordinatore.' : (r.turni.length ? 'Giornata già compilata: puoi modificarla.' : 'Nessuna timbratura per questo giorno.');
+        disegnaTurni();
+      }).catch(function (e) { alert(e.message); });
+    }
+    function disegnaTurni() {
+      var campo = 'w-full p-3 rounded-2xl border border-slate-200 text-sm bg-slate-50/50 focus:bg-white focus:border-emerald-500 outline-none text-slate-700 font-medium';
+      document.getElementById('listaTurni').innerHTML = turniCorrenti.map(function (t, i) {
+        var opz = '<option value="">Servizio / Plesso...</option>' + servizioOpzioni.map(function (sv) {
+          return '<option value="' + esc(sv) + '"' + (sv === t.servizio ? ' selected' : '') + '>' + esc(sv) + '</option>'; }).join('');
+        return '<div class="p-4 rounded-2xl border border-slate-100 bg-slate-50/40 space-y-3">' +
+          '<div class="flex items-center justify-between"><span class="text-xs font-black text-slate-500 uppercase">Turno ' + (i + 1) + '</span>' +
+          (turniCorrenti.length > 1 ? '<button onclick="rimuoviTurno(' + i + ')" class="text-rose-600 text-xs font-bold cursor-pointer"><i class="fa-solid fa-trash mr-1"></i>Rimuovi</button>' : '') + '</div>' +
+          '<select onchange="turnoCampo(' + i + ',\'servizio\',this.value)" class="' + campo + '">' + opz + '</select>' +
+          '<div class="grid grid-cols-2 gap-3">' +
+          '<div><label class="text-[11px] font-bold text-slate-500 uppercase">Entrata</label><input type="time" value="' + esc(t.entrata) + '" oninput="turnoCampo(' + i + ',\'entrata\',this.value)" class="' + campo + '"></div>' +
+          '<div><label class="text-[11px] font-bold text-slate-500 uppercase">Uscita</label><input type="time" value="' + esc(t.uscita) + '" oninput="turnoCampo(' + i + ',\'uscita\',this.value)" class="' + campo + '"></div></div>' +
+          '<input type="text" maxlength="300" placeholder="Note (opzionale)" value="' + esc(t.note) + '" oninput="turnoCampo(' + i + ',\'note\',this.value)" class="' + campo + '"></div>';
+      }).join('');
+    }
+    function turnoCampo(i, c, v) { turniCorrenti[i][c] = v; }
+    function aggiungiTurno() { if (turniCorrenti.length < 15) { turniCorrenti.push({ servizio: '', entrata: '', uscita: '', note: '' }); disegnaTurni(); } }
+    function rimuoviTurno(i) { turniCorrenti.splice(i, 1); disegnaTurni(); }
 
-  chiamaBackend('salvaTimbratura', {
-    operatore: operatore,
-    servizio: servizio,
-    tipo: tipoTimbratura,
-    note: note
-  })
-  .then(res => {
-    alert(res.messaggio);
-    caricaStoricoOdierno(operatore); // Aggiorna la tabella dello storico di oggi
-    if(document.getElementById('inputNoteTimbratura')) document.getElementById('inputNoteTimbratura').value = "";
-  })
-  .catch(err => {
-    alert("Errore timbratura: " + err.message);
-  });
-}
-
-function caricaStoricoOdierno(nomeOperatore) {
-  var container = document.getElementById('listaStoricoOdierno');
-  var btnEntrata = document.querySelector('button[onclick*="ENTRATA"]');
-  var btnUscita = document.querySelector('button[onclick*="USCITA"]');
-  
-  if (!container) return;
-
-  container.innerHTML = '<div class="text-slate-400 py-3 flex items-center justify-center gap-2"><i class="fa-solid fa-spinner animate-spin"></i> Caricamento storico...</div>';
-
-  chiamaBackend('ottieniStoricoOdierno', { nomeOperatore: nomeOperatore })
-    .then(storico => {
-      // Gestione stato pulsanti (Prevenzione doppia timbratura)
-      var ultimoStato = "";
-      if (storico && storico.length > 0) {
-        // Prende l'ultimo elemento registrato oggi
-        ultimoStato = (storico[storico.length - 1].tipo || "").toUpperCase();
-      }
-
-      // Se l'ultima timbratura è ENTRATA, non può rientrare (blocca Entrata, abilita Uscita)
-      // Se l'ultima è USCITA o non c'è nulla, non può uscire (abilita Entrata, blocca Uscita)
-      if (btnEntrata && btnUscita) {
-        if (ultimoStato === 'ENTRATA') {
-          impostaStatoPulsante(btnEntrata, false, "Già in Entrata");
-          impostaStatoPulsante(btnUscita, true, "Registra Uscita");
-        } else {
-          impostaStatoPulsante(btnEntrata, true, "Registra Entrata");
-          impostaStatoPulsante(btnUscita, false, "Devi prima Entrare");
-        }
-      }
-
-      if (!storico || storico.length === 0) {
-        container.innerHTML = '<div class="text-slate-400 py-3 text-center">Nessuna timbratura registrata oggi. (Stato attuale: Disponibile per Entrata)</div>';
-        return;
-      }
-
-      var html = '<div class="space-y-2 text-left max-h-48 overflow-y-auto pr-1">';
-      storico.forEach(item => {
-        var isEntrata = (item.tipo || '').toUpperCase() === 'ENTRATA';
-        var badgeClass = isEntrata 
-          ? 'bg-emerald-50 text-emerald-700 border-emerald-200' 
-          : 'bg-slate-100 text-slate-700 border-slate-200';
-        var icona = isEntrata ? 'fa-right-to-bracket' : 'fa-right-from-bracket';
-
-        html += `
-          <div class="flex items-center justify-between p-3 rounded-xl bg-white border border-slate-100 shadow-xs text-xs">
-            <div class="flex items-center gap-2.5">
-              <span class="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-lg font-semibold border ${badgeClass}">
-                <i class="fa-solid ${icona} text-[10px]"></i> ${esc(item.tipo)}
-              </span>
-              <span class="font-medium text-slate-700">${esc(item.servizio)}</span>
-            </div>
-            <div class="text-slate-500 font-mono font-medium">${esc(item.orario)}</div>
-          </div>
-        `;
+    function preSalva() {
+      if (giornoChiuso) { document.getElementById('esitoTimbratura').textContent = 'Giornata chiusa: contatta il coordinatore per modificarla.'; return; }
+      var data = document.getElementById('dataTimbratura').value, err = '';
+      turniCorrenti.forEach(function (t, i) {
+        if (!t.servizio || !t.entrata || !t.uscita) err = 'Turno ' + (i + 1) + ': compila servizio, entrata e uscita.';
+        else if (t.entrata >= t.uscita) err = 'Turno ' + (i + 1) + ": l'uscita deve essere dopo l'entrata.";
       });
-      html += '</div>';
-      container.innerHTML = html;
-    })
-    .catch(err => {
-      console.error("Errore caricamento storico:", err);
-      container.innerHTML = '<div class="text-rose-600 py-3 text-center">Impossibile caricare lo storico odierno.</div>';
-    });
-}
+      if (err) { document.getElementById('esitoTimbratura').textContent = err; return; }
+      document.getElementById('esitoTimbratura').textContent = '';
+      document.getElementById('riepilogoConferma').innerHTML =
+        '<p class="font-bold text-slate-800">' + esc(data.split('-').reverse().join('/')) + '</p>' +
+        turniCorrenti.map(function (t) {
+          return '<p>' + esc(t.servizio) + ': <strong>' + esc(t.entrata) + ' – ' + esc(t.uscita) + '</strong>' + (t.note ? ' <span class="text-slate-500">(' + esc(t.note) + ')</span>' : '') + '</p>'; }).join('');
+      document.getElementById('modalConferma').classList.remove('hidden');
+    }
+    function chiudiConferma() { document.getElementById('modalConferma').classList.add('hidden'); }
+    function confermaSalvataggio() {
+      var btn = document.getElementById('btnConferma'); btn.disabled = true;
+      chiamaBackend('salvaTimbratureGiorno', { data: document.getElementById('dataTimbratura').value, turni: turniCorrenti })
+        .then(function (r) {
+          turniCorrenti = r.turni; disegnaTurni(); chiudiConferma();
+          document.getElementById('statoGiorno').textContent = 'Giornata già compilata: puoi modificarla.';
+          document.getElementById('esitoTimbratura').textContent = 'Timbrature salvate.';
+        }).catch(function (e) { chiudiConferma(); document.getElementById('esitoTimbratura').textContent = 'Non salvato: ' + e.message; })
+        .then(function () { btn.disabled = false; });
+    }
 
-// Funzione di supporto per abilitare/disabilitare i pulsanti graficamente
 function impostaStatoPulsante(btn, attivo, testo) {
   if (!btn) return;
   // Trova il testo interno o aggiorna l'attributo
