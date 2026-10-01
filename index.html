@@ -302,7 +302,7 @@
         document.getElementById('btnEsci').classList.remove('hidden');
         mostraSezione('schermataHome');
       }).catch(function (e) {
-        if (e.message !== 'NON_AUTORIZZATO' && e.message !== 'TOKEN_NON_VALIDO') mostraLogin('Connessione non riuscita. Riprova.');
+        if (e.message !== 'NON_AUTORIZZATO' && e.message !== 'TOKEN_NON_VALIDO') mostraLogin('Connessione non riuscita: ' + e.message);
       });
     }
     function ottieniToken() {
@@ -355,7 +355,7 @@
           aggiornaStatoSalvataggio('pronto', 'Aggiornato');
           return data;
         })
-        .catch(function (e) { aggiornaStatoSalvataggio('errore', 'Errore di connessione'); throw e; });
+        .catch(function (e) { console.error('Backend:', e); aggiornaStatoSalvataggio('errore', 'Errore di connessione'); throw e; });
     }
     function aggiornaStatoSalvataggio(stato, messaggio) {
       var punto = document.getElementById('puntoStato');
