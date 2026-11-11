@@ -153,8 +153,12 @@
           <h3 id="titoloSedeSelezionata" class="text-xl font-black text-blue-600 flex items-center gap-2">
             <i class="fa-solid fa-clipboard-list"></i> Registro Presenze
           </h3>
-          <span id="dataOdiernaBadge" class="text-xs bg-blue-50 text-blue-600 font-bold px-3 py-1 rounded-full w-fit">Data odierna</span>
-        </div>
+          <div class="flex items-center gap-2 bg-blue-50/80 border border-blue-200 px-3 py-1.5 rounded-2xl shadow-sm">
+  <i class="fa-solid fa-calendar-days text-blue-600 text-xs"></i>
+  <input type="date" id="selettoreDataRegistro" 
+         class="bg-transparent text-xs font-bold text-blue-700 focus:outline-none cursor-pointer"
+         onchange="cambiaDataRegistro(this.value)">
+</div>
 
         <!-- Barra di Riepilogo -->
         <div class="grid grid-cols-3 gap-3 text-center">
