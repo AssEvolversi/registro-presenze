@@ -293,6 +293,56 @@
         return { '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c];
       });
     }
+    // Variabile globale per la data selezionata nel registro presenze
+var dataSelezionataRegistro = "";
+
+// 1. Chiamata quando l'utente sceglie una data dal calendario
+function cambiaDataRegistro(nuovaData) {
+  if (!nuovaData) return;
+  dataSelezionataRegistro = nuovaData;
+  
+  if (typeof nomeTabAttivo !== 'undefined' && nomeTabAttivo) {
+    caricaDatiRegistroPerData(nomeTabAttivo, dataSelezionataRegistro);
+  }
+}
+
+// 2. Funzione di caricamento aggiornata che accetta la data
+function caricaDatiRegistroPerData(nomeTab, dataIso) {
+  // Se non viene passata una data, imposta quella odierna nel selettore
+  var inputData = document.getElementById('selettoreDataRegistro');
+  if (!dataIso && inputData) {
+    dataIso = inputData.value || new Date().toISOString().split('T')[0];
+  }
+  dataSelezionataRegistro = dataIso;
+
+  chiamaBackend('ottieniDatiRegistro', { tab: nomeTab, data: dataIso })
+    .then(data => {
+      listaAlunniGlobale = data.alunni || [];
+      colonnaGiornoGlobale = data.colonnaGiorno || -1;
+      isDonMilaniIntegrazioneGlobale = !!data.isDonMilaniIntegrazione;
+      
+      // Aggiorna il valore visivo del selettore con la data restituita dal server
+      if (inputData && data.dataIso) {
+        inputData.value = data.dataIso;
+        dataSelezionataRegistro = data.dataIso;
+      }
+
+      listaAlunniGlobale.sort((a, b) => {
+        let cognomeA = estraiCognome(a.nome);
+        let cognomeB = estraiCognome(b.nome);
+        return cognomeA.localeCompare(cognomeB);
+      });
+
+      renderizzaListaHTML(listaAlunniGlobale);
+    })
+    .catch(err => {
+      console.error("Errore caricamento registro:", err);
+      var container = document.getElementById('contenutoSedeSpecifica');
+      if (container) {
+        container.innerHTML = `<p class="text-rose-400 text-sm py-4 text-center">Impossibile caricare gli iscritti per questo servizio.</p>`;
+      }
+    });
+}
     function scadenzaToken(t) {
       try { return JSON.parse(atob(t.split('.')[1].replace(/-/g, '+').replace(/_/g, '/'))).exp * 1000; } catch (e) { return 0; }
     }
