@@ -961,10 +961,9 @@ function verificaSeCarnet(tipo) {
         tab: sedeSelezionataCorrente.originale,
         riga: riga,
         colonna: colonnaGiornoGlobale,
-        stato: alunno.stato
-      }).then(res => {
-        var spanIngressi = document.getElementById(`ingressi-val-${riga}`);
-        
+        stato: alunno.stato,
+        data: typeof dataSelezionataRegistro !== 'undefined' ? dataSelezionataRegistro : document.getElementById('selettoreDataRegistro').value
+      })
         // Controlliamo che gestisca i carnet E che la risposta del backend sia valida
         if (gestisceIngressi && res && res.nuoviIngressi !== undefined && res.nuoviIngressi !== "" && res.nuoviIngressi !== "-") {
           alunno.ingressi = res.nuoviIngressi;
