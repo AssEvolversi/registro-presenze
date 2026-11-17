@@ -159,6 +159,8 @@
          class="bg-transparent text-xs font-bold text-blue-700 focus:outline-none cursor-pointer"
          onchange="cambiaDataRegistro(this.value)">
 </div>
+        </div>
+        <p id="avvisoDataRegistro" class="hidden text-xs font-bold text-amber-700 bg-amber-50 border border-amber-200 rounded-xl px-3 py-2"></p>
 
         <!-- Barra di Riepilogo -->
         <div class="grid grid-cols-3 gap-3 text-center">
@@ -293,56 +295,39 @@
         return { '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c];
       });
     }
-    // Variabile globale per la data selezionata nel registro presenze
-var dataSelezionataRegistro = "";
+    // Giorno mostrato/modificato nel registro (AAAA-MM-GG). Vuoto = oggi.
+    var dataSelezionataRegistro = "";
 
-// 1. Chiamata quando l'utente sceglie una data dal calendario
-function cambiaDataRegistro(nuovaData) {
-  if (!nuovaData) return;
-  dataSelezionataRegistro = nuovaData;
-  
-  if (typeof nomeTabAttivo !== 'undefined' && nomeTabAttivo) {
-    caricaDatiRegistroPerData(nomeTabAttivo, dataSelezionataRegistro);
-  }
-}
-
-// 2. Funzione di caricamento aggiornata che accetta la data
-function caricaDatiRegistroPerData(nomeTab, dataIso) {
-  // Se non viene passata una data, imposta quella odierna nel selettore
-  var inputData = document.getElementById('selettoreDataRegistro');
-  if (!dataIso && inputData) {
-    dataIso = inputData.value || new Date().toISOString().split('T')[0];
-  }
-  dataSelezionataRegistro = dataIso;
-
-  chiamaBackend('ottieniDatiRegistro', { tab: nomeTab, data: dataIso })
-    .then(data => {
-      listaAlunniGlobale = data.alunni || [];
-      colonnaGiornoGlobale = data.colonnaGiorno || -1;
-      isDonMilaniIntegrazioneGlobale = !!data.isDonMilaniIntegrazione;
-      
-      // Aggiorna il valore visivo del selettore con la data restituita dal server
-      if (inputData && data.dataIso) {
-        inputData.value = data.dataIso;
-        dataSelezionataRegistro = data.dataIso;
+    function cambiaDataRegistro(nuovaData) {
+      var inp = document.getElementById('selettoreDataRegistro');
+      if (!nuovaData) { if (inp) inp.value = dataSelezionataRegistro || oggiLocale(); return; }   // campo svuotato: resta il giorno attuale
+      if (nuovaData > oggiLocale()) {
+        alert('Non puoi segnare presenze per giorni futuri.');
+        if (inp) inp.value = dataSelezionataRegistro || oggiLocale();
+        return;
       }
+      dataSelezionataRegistro = nuovaData;
+      aggiornaAvvisoData();
+      ricaricaIscrittiCorrenti();
+    }
 
-      listaAlunniGlobale.sort((a, b) => {
-        let cognomeA = estraiCognome(a.nome);
-        let cognomeB = estraiCognome(b.nome);
-        return cognomeA.localeCompare(cognomeB);
-      });
+    function aggiornaAvvisoData() {
+      var el = document.getElementById('avvisoDataRegistro');
+      if (!el) return;
+      var d = dataSelezionataRegistro || oggiLocale();
+      if (d === oggiLocale()) { el.classList.add('hidden'); el.textContent = ''; }
+      else { el.textContent = 'Stai modificando il giorno ' + formatData(d) + ' (non è oggi).'; el.classList.remove('hidden'); }
+    }
 
-      renderizzaListaHTML(listaAlunniGlobale);
-    })
-    .catch(err => {
-      console.error("Errore caricamento registro:", err);
-      var container = document.getElementById('contenutoSedeSpecifica');
-      if (container) {
-        container.innerHTML = `<p class="text-rose-400 text-sm py-4 text-center">Impossibile caricare gli iscritti per questo servizio.</p>`;
-      }
-    });
-}
+    // Errore di salvataggio: avvisa e ricarica i dati reali dal foglio (l'interfaccia non resta "bugiarda")
+    function erroreSalvataggio(err) {
+      console.error('Errore salvataggio:', err);
+      var msg = (err && err.message) || '';
+      if (msg === 'NON_AUTORIZZATO' || msg === 'TOKEN_NON_VALIDO' || msg === 'SESSIONE_SCADUTA') return;   // già gestito dal login
+      if (msg === 'RIGHE_CAMBIATE') alert("L'elenco iscritti è stato aggiornato nel frattempo. Lo ricarico: ripeti l'operazione.");
+      else alert('Salvataggio non riuscito: ' + msg + '\nI dati mostrati vengono ricaricati dal foglio.');
+      ricaricaIscrittiCorrenti();
+    }
     function scadenzaToken(t) {
       try { return JSON.parse(atob(t.split('.')[1].replace(/-/g, '+').replace(/_/g, '/'))).exp * 1000; } catch (e) { return 0; }
     }
@@ -594,7 +579,12 @@ function caricaDatiRegistroPerData(nomeTab, dataIso) {
       
       var inputRicerca = document.getElementById('inputRicercaIscritto');
       if (inputRicerca) inputRicerca.value = "";
-      
+
+      dataSelezionataRegistro = oggiLocale();
+      var inputData = document.getElementById('selettoreDataRegistro');
+      if (inputData) { inputData.max = oggiLocale(); inputData.value = dataSelezionataRegistro; }
+      aggiornaAvvisoData();
+
       mostraSezione('wrapperSedeSpecifica');
       caricaIscrittiSede(nomeTabOriginale);
     }
@@ -606,56 +596,52 @@ function caricaDatiRegistroPerData(nomeTab, dataIso) {
     }
 
     function caricaIscrittiSede(nomeTab) {
-  var container = document.getElementById('contenutoSedeSpecifica');
-  if (!container) return;
-  
-  container.innerHTML = `
-    <div class="text-center py-8 text-slate-400 text-sm">
-      <i class="fa-solid fa-spinner animate-spin text-blue-600 text-lg mr-2"></i> Caricamento iscritti in corso...
-    </div>
-  `;
+      var container = document.getElementById('contenutoSedeSpecifica');
+      if (!container) return;
+      var dataRichiesta = dataSelezionataRegistro || oggiLocale();
 
-  chiamaBackend('ottieniDatiRegistro', { tab: nomeTab })
-    .then(data => {
-      listaAlunniGlobale = data.alunni || [];
-      
-      // 1. Valorizziamo subito i flag globali PRIMA di ciclare sugli alunni
-      colonnaGiornoGlobale = data.colonnaGiorno || -1;
-      isDonMilaniIntegrazioneGlobale = !!data.isDonMilaniIntegrazione;
-      
-      listaAlunniGlobale.forEach(alunno => {
-        var tipoLower = (alunno.tipo || "").toLowerCase();
-        
-        // Controllo rigoroso: deve contenere termini da carnet E NON essere annuale/mensile
-        var eUnCarnet = (tipoLower.includes("carnet") || 
-                         tipoLower.includes("pacchetto") || 
-                         tipoLower.includes("ingresso")) && 
-                        !tipoLower.includes("annuale") && 
-                        !tipoLower.includes("mensile");
-        
-        // 2. Se NON siamo in Don Milani E non è un carnet, allora applichiamo il trattino "-"
-        if (!isDonMilaniIntegrazioneGlobale && !eUnCarnet) {
-          alunno.ingressi = "-";
-        }
-      });
+      container.innerHTML = `
+        <div class="text-center py-8 text-slate-400 text-sm">
+          <i class="fa-solid fa-spinner animate-spin text-blue-600 text-lg mr-2"></i> Caricamento iscritti in corso...
+        </div>
+      `;
 
-      if (data.dataOdierna) {
-        var badge = document.getElementById('dataOdiernaBadge');
-        if (badge) badge.innerText = `Data odierna: ${data.dataOdierna}`;
-      }
+      chiamaBackend('ottieniDatiRegistro', { tab: nomeTab, data: dataRichiesta })
+        .then(data => {
+          // risposta superata (l'operatore ha cambiato sede o giorno nel frattempo): ignorala
+          if (!sedeSelezionataCorrente || sedeSelezionataCorrente.originale !== nomeTab) return;
+          if ((dataSelezionataRegistro || oggiLocale()) !== dataRichiesta) return;
 
-      listaAlunniGlobale.sort((a, b) => {
-        let cognomeA = estraiCognome(a.nome);
-        let cognomeB = estraiCognome(b.nome);
-        return cognomeA.localeCompare(cognomeB);
-      });
+          colonnaGiornoGlobale = data.colonnaGiorno || -1;
+          isDonMilaniIntegrazioneGlobale = !!data.isDonMilaniIntegrazione;
 
-      renderizzaListaHTML(listaAlunniGlobale);
-    })
-    .catch(err => {
-      container.innerHTML = `<p class="text-rose-400 text-sm py-4 text-center">Impossibile caricare gli iscritti per questo servizio.</p>`;
-    });
-}
+          if (data.dataIso) {
+            dataSelezionataRegistro = data.dataIso;
+            var inp = document.getElementById('selettoreDataRegistro');
+            if (inp) inp.value = data.dataIso;
+          }
+          aggiornaAvvisoData();
+
+          if (data.giornoNonDisponibile) {
+            listaAlunniGlobale = [];
+            container.innerHTML = `<p class="text-amber-700 text-sm py-6 text-center font-medium">Il giorno ${esc(formatData(data.dataIso || dataRichiesta))} non è presente nel registro del mese in corso (mese già archiviato o giorno inesistente).</p>`;
+            aggiornaRiepilogoStatistiche();
+            return;
+          }
+
+          listaAlunniGlobale = data.alunni || [];
+          listaAlunniGlobale.forEach(alunno => {
+            // Solo i carnet hanno un residuo; per gli altri tipi si mostra "-"
+            if (!isDonMilaniIntegrazioneGlobale && !verificaSeCarnet(alunno.tipo)) alunno.ingressi = "-";
+          });
+
+          listaAlunniGlobale.sort((a, b) => estraiCognome(a.nome).localeCompare(estraiCognome(b.nome)));
+          renderizzaListaHTML(listaAlunniGlobale);
+        })
+        .catch(err => {
+          container.innerHTML = `<p class="text-rose-400 text-sm py-4 text-center">Impossibile caricare gli iscritti per questo servizio. ${esc((err && err.message) || '')}</p>`;
+        });
+    }
     function estraiCognome(nomeCompleto) {
       if (!nomeCompleto) return "";
       let parti = nomeCompleto.trim().split(" ");
@@ -748,17 +734,8 @@ function caricaDatiRegistroPerData(nomeTab, dataIso) {
     }
     
 function ottieniTestoIngressiSicuro(tipo, ingressi) {
-  var t = (tipo || "").toLowerCase();
-  var eUnCarnet = (t.includes("ingresso") || t.includes("pacchetto") || t.includes("carnet")) && 
-                  !t.includes("annuale") && 
-                  !t.includes("mensile");
-
-  if (!eUnCarnet) {
-    return "-";
-  }
-  if (ingressi === undefined || ingressi === null || String(ingressi).trim() === "" || String(ingressi).trim() === "-") {
-    return "-";
-  }
+  if (!verificaSeCarnet(tipo)) return "-";
+  if (ingressi === undefined || ingressi === null || String(ingressi).trim() === "" || String(ingressi).trim() === "-") return "-";
   return ingressi;
 }
      function creaElementoAlunnoHTML(alunno, isIqbalMasih, isDonMilani, nomeTab) {
@@ -782,7 +759,7 @@ function ottieniTestoIngressiSicuro(tipo, ingressi) {
       if (testoIngressi !== "-") {
         htmlIngressiResidui = `
           <span class="text-xs text-slate-400 block mt-1">
-            Ingressi residui: <span id="ingressi-val-${alunno.riga}" class="font-bold text-blue-600">${esc(testoIngressi)}</span>
+            Ingressi residui: <span id="ingressi-val-${alunno.riga}" class="font-bold ${Number(testoIngressi) <= 0 ? 'text-rose-600' : 'text-blue-600'}">${esc(testoIngressi)}</span>
           </span>`;
       }
 
@@ -872,9 +849,11 @@ function inviaNota(nomeTab, numeroRiga, testoNota) {
     elInput.classList.add("bg-amber-50", "border-amber-400");
   }
 
+  var alunnoNota = (typeof listaAlunniGlobale !== "undefined") ? listaAlunniGlobale.find(a => a.riga === numeroRiga) : null;
   chiamaBackend('salvaNota', {
     tab: tabTarget,
     riga: numeroRiga,
+    nome: alunnoNota ? alunnoNota.nome : undefined,
     valore: testoNota
   })
   .then(res => {
@@ -895,12 +874,13 @@ function inviaNota(nomeTab, numeroRiga, testoNota) {
       elInput.classList.add("bg-rose-50", "border-rose-500");
     }
     console.error("Errore nel salvataggio della nota:", err);
+    if (err && err.message === 'RIGHE_CAMBIATE') erroreSalvataggio(err);
   });
 }
 function verificaSeCarnet(tipo) {
+  // Deve coincidere con eCarnet_ del backend: pacchetto di ingressi, NON annuale/mensile/stagionale
   var t = (tipo || "").toLowerCase();
-  // È un carnet solo se contiene parole chiave di pacchetto e NON è un annuale o mensile
-  return (t.includes("ingresso") || t.includes("pacchetto") || t.includes("carnet")) &&
+  return (t.includes("ingress") || t.includes("pacchetto") || t.includes("carnet")) &&
          !t.includes("annuale") && !t.includes("mensile") && !t.includes("stagionale");
 }
     function toggleInfo(riga) {
@@ -912,43 +892,22 @@ function verificaSeCarnet(tipo) {
     
   function impostaStatoPresenza(riga, nuovoStato) {
       var alunno = listaAlunniGlobale.find(a => a.riga === riga);
-      if (!alunno) return;
+      if (!alunno || !sedeSelezionataCorrente) return;
 
       var eraPresente = (alunno.stato === "P" || alunno.stato === "PRESENTE");
-
-      if (alunno.stato === nuovoStato) {
-        alunno.stato = "";
-      } else {
-        alunno.stato = nuovoStato;
-      }
-
+      alunno.stato = (alunno.stato === nuovoStato) ? "" : nuovoStato;
       var oraPresente = (alunno.stato === "P" || alunno.stato === "PRESENTE");
 
-      // CONTROLLO RIGOROSO SUL TIPO DI ABBONAMENTO (esclude annuali/mensili per evitare falsi positivi)
-      var tipoLower = (alunno.tipo || "").toLowerCase();
-      var eUnPacchettoIngressi = (tipoLower.includes("carnet") || 
-                                 tipoLower.includes("pacchetto") || 
-                                 tipoLower.includes("ingresso")) && 
-                                 !tipoLower.includes("annuale") && 
-                                 !tipoLower.includes("mensile");
-
-      var gestisceIngressi = !isDonMilaniIntegrazioneGlobale && eUnPacchettoIngressi;
-
-      // BLOCCO ASSOLUTO PER GLI ANNUALI O NON-CARNET
+      // Aggiornamento immediato a video; il valore definitivo del residuo lo decide il foglio
+      var gestisceIngressi = !isDonMilaniIntegrazioneGlobale && verificaSeCarnet(alunno.tipo);
       if (!gestisceIngressi) {
         alunno.ingressi = "-";
       } else {
-        // Se è un carnet, calcoliamo in sicurezza
-        var valIngressiStr = String(alunno.ingressi).trim();
-        if (valIngressiStr !== "" && valIngressiStr !== "-") {
-          var ingressiNum = Number(valIngressiStr);
-          if (!isNaN(ingressiNum)) {
-            if (!eraPresente && oraPresente) {
-              alunno.ingressi = Math.max(0, ingressiNum - 1);
-            } else if (eraPresente && !oraPresente) {
-              alunno.ingressi = ingressiNum + 1;
-            }
-          }
+        var testo = String(alunno.ingressi).trim();
+        var n = Number(testo);
+        if (testo !== "" && testo !== "-" && !isNaN(n)) {
+          if (!eraPresente && oraPresente) alunno.ingressi = n - 1;
+          else if (eraPresente && !oraPresente) alunno.ingressi = n + 1;
         } else {
           alunno.ingressi = "-";
         }
@@ -960,21 +919,15 @@ function verificaSeCarnet(tipo) {
       chiamaBackend('salvaPresenza', {
         tab: sedeSelezionataCorrente.originale,
         riga: riga,
-        colonna: colonnaGiornoGlobale,
+        nome: alunno.nome,                                   // il server verifica che la riga sia ancora questa persona
         stato: alunno.stato,
-        data: typeof dataSelezionataRegistro !== 'undefined' ? dataSelezionataRegistro : document.getElementById('selettoreDataRegistro').value
-      })
-        // Controlliamo che gestisca i carnet E che la risposta del backend sia valida
+        data: dataSelezionataRegistro || oggiLocale()        // il giorno lo decide l'operatore, il server lo valida
+      }).then(res => {
         if (gestisceIngressi && res && res.nuoviIngressi !== undefined && res.nuoviIngressi !== "" && res.nuoviIngressi !== "-") {
           alunno.ingressi = res.nuoviIngressi;
-          if (spanIngressi) spanIngressi.innerText = res.nuoviIngressi;
-        } else {
-          alunno.ingressi = "-";
-          if (spanIngressi) spanIngressi.innerText = "-";
+          aggiornaUIElementoSingolo(riga, alunno.stato, alunno.ingressi, alunno.tipo);
         }
-      }).catch(err => {
-        console.error("Errore salvataggio presenza:", err);
-      });
+      }).catch(erroreSalvataggio);
     }
  function aggiornaUIElementoSingolo(riga, stato, ingressiAggiornati, tipoAlunno) {
   var btnP = document.querySelector(`.btn-presente-${riga}`);
@@ -990,7 +943,10 @@ function verificaSeCarnet(tipo) {
   btnA.className = `btn-assente-${riga} px-4 py-2 rounded-xl text-xs font-bold transition shadow-sm cursor-pointer ${isAssente ? 'bg-rose-600 text-white shadow-rose-200 scale-105' : 'bg-slate-100 text-slate-600 hover:bg-rose-100 hover:text-rose-700'}`;
     
   if (spanIngressi && !isDonMilaniIntegrazioneGlobale) {
-    spanIngressi.innerText = ottieniTestoIngressiSicuro(tipoAlunno, ingressiAggiornati);
+    var testoNuovo = ottieniTestoIngressiSicuro(tipoAlunno, ingressiAggiornati);
+    spanIngressi.innerText = testoNuovo;
+    spanIngressi.classList.toggle('text-rose-600', Number(testoNuovo) <= 0);
+    spanIngressi.classList.toggle('text-blue-600', !(Number(testoNuovo) <= 0));
   }
 }
     function aggiornaRiepilogoStatistiche() {
@@ -1017,25 +973,27 @@ function verificaSeCarnet(tipo) {
     }
 
     function segnaTutti(statoForzato) {
-      if (!listaAlunniGlobale || listaAlunniGlobale.length === 0) return;
+      if (!listaAlunniGlobale || listaAlunniGlobale.length === 0 || !sedeSelezionataCorrente) return;
+      var dataGiorno = dataSelezionataRegistro || oggiLocale();
+      if (dataGiorno !== oggiLocale() && !confirm('Stai modificando il giorno ' + formatData(dataGiorno) + '. Procedere per tutti gli iscritti?')) return;
 
-      listaAlunniGlobale.forEach(a => { a.stato = statoForzato; aggiornaUIElementoSingolo(a.riga, statoForzato, a.ingressi); });
+      listaAlunniGlobale.forEach(a => { a.stato = statoForzato; aggiornaUIElementoSingolo(a.riga, statoForzato, a.ingressi, a.tipo); });
+      aggiornaRiepilogoStatistiche();
+
       chiamaBackend('salvaPresenzaMultipla', {
         tab: sedeSelezionataCorrente.originale,
-        righe: listaAlunniGlobale.map(a => a.riga),
-        stato: statoForzato
+        righe: listaAlunniGlobale.map(a => ({ riga: a.riga, nome: a.nome })),
+        stato: statoForzato,
+        data: dataGiorno
       }).then(res => {
         (res.risultati || []).forEach(x => {
           var a = listaAlunniGlobale.find(z => z.riga === x.riga);
           if (a && x.nuoviIngressi !== undefined && x.nuoviIngressi !== "-") {
             a.ingressi = x.nuoviIngressi;
-            var sp = document.getElementById('ingressi-val-' + x.riga);
-            if (sp) sp.innerText = x.nuoviIngressi;
+            aggiornaUIElementoSingolo(a.riga, a.stato, a.ingressi, a.tipo);
           }
         });
-      }).catch(err => { console.error("Errore salvataggio di massa:", err); alert("Errore nel salvataggio: ricarica la pagina e riprova."); });
-
-      aggiornaRiepilogoStatistiche();
+      }).catch(erroreSalvataggio);
     }
 
     document.addEventListener("DOMContentLoaded", function() {
