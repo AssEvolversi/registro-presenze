@@ -1,4 +1,4 @@
-const CACHE_NAME = 'evolversi-v7';
+const CACHE_NAME = 'evolversi-v8';
 const ASSETS_TO_CACHE = ['./', './index.html', './manifest.json', './IconaApp.png'];
 
 self.addEventListener('install', (event) => {
